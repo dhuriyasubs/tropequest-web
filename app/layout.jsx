@@ -1,5 +1,7 @@
 import './globals.css'
 import Nav from '@/components/Nav'
+import Toaster from '@/components/Toaster'
+import AuthRedirectHandler from '@/components/AuthRedirectHandler'
 
 export const metadata = {
   metadataBase: new URL('https://tropequest.netlify.app'),
@@ -23,6 +25,8 @@ export default function RootLayout({ children }) {
       <body className="min-h-screen flex flex-col">
         <Nav />
         <main className="flex-1">{children}</main>
+        <Toaster />
+        <AuthRedirectHandler />
         <footer className="bg-ink text-white/60 text-sm py-8 px-4 mt-16">
           <div className="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between gap-4">
             <p>© {new Date().getFullYear()} TropeQuest</p>

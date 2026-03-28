@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import TbrButton from './TbrButton'
 
 export default function BookCard({ book }) {
   return (
@@ -14,12 +15,17 @@ export default function BookCard({ book }) {
             alt={`${book.title} cover`}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             loading="lazy"
+            width={200}
+            height={300}
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-petal/40 text-4xl">
             📚
           </div>
         )}
+        <div className="absolute top-2 right-2 bg-white/80 backdrop-blur-sm rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <TbrButton bookId={book.id} size="sm" />
+        </div>
       </div>
       <div className="p-3 flex flex-col gap-1">
         <p className="font-serif font-semibold text-sm leading-tight line-clamp-2">

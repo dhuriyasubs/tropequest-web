@@ -7,14 +7,14 @@ export const metadata = {
 }
 
 export default async function SearchPage({ searchParams }) {
-  const query    = searchParams.q || null
+  const query    = searchParams.q || ''
   const tropes   = [searchParams.tropes].flat().filter(Boolean)
   const subjects = [searchParams.subjects].flat().filter(Boolean)
   const page     = Number(searchParams.page || 1)
 
   const [{ books, total }, { tropes: allTropes, subjects: allSubjects }] =
     await Promise.all([
-      searchBooks({ query, tropes, subjects, page }),
+      searchBooks({ query: query || null, tropes, subjects, page }),
       getFilterOptions(),
     ])
 
@@ -26,6 +26,10 @@ export default async function SearchPage({ searchParams }) {
         initialTotal={total}
         tropes={allTropes}
         subjects={allSubjects}
+        initialQuery={query}
+        initialSelTropes={tropes}
+        initialSelSubjects={subjects}
+        initialPage={page}
       />
     </div>
   )

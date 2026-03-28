@@ -1,56 +1,52 @@
 import Link from 'next/link'
 import BookCard from '@/components/BookCard'
-import { getFeaturedBooks, getFilterOptions } from '@/lib/search'
+import HeroGrid from '@/components/HeroGrid'
+import { getFeaturedBooks, getPopularTropes, getPersonalizedBooks } from '@/lib/search'
+import { createSupabaseServer } from '@/lib/supabase'
 
-export const revalidate = 3600 // regenerate every hour
-
-const HERO_TROPES = [
-  'Enemies to Lovers', 'Slow Burn', 'Forced Proximity',
-  'Dark Romance', 'Fake Dating', 'Second Chance',
-  'Grumpy x Sunshine', 'Found Family', 'Forbidden Love',
-]
+export const dynamic = 'force-dynamic'
 
 export default async function HomePage() {
-  const [books, { tropes }] = await Promise.all([
+  const supabase = createSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  let interests = null
+  if (user) {
+    const { data } = await supabase
+      .from('user_interests')
+      .select('tropes, subjects, authors')
+      .eq('user_id', user.id)
+      .single()
+    if (data && (data.tropes?.length || data.subjects?.length || data.authors?.length)) {
+      interests = data
+    }
+  }
+
+  const [books, popularTropes, personalizedBooks] = await Promise.all([
     getFeaturedBooks(12),
-    getFilterOptions(),
+    getPopularTropes(20),
+    interests ? getPersonalizedBooks(interests) : Promise.resolve([]),
   ])
 
   return (
     <>
-      {/* Hero */}
-      <section className="bg-plum text-white py-20 px-4 text-center">
-        <h1 className="font-serif text-4xl sm:text-5xl font-bold mb-4">
-          Find books by the tropes you love
-        </h1>
-        <p className="text-white/60 text-lg mb-8 max-w-xl mx-auto">
-          Browse 500+ romance and thriller books. Filter by trope, author, series, or mood.
-        </p>
-        <Link href="/search" className="btn-primary text-base px-6 py-3">
-          Start Browsing
-        </Link>
-      </section>
+      {/* Hero — Trope Grid */}
+      <HeroGrid tropes={popularTropes} />
 
-      {/* Trope pills */}
-      <section className="max-w-6xl mx-auto px-4 py-10">
-        <h2 className="font-serif text-2xl font-semibold mb-5">Browse by Trope</h2>
-        <div className="flex flex-wrap gap-2">
-          {HERO_TROPES.map(t => (
-            <Link
-              key={t}
-              href={`/search?tropes=${encodeURIComponent(t)}`}
-              className="chip"
-            >
-              {t}
-            </Link>
-          ))}
-          <Link href="/tropes" className="chip border-dashed">
-            View all →
-          </Link>
-        </div>
-      </section>
+      {/* Personalised picks */}
+      {personalizedBooks.length > 0 && (
+        <section className="max-w-6xl mx-auto px-4 py-10">
+          <h2 className="font-serif text-2xl font-semibold mb-1">Picked for You</h2>
+          <p className="text-sm text-slate mb-5">Based on your interests</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {personalizedBooks.map(book => (
+              <BookCard key={book.id} book={book} />
+            ))}
+          </div>
+        </section>
+      )}
 
-      {/* Featured books */}
+      {/* Top rated */}
       <section className="max-w-6xl mx-auto px-4 pb-16">
         <h2 className="font-serif text-2xl font-semibold mb-5">Top Rated</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">

@@ -1,11 +1,27 @@
 import Link from 'next/link'
 import { getFilterOptions } from '@/lib/search'
+import { slugify } from '@/lib/utils'
 
 export const metadata = {
   title: 'Browse by Trope',
   description:
     'Explore all romance and thriller book tropes. Find books by Enemies to Lovers, ' +
     'Slow Burn, Dark Romance, Fake Dating and many more.',
+  alternates: { canonical: '/tropes' },
+  openGraph: {
+    title: 'Browse Books by Trope | TropeQuest',
+    description:
+      'Explore all romance and thriller book tropes. Find books by Enemies to Lovers, ' +
+      'Slow Burn, Dark Romance, Fake Dating and many more.',
+    url: '/tropes',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Browse Books by Trope | TropeQuest',
+    description:
+      'Explore all romance and thriller book tropes. Find books by Enemies to Lovers, ' +
+      'Slow Burn, Dark Romance, Fake Dating and many more.',
+  },
 }
 
 export const revalidate = 3600
@@ -37,7 +53,7 @@ export default async function TropesPage() {
             {grouped[letter].map(t => (
               <Link
                 key={t}
-                href={`/search?tropes=${encodeURIComponent(t)}`}
+                href={`/tropes/${slugify(t)}`}
                 className="chip"
               >
                 {t}

@@ -1,63 +1,66 @@
 'use client'
-import { useState, useEffect, useCallback, useTransition } from 'react'
-import { useRouter, useSearchParams, usePathname } from 'next/navigation'
+import { useState, useEffect, useCallback, useTransition, useRef } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
 import { useDebounce } from 'use-debounce'
 import BookCard from './BookCard'
 
-export default function SearchClient({ initialBooks, initialTotal, tropes, subjects }) {
+export default function SearchClient({
+  initialBooks, initialTotal, tropes,
+  initialQuery = '', initialSelTropes = [], initialPage = 1,
+}) {
   const router      = useRouter()
   const pathname    = usePathname()
-  const params      = useSearchParams()
   const [isPending, startTransition] = useTransition()
+  const isMounted   = useRef(false)
 
-  const [query,    setQuery]    = useState(params.get('q') || '')
-  const [selTropes,   setSelTropes]   = useState(params.getAll('tropes'))
-  const [selSubjects, setSelSubjects] = useState(params.getAll('subjects'))
-  const [page,     setPage]     = useState(Number(params.get('page') || 1))
+  const [query,     setQuery]     = useState(initialQuery)
+  const [selTropes, setSelTropes] = useState(initialSelTropes)
+  const [page,      setPage]      = useState(initialPage)
 
-  const [books,    setBooks]    = useState(initialBooks)
-  const [total,    setTotal]    = useState(initialTotal)
+  const [books,    setBooks]    = useState(initialBooks ?? [])
+  const [total,    setTotal]    = useState(initialTotal ?? 0)
   const [loading,  setLoading]  = useState(false)
 
   const [debouncedQuery] = useDebounce(query, 350)
 
   // Push updated filters into URL (enables shareable links + SSR on refresh)
-  const syncUrl = useCallback((q, tropes, subjects, p) => {
+  const syncUrl = useCallback((q, tropes, p) => {
     const sp = new URLSearchParams()
     if (q) sp.set('q', q)
     tropes.forEach(t => sp.append('tropes', t))
-    subjects.forEach(s => sp.append('subjects', s))
     if (p > 1) sp.set('page', p)
     startTransition(() => {
       router.replace(`${pathname}?${sp.toString()}`, { scroll: false })
     })
   }, [pathname, router])
 
-  // Fetch results from API route whenever filters change
+  // Fetch results from API route whenever filters change.
+  // Skip the very first run — the server already provided correct initialBooks/initialTotal.
   useEffect(() => {
+    if (!isMounted.current) {
+      isMounted.current = true
+      return
+    }
+
     const sp = new URLSearchParams()
     if (debouncedQuery) sp.set('q', debouncedQuery)
     selTropes.forEach(t => sp.append('tropes', t))
-    selSubjects.forEach(s => sp.append('subjects', s))
     sp.set('page', page)
 
     setLoading(true)
     fetch(`/api/search?${sp.toString()}`)
       .then(r => r.json())
-      .then(({ books, total }) => { setBooks(books); setTotal(total) })
+      .then(({ books, total }) => { setBooks(books ?? []); setTotal(total ?? 0) })
       .finally(() => setLoading(false))
 
-    syncUrl(debouncedQuery, selTropes, selSubjects, page)
-  }, [debouncedQuery, selTropes, selSubjects, page, syncUrl])
+    syncUrl(debouncedQuery, selTropes, page)
+  }, [debouncedQuery, selTropes, page, syncUrl])
 
   // Reset to page 1 on filter change
-  useEffect(() => { setPage(1) }, [debouncedQuery, selTropes, selSubjects])
+  useEffect(() => { setPage(1) }, [debouncedQuery, selTropes])
 
   const toggleTrope = t =>
     setSelTropes(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t])
-
-  const toggleSubject = s =>
-    setSelSubjects(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s])
 
   const totalPages = Math.ceil(total / 20)
 
@@ -74,7 +77,6 @@ export default function SearchClient({ initialBooks, initialTotal, tropes, subje
         />
 
         <FilterSection title="Tropes" items={tropes} selected={selTropes} onToggle={toggleTrope} />
-        <FilterSection title="Tags" items={subjects.slice(0, 30)} selected={selSubjects} onToggle={toggleSubject} />
       </aside>
 
       {/* Results */}
@@ -120,7 +122,13 @@ export default function SearchClient({ initialBooks, initialTotal, tropes, subje
 
 function FilterSection({ title, items, selected, onToggle }) {
   const [expanded, setExpanded] = useState(false)
-  const visible = expanded ? items : items.slice(0, 10)
+
+  // Always show selected items even if they fall outside the first 10
+  const selectedSet = new Set(selected)
+  const unselected  = items.filter(i => !selectedSet.has(i))
+  const visible     = expanded
+    ? items
+    : [...selected, ...unselected.slice(0, Math.max(0, 10 - selected.length))]
 
   return (
     <div className="mb-6">

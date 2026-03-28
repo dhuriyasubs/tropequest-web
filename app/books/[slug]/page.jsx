@@ -1,7 +1,9 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { getBookBySlug, getSeriesBooks, getMoreByAuthor, getAllSlugs } from '@/lib/search'
-import BuyButtons from '@/components/BuyButtons'
+import { slugify } from '@/lib/utils'
+import { createSupabaseServer } from '@/lib/supabase'
+import TbrButton from '@/components/TbrButton'
 
 export async function generateStaticParams() {
   const slugs = await getAllSlugs()
@@ -11,12 +13,21 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }) {
   const book = await getBookBySlug(params.slug)
   if (!book) return {}
+  const description = book.description?.slice(0, 155) || `Find ${book.title} on TropeQuest.`
   return {
     title: `${book.title} by ${book.author}`,
-    description: book.description?.slice(0, 155) || `Find ${book.title} on TropeQuest.`,
+    description,
+    alternates: { canonical: `/books/${book.slug}` },
     openGraph: {
-      title: book.title,
-      description: book.description?.slice(0, 155),
+      title: `${book.title} by ${book.author}`,
+      description,
+      url: `/books/${book.slug}`,
+      images: book.cover_url ? [{ url: book.cover_url }] : [],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${book.title} by ${book.author}`,
+      description,
       images: book.cover_url ? [book.cover_url] : [],
     },
   }
@@ -25,6 +36,19 @@ export async function generateMetadata({ params }) {
 export default async function BookPage({ params }) {
   const book = await getBookBySlug(params.slug)
   if (!book) notFound()
+
+  const supabase = createSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+  let isSaved = false
+  if (user) {
+    const { data } = await supabase
+      .from('tbr')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('book_id', book.id)
+      .single()
+    isSaved = !!data
+  }
 
   const [seriesBooks, moreByAuthor] = await Promise.all([
     book.series_name ? getSeriesBooks(book.series_name, book.id) : [],
@@ -94,15 +118,27 @@ export default async function BookPage({ params }) {
             {book.tropes?.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-4">
                 {book.tropes.map(t => (
-                  <Link key={t} href={`/search?tropes=${encodeURIComponent(t)}`} className="chip text-xs">
+                  <Link key={t} href={`/tropes/${slugify(t)}`} className="chip text-xs">
                     {t}
                   </Link>
                 ))}
               </div>
             )}
 
-            {/* Buy buttons */}
-            <BuyButtons book={book} />
+            {/* Buy Now + TBR */}
+            <div className="flex items-center gap-3 mt-5">
+              {book.buy_url_amazon_in && (
+                <a
+                  href={book.buy_url_amazon_in}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block px-6 py-2.5 bg-bloom text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-opacity"
+                >
+                  Buy Now
+                </a>
+              )}
+              <TbrButton bookId={book.id} initialSaved={isSaved} />
+            </div>
 
             {/* Description */}
             {book.description && (

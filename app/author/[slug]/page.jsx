@@ -10,9 +10,21 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }) {
   const author = decodeURIComponent(params.slug)
+  const description = `Browse all books by ${author} on TropeQuest — series, standalones, ratings, and tropes.`
   return {
     title: `Books by ${author}`,
-    description: `Browse all books by ${author} on TropeQuest.`,
+    description,
+    alternates: { canonical: `/author/${params.slug}` },
+    openGraph: {
+      title: `Books by ${author} | TropeQuest`,
+      description,
+      url: `/author/${params.slug}`,
+    },
+    twitter: {
+      card: 'summary',
+      title: `Books by ${author} | TropeQuest`,
+      description,
+    },
   }
 }
 
