@@ -1,13 +1,13 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import BookCard from '@/components/BookCard'
-import { getFilterOptions, getBooksByTrope } from '@/lib/search'
+import { getFilterOptions, getAllTropeSlugs, getBooksByTrope } from '@/lib/search'
 import { slugify } from '@/lib/utils'
 
 export const revalidate = 3600
 
 export async function generateStaticParams() {
-  const { tropes } = await getFilterOptions()
+  const tropes = await getAllTropeSlugs()
   return tropes.map(t => ({ slug: slugify(t) }))
 }
 
