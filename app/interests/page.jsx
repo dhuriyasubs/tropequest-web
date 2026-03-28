@@ -23,7 +23,7 @@ export default async function InterestsPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-10">
       <h1 className="font-serif text-3xl font-bold mb-2">Manage Interests</h1>
-      <p className="text-slate text-sm mb-8">We'll use these to personalise your homepage.</p>
+      <p className="text-slate text-sm mb-8">We&apos;ll use these to personalise your homepage.</p>
       <InterestsClient
         interests={interests}
         tropes={tropes}

@@ -126,7 +126,7 @@ export default function HeroGrid({ tropes }) {
           </p>
           <h1 className="font-serif text-4xl sm:text-5xl lg:text-[3.25rem] font-bold leading-tight mb-6 max-w-lg">
             The ultimate map to your specific{' '}
-            <span className="text-petal italic">'type'.</span>
+            <span className="text-petal italic">&lsquo;type&rsquo;.</span>
           </h1>
           <p className="text-white/50 text-base sm:text-lg mb-10 max-w-sm leading-relaxed">
             Why settle? Choose the tropes that define your perfect escape

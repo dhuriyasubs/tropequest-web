@@ -89,7 +89,7 @@ export default function InterestsClient({ interests, tropes, allAuthors }) {
             </button>
           ))}
           {filteredAuthors.length === 0 && authorSearch && (
-            <p className="text-xs text-slate py-1">No authors found for "{authorSearch}"</p>
+            <p className="text-xs text-slate py-1">No authors found for &ldquo;{authorSearch}&rdquo;</p>
           )}
         </div>
       </section>
