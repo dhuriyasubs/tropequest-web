@@ -4,7 +4,7 @@ import Toaster from '@/components/Toaster'
 import AuthRedirectHandler from '@/components/AuthRedirectHandler'
 
 export const metadata = {
-  metadataBase: new URL('https://tropequest-web.vercel.app'),
+  metadataBase: new URL('https://tropequest.com'),
   title: {
     default: 'TropeQuest — Find Books by Trope',
     template: '%s | TropeQuest',

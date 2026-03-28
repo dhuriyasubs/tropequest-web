@@ -1,7 +1,7 @@
 import { getAllSlugs, getAllAuthors, getFilterOptions } from '@/lib/search'
 import { slugify } from '@/lib/utils'
 
-const BASE = 'https://tropequest.netlify.app'
+const BASE = 'https://tropequest.com'
 
 export default async function sitemap() {
   const [slugs, authors, { tropes }] = await Promise.all([
