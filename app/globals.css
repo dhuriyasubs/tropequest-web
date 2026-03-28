@@ -1,0 +1,26 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-white text-ink font-sans;
+  }
+  h1, h2, h3 {
+    @apply font-serif;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-bloom text-white px-4 py-2 rounded-lg font-medium hover:bg-petal transition-colors;
+  }
+  .chip {
+    @apply inline-block px-3 py-1 rounded-full text-sm bg-pink-50 text-bloom border border-pink-200 hover:bg-pink-100 transition-colors cursor-pointer;
+  }
+  .chip-active {
+    @apply bg-bloom text-white border-bloom;
+  }
+}

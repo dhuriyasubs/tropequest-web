@@ -1,0 +1,20 @@
+import { NextResponse } from 'next/server'
+import { searchBooks } from '@/lib/search'
+
+export async function GET(request) {
+  const { searchParams } = new URL(request.url)
+
+  const query    = searchParams.get('q') || null
+  const tropes   = searchParams.getAll('tropes')
+  const subjects = searchParams.getAll('subjects')
+  const page     = Number(searchParams.get('page') || 1)
+
+  try {
+    const result = await searchBooks({ query, tropes, subjects, page })
+    return NextResponse.json(result, {
+      headers: { 'Cache-Control': 's-maxage=60, stale-while-revalidate=300' },
+    })
+  } catch (err) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}
