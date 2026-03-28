@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { YoutubeTranscript } from 'youtube-transcript'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { supabaseAdmin } from '@/lib/supabase'
 
@@ -19,17 +18,57 @@ function decodeHTMLEntities(text) {
   return text
     .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&apos;/g, "'")
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/&#(\d+);/g,           (_, d) => String.fromCodePoint(parseInt(d, 10)))
 }
 
+// Fetches captions via YouTube's InnerTube API (no third-party package needed)
 async function getYoutubeText(url) {
   const videoId = extractYoutubeId(url)
   if (!videoId) throw new Error('Could not extract YouTube video ID')
-  try {
-    const transcript = await YoutubeTranscript.fetchTranscript(videoId)
-    return transcript.map(t => t.text).join(' ').slice(0, 8000)
-  } catch {
-    throw new Error('No transcript available for this video. Try a video with captions/subtitles enabled.')
+
+  // Step 1: ask InnerTube for the player response (includes caption track URLs)
+  const playerRes = await fetch('https://www.youtube.com/youtubei/v1/player?prettyPrint=false', {
+    method:  'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'User-Agent':   'com.google.android.youtube/20.10.38 (Linux; U; Android 14)',
+    },
+    body: JSON.stringify({
+      context: { client: { clientName: 'ANDROID', clientVersion: '20.10.38' } },
+      videoId,
+    }),
+  })
+  const player = await playerRes.json()
+
+  const tracks = player?.captions?.playerCaptionsTracklistRenderer?.captionTracks
+  if (!tracks?.length) throw new Error('No captions available for this video. Try a video with subtitles/captions enabled.')
+
+  // Prefer English, fall back to first available track
+  const track = tracks.find(t => t.languageCode === 'en') ?? tracks[0]
+
+  // Step 2: fetch the caption XML
+  const captionRes = await fetch(track.baseUrl, {
+    headers: { 'User-Agent': 'Mozilla/5.0' },
+  })
+  const xml = await captionRes.text()
+
+  // Parse <text> or <p> elements
+  const textParts = []
+  const pRe   = /<p\s[^>]*>([\s\S]*?)<\/p>/g
+  const textRe = /<text[^>]*>([^<]*)<\/text>/g
+  let m
+
+  while ((m = pRe.exec(xml)) !== null) {
+    textParts.push(decodeHTMLEntities(m[1].replace(/<[^>]+>/g, ' ')).trim())
   }
+  if (!textParts.length) {
+    while ((m = textRe.exec(xml)) !== null) {
+      textParts.push(decodeHTMLEntities(m[1]).trim())
+    }
+  }
+  if (!textParts.length) throw new Error('Could not parse captions for this video.')
+  return textParts.join(' ').slice(0, 10000)
 }
 
 async function getInstagramText(url) {
