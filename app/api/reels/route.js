@@ -88,7 +88,7 @@ async function getInstagramText(url) {
 }
 
 async function extractBooksFromText(text) {
-  const model = gemini.getGenerativeModel({ model: 'gemini-1.5-flash' })
+  const model = gemini.getGenerativeModel({ model: 'gemini-2.0-flash' })
   const prompt = `You are a book extraction assistant. Analyze the following text from a video transcript or social media post about books.
 
 Extract every book title mentioned. For each book determine:
