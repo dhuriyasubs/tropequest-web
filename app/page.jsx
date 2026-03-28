@@ -24,7 +24,7 @@ export default async function HomePage() {
 
   const [books, popularTropes, personalizedBooks] = await Promise.all([
     getFeaturedBooks(12),
-    getPopularTropes(20),
+    getPopularTropes(50),
     interests ? getPersonalizedBooks(interests) : Promise.resolve([]),
   ])
 

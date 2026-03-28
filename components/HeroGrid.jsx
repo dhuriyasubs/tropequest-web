@@ -117,18 +117,18 @@ export default function HeroGrid({ tropes }) {
 
   return (
     <section className="bg-[#1a1a2e] text-white overflow-hidden">
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row min-h-[580px]">
+      <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:min-h-[580px]">
 
         {/* ── Left: Hero Copy ── */}
-        <div className="flex-1 flex flex-col justify-center px-8 py-16 md:py-20 lg:px-16">
-          <p className="text-amber-400/65 text-xs font-semibold tracking-widest uppercase mb-5">
+        <div className="flex-1 flex flex-col justify-center px-6 py-10 md:py-20 md:px-8 lg:px-16">
+          <p className="text-amber-400/65 text-xs font-semibold tracking-widest uppercase mb-4 md:mb-5">
             Romance · Thriller · Dark Fiction
           </p>
-          <h1 className="font-serif text-4xl sm:text-5xl lg:text-[3.25rem] font-bold leading-tight mb-6 max-w-lg">
+          <h1 className="font-serif text-3xl sm:text-4xl lg:text-[3.25rem] font-bold leading-tight mb-4 md:mb-6 max-w-lg">
             The ultimate map to your specific{' '}
             <span className="text-petal italic">&lsquo;type&rsquo;.</span>
           </h1>
-          <p className="text-white/50 text-base sm:text-lg mb-10 max-w-sm leading-relaxed">
+          <p className="hidden sm:block text-white/50 text-base sm:text-lg mb-8 md:mb-10 max-w-sm leading-relaxed">
             Why settle? Choose the tropes that define your perfect escape
             from 1000+ curated titles.
           </p>
@@ -136,14 +136,14 @@ export default function HeroGrid({ tropes }) {
           <a
             href="/search"
             className="self-start inline-block bg-amber-500 hover:bg-amber-400
-                       text-[#1a1a2e] font-bold px-8 py-3.5 rounded-xl text-sm
-                       transition-colors duration-200 shadow-lg shadow-amber-500/25 mb-10"
+                       text-[#1a1a2e] font-bold px-7 py-3 md:px-8 md:py-3.5 rounded-xl text-sm
+                       transition-colors duration-200 shadow-lg shadow-amber-500/25 mb-6 md:mb-10"
           >
             Discover Your Tropes
           </a>
 
           {/* Three entry points */}
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2 md:gap-3">
             <a
               href="/search?q=romance"
               className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-petal/30
@@ -169,10 +169,26 @@ export default function HeroGrid({ tropes }) {
               ✦ Surprise Me
             </button>
           </div>
+
+          {/* Mobile-only: horizontal scroll trope strip */}
+          <div className="md:hidden mt-7 -mx-6 px-6">
+            <p className="text-white/35 text-[10px] uppercase tracking-widest mb-2.5">Browse by trope</p>
+            <div className="flex gap-2 overflow-x-auto pb-3" style={{ scrollbarWidth: 'none' }}>
+              {allTropes.slice(0, 50).map(t => (
+                <a
+                  key={t}
+                  href={`/search?tropes=${encodeURIComponent(t)}`}
+                  className="flex-shrink-0 text-xs px-3 py-1.5 rounded-full border border-petal/30 bg-petal/10 text-petal whitespace-nowrap"
+                >
+                  {t}
+                </a>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {/* ── Right: Library Visualization ── */}
-        <div className="flex-1 relative flex flex-col justify-center px-6 py-12 md:py-20 md:pr-12 overflow-hidden">
+        {/* ── Right: Library Visualization (desktop only) ── */}
+        <div className="hidden md:flex flex-1 relative flex-col justify-center px-6 py-12 md:py-20 md:pr-12 overflow-hidden">
 
           {/* Warm candlelight glow */}
           <div
