@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createSupabaseServer } from '@/lib/supabase'
-import { getFilterOptions, getAllAuthors } from '@/lib/search'
+import { getFilterOptions, getAllAuthors, getPopularGenres } from '@/lib/search'
 import InterestsClient from '@/components/InterestsClient'
 
 export const dynamic = 'force-dynamic'
@@ -12,13 +12,14 @@ export default async function InterestsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login?next=/interests')
 
-  const [{ tropes }, allAuthors, { data: interestsData }] = await Promise.all([
+  const [{ tropes }, allAuthors, allGenres, { data: interestsData }] = await Promise.all([
     getFilterOptions(),
     getAllAuthors(),
+    getPopularGenres(50),
     supabase.from('user_interests').select('*').eq('user_id', user.id).single(),
   ])
 
-  const interests = interestsData ?? { tropes: [], authors: [] }
+  const interests = interestsData ?? { tropes: [], genres: [], authors: [] }
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10">
@@ -27,6 +28,7 @@ export default async function InterestsPage() {
       <InterestsClient
         interests={interests}
         tropes={tropes}
+        allGenres={allGenres}
         allAuthors={allAuthors}
       />
     </div>

@@ -1,15 +1,21 @@
 'use client'
 import { useState } from 'react'
 
-export default function InterestsClient({ interests, tropes, allAuthors }) {
+export default function InterestsClient({ interests, tropes, allGenres = [], allAuthors }) {
   const [selTropes,  setSelTropes]  = useState(interests.tropes  ?? [])
+  const [selGenres,  setSelGenres]  = useState(interests.genres  ?? [])
   const [selAuthors, setSelAuthors] = useState(interests.authors ?? [])
   const [tropeSearch,  setTropeSearch]  = useState('')
+  const [genreSearch,  setGenreSearch]  = useState('')
   const [authorSearch, setAuthorSearch] = useState('')
   const [saving, setSaving] = useState(false)
 
   function toggleTrope(t) {
     setSelTropes(s => s.includes(t) ? s.filter(x => x !== t) : [...s, t])
+  }
+
+  function toggleGenre(g) {
+    setSelGenres(s => s.includes(g) ? s.filter(x => x !== g) : [...s, g])
   }
 
   function toggleAuthor(a) {
@@ -21,7 +27,7 @@ export default function InterestsClient({ interests, tropes, allAuthors }) {
     await fetch('/api/interests', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ tropes: selTropes, subjects: [], authors: selAuthors }),
+      body:    JSON.stringify({ tropes: selTropes, genres: selGenres, subjects: [], authors: selAuthors }),
     })
     setSaving(false)
     window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Interests saved!' } }))
@@ -29,11 +35,43 @@ export default function InterestsClient({ interests, tropes, allAuthors }) {
 
   const filteredTropes  = tropes.filter(t =>
     !tropeSearch  || t.toLowerCase().includes(tropeSearch.toLowerCase()))
+  const filteredGenres  = allGenres.filter(g =>
+    !genreSearch  || g.toLowerCase().includes(genreSearch.toLowerCase()))
   const filteredAuthors = allAuthors.filter(a =>
     !authorSearch || a.toLowerCase().includes(authorSearch.toLowerCase()))
 
   return (
     <div className="space-y-10">
+
+      {/* Genres */}
+      {allGenres.length > 0 && (
+        <section>
+          <h2 className="font-serif text-xl font-semibold mb-1">Favourite Genres</h2>
+          <p className="text-xs text-slate mb-3">{selGenres.length} selected</p>
+          <input
+            type="text"
+            placeholder="Search genres…"
+            value={genreSearch}
+            onChange={e => setGenreSearch(e.target.value)}
+            className="w-full border border-petal/30 rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-bloom/30"
+          />
+          <div className="flex flex-wrap gap-2 max-h-52 overflow-y-auto py-1">
+            {filteredGenres.map(g => (
+              <button
+                key={g}
+                onClick={() => toggleGenre(g)}
+                className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                  selGenres.includes(g)
+                    ? 'bg-bloom text-white border-bloom'
+                    : 'bg-white text-ink border-petal/40 hover:border-bloom'
+                }`}
+              >
+                {g}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Tropes */}
       <section>

@@ -7,10 +7,11 @@ export async function GET(request) {
   const query    = searchParams.get('q') || null
   const tropes   = searchParams.getAll('tropes')
   const subjects = searchParams.getAll('subjects')
+  const genres   = searchParams.getAll('genres')
   const page     = Number(searchParams.get('page') || 1)
 
   try {
-    const result = await searchBooks({ query, tropes, subjects, page })
+    const result = await searchBooks({ query, tropes, subjects, genres, page })
     return NextResponse.json(result, {
       headers: { 'Cache-Control': 's-maxage=60, stale-while-revalidate=300' },
     })

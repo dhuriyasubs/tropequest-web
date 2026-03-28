@@ -5,8 +5,8 @@ import { useDebounce } from 'use-debounce'
 import BookCard from './BookCard'
 
 export default function SearchClient({
-  initialBooks, initialTotal, tropes,
-  initialQuery = '', initialSelTropes = [], initialPage = 1,
+  initialBooks, initialTotal, tropes, genres = [],
+  initialQuery = '', initialSelTropes = [], initialSelGenres = [], initialPage = 1,
 }) {
   const router      = useRouter()
   const pathname    = usePathname()
@@ -15,6 +15,7 @@ export default function SearchClient({
 
   const [query,     setQuery]     = useState(initialQuery)
   const [selTropes, setSelTropes] = useState(initialSelTropes)
+  const [selGenres, setSelGenres] = useState(initialSelGenres)
   const [page,      setPage]      = useState(initialPage)
 
   const [books,    setBooks]    = useState(initialBooks ?? [])
@@ -24,10 +25,11 @@ export default function SearchClient({
   const [debouncedQuery] = useDebounce(query, 350)
 
   // Push updated filters into URL (enables shareable links + SSR on refresh)
-  const syncUrl = useCallback((q, tropes, p) => {
+  const syncUrl = useCallback((q, tropes, genres, p) => {
     const sp = new URLSearchParams()
     if (q) sp.set('q', q)
     tropes.forEach(t => sp.append('tropes', t))
+    genres.forEach(g => sp.append('genres', g))
     if (p > 1) sp.set('page', p)
     startTransition(() => {
       router.replace(`${pathname}?${sp.toString()}`, { scroll: false })
@@ -45,6 +47,7 @@ export default function SearchClient({
     const sp = new URLSearchParams()
     if (debouncedQuery) sp.set('q', debouncedQuery)
     selTropes.forEach(t => sp.append('tropes', t))
+    selGenres.forEach(g => sp.append('genres', g))
     sp.set('page', page)
 
     setLoading(true)
@@ -53,14 +56,17 @@ export default function SearchClient({
       .then(({ books, total }) => { setBooks(books ?? []); setTotal(total ?? 0) })
       .finally(() => setLoading(false))
 
-    syncUrl(debouncedQuery, selTropes, page)
-  }, [debouncedQuery, selTropes, page, syncUrl])
+    syncUrl(debouncedQuery, selTropes, selGenres, page)
+  }, [debouncedQuery, selTropes, selGenres, page, syncUrl])
 
   // Reset to page 1 on filter change
-  useEffect(() => { setPage(1) }, [debouncedQuery, selTropes])
+  useEffect(() => { setPage(1) }, [debouncedQuery, selTropes, selGenres])
 
   const toggleTrope = t =>
     setSelTropes(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t])
+
+  const toggleGenre = g =>
+    setSelGenres(prev => prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g])
 
   const totalPages = Math.ceil(total / 20)
 
@@ -76,6 +82,9 @@ export default function SearchClient({
           className="w-full border border-petal/40 rounded-lg px-3 py-2 text-sm mb-6 focus:outline-none focus:ring-2 focus:ring-bloom"
         />
 
+        {genres.length > 0 && (
+          <FilterSection title="Genres" items={genres} selected={selGenres} onToggle={toggleGenre} />
+        )}
         <FilterSection title="Tropes" items={tropes} selected={selTropes} onToggle={toggleTrope} />
       </aside>
 

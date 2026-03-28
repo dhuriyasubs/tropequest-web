@@ -1,4 +1,4 @@
-import { searchBooks, getPopularTropes } from '@/lib/search'
+import { searchBooks, getPopularTropes, getPopularGenres } from '@/lib/search'
 import SearchClient from '@/components/SearchClient'
 
 export const metadata = {
@@ -10,12 +10,14 @@ export default async function SearchPage({ searchParams }) {
   const query    = searchParams.q || ''
   const tropes   = [searchParams.tropes].flat().filter(Boolean)
   const subjects = [searchParams.subjects].flat().filter(Boolean)
+  const genres   = [searchParams.genres].flat().filter(Boolean)
   const page     = Number(searchParams.page || 1)
 
-  const [{ books, total }, allTropes] =
+  const [{ books, total }, allTropes, allGenres] =
     await Promise.all([
-      searchBooks({ query: query || null, tropes, subjects, page }),
+      searchBooks({ query: query || null, tropes, subjects, genres, page }),
       getPopularTropes(50),
+      getPopularGenres(50),
     ])
 
   return (
@@ -25,9 +27,11 @@ export default async function SearchPage({ searchParams }) {
         initialBooks={books}
         initialTotal={total}
         tropes={allTropes}
+        genres={allGenres}
         initialQuery={query}
         initialSelTropes={tropes}
         initialSelSubjects={subjects}
+        initialSelGenres={genres}
         initialPage={page}
       />
     </div>
