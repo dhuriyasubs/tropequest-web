@@ -7,6 +7,7 @@ import { createSupabaseBrowser } from '@/lib/supabase-browser'
 const links = [
   { href: '/search', label: 'Browse' },
   { href: '/tropes', label: 'Tropes' },
+  { href: '/reels',  label: 'Reels'  },
 ]
 
 export default function Nav() {

@@ -1,0 +1,140 @@
+import { NextResponse } from 'next/server'
+import { YoutubeTranscript } from 'youtube-transcript'
+import { GoogleGenerativeAI } from '@google/generative-ai'
+import { supabaseAdmin } from '@/lib/supabase'
+
+export const maxDuration = 60
+
+const gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+
+function isYoutube(url)   { return /youtube\.com|youtu\.be/.test(url) }
+function isInstagram(url) { return /instagram\.com/.test(url) }
+
+function extractYoutubeId(url) {
+  const m = url.match(/(?:v=|youtu\.be\/|shorts\/|embed\/)([a-zA-Z0-9_-]{11})/)
+  return m?.[1] ?? null
+}
+
+function decodeHTMLEntities(text) {
+  return text
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&apos;/g, "'")
+}
+
+async function getYoutubeText(url) {
+  const videoId = extractYoutubeId(url)
+  if (!videoId) throw new Error('Could not extract YouTube video ID')
+  try {
+    const transcript = await YoutubeTranscript.fetchTranscript(videoId)
+    return transcript.map(t => t.text).join(' ').slice(0, 8000)
+  } catch {
+    throw new Error('No transcript available for this video. Try a video with captions/subtitles enabled.')
+  }
+}
+
+async function getInstagramText(url) {
+  const res = await fetch(url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept-Language': 'en-US,en;q=0.9',
+    },
+    redirect: 'follow',
+  })
+  const html = await res.text()
+  const og = html.match(/<meta property="og:description" content="([^"]*)"/)
+  if (og) return decodeHTMLEntities(og[1]).slice(0, 8000)
+  const meta = html.match(/<meta name="description" content="([^"]*)"/)
+  if (meta) return decodeHTMLEntities(meta[1]).slice(0, 8000)
+  return ''
+}
+
+async function extractBooksFromText(text) {
+  const model = gemini.getGenerativeModel({ model: 'gemini-1.5-flash' })
+  const prompt = `You are a book extraction assistant. Analyze the following text from a video transcript or social media post about books.
+
+Extract every book title mentioned. For each book determine:
+1. Is the creator recommending/suggesting this book (true), or warning against it / saying it was bad (false)?
+2. The exact book title and the author's full name if mentioned (leave author empty string if unknown).
+
+Return ONLY a valid JSON array — no markdown, no explanation:
+[{"title":"Book Title","author":"Author Name","suggested":true,"reason":"one sentence summary of why suggested or not"}]
+
+If no books are mentioned, return: []
+
+Text:
+${text}`
+
+  const result = await model.generateContent(prompt)
+  const raw     = result.response.text().trim()
+  const cleaned = raw.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
+  try {
+    const parsed = JSON.parse(cleaned)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+async function matchBooksInDB(books) {
+  return Promise.all(books.map(async (book) => {
+    // Exact title match
+    let { data } = await supabaseAdmin
+      .from('books')
+      .select('id,title,author,cover_url,slug,rating')
+      .ilike('title', book.title)
+      .limit(1)
+      .maybeSingle()
+
+    // Fuzzy title match
+    if (!data) {
+      const res = await supabaseAdmin
+        .from('books')
+        .select('id,title,author,cover_url,slug,rating')
+        .ilike('title', `%${book.title}%`)
+        .limit(1)
+      data = res.data?.[0] ?? null
+    }
+
+    return {
+      title:     book.title,
+      author:    book.author,
+      suggested: book.suggested,
+      reason:    book.reason,
+      dbBook:    data ?? null,
+    }
+  }))
+}
+
+export async function POST(request) {
+  const { url } = await request.json()
+  if (!url) return NextResponse.json({ error: 'URL is required' }, { status: 400 })
+
+  if (!process.env.GEMINI_API_KEY) {
+    return NextResponse.json({ error: 'GEMINI_API_KEY not configured' }, { status: 500 })
+  }
+
+  try {
+    let text = ''
+    if (isYoutube(url)) {
+      text = await getYoutubeText(url)
+    } else if (isInstagram(url)) {
+      text = await getInstagramText(url)
+    } else {
+      return NextResponse.json({ error: 'Only YouTube and Instagram URLs are supported' }, { status: 400 })
+    }
+
+    if (!text.trim()) {
+      return NextResponse.json({ error: 'No content could be extracted from this URL. For Instagram, make sure the post is public.' }, { status: 422 })
+    }
+
+    const rawBooks = await extractBooksFromText(text)
+    if (rawBooks.length === 0) {
+      return NextResponse.json({ books: [], message: 'No books found in this content.' })
+    }
+
+    const books = await matchBooksInDB(rawBooks)
+    return NextResponse.json({ books })
+  } catch (err) {
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}
