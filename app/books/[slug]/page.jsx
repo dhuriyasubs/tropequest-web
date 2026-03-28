@@ -106,8 +106,16 @@ export default async function BookPage({ params }) {
 
             {/* Description */}
             {book.description && (
-              <div className="mt-6 prose prose-sm max-w-none text-ink/80 leading-relaxed">
-                {book.description}
+              <div className="mt-6 text-sm text-ink/80 leading-relaxed space-y-3">
+                {book.description
+                  .replace(/\*\*\*(.*?)\*\*\*/gs, '$1')
+                  .replace(/\*\*(.*?)\*\*/gs, '$1')
+                  .replace(/\*(.*?)\*/gs, '$1')
+                  .replace(/_(.*?)_/gs, '$1')
+                  .split(/\n+/)
+                  .filter(p => p.trim())
+                  .map((para, i) => <p key={i}>{para.trim()}</p>)
+                }
               </div>
             )}
           </div>
