@@ -6,6 +6,11 @@ import { createSupabaseServer } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
+export const metadata = {
+  alternates: { canonical: '/' },
+  openGraph: { url: '/' },
+}
+
 export default async function HomePage() {
   const supabase = createSupabaseServer()
   const { data: { user } } = await supabase.auth.getUser()

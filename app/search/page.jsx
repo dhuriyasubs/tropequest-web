@@ -4,6 +4,8 @@ import SearchClient from '@/components/SearchClient'
 export const metadata = {
   title: 'Browse Books',
   description: 'Search romance and thriller books by trope, author, series, mood and more.',
+  alternates: { canonical: '/search' },
+  openGraph: { url: '/search' },
 }
 
 export default async function SearchPage({ searchParams }) {
