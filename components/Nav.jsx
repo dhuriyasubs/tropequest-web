@@ -4,16 +4,16 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
 import { createSupabaseBrowser } from '@/lib/supabase-browser'
 
-const links = [
-  { href: '/search', label: 'Browse' },
-  { href: '/tropes', label: 'Tropes' },
-  { href: '/reels',  label: 'Reels'  },
+const menuItems = [
+  { href: '/reels',     label: 'Reels'            },
+  { href: '/tbr',       label: 'My TBR'           },
+  { href: '/interests', label: 'Manage Interests'  },
 ]
 
 export default function Nav() {
   const path    = usePathname()
   const router  = useRouter()
-  const [user, setUser]       = useState(null)
+  const [user, setUser]         = useState(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef(null)
 
@@ -42,6 +42,16 @@ export default function Nav() {
     router.refresh()
   }
 
+  function handleProtectedLink(href) {
+    setMenuOpen(false)
+    if (!user) {
+      sessionStorage.setItem('authRedirect', href)
+      router.push('/login')
+    } else {
+      router.push(href)
+    }
+  }
+
   return (
     <header className="bg-white border-b border-petal/30 sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
@@ -49,74 +59,58 @@ export default function Nav() {
           TropeQuest
         </Link>
 
-        <nav className="flex items-center gap-6 text-sm font-medium">
-          {links.map(l => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className={path.startsWith(l.href) ? 'text-bloom' : 'text-ink/70 hover:text-ink'}
-            >
-              {l.label}
-            </Link>
-          ))}
+        <div className="relative" ref={menuRef}>
+          <button
+            onClick={() => setMenuOpen(o => !o)}
+            className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none"
+            aria-label="Menu"
+          >
+            {menuOpen ? (
+              <svg className="w-5 h-5 text-ink" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5 text-ink" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" />
+              </svg>
+            )}
+          </button>
 
-          {user ? (
-            <div className="relative" ref={menuRef}>
-              <button
-                onClick={() => setMenuOpen(o => !o)}
-                className="flex items-center focus:outline-none"
-                aria-label="User menu"
-              >
-                {user.user_metadata?.avatar_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={user.user_metadata.avatar_url}
-                    alt="avatar"
-                    className="w-7 h-7 rounded-full object-cover"
-                    referrerPolicy="no-referrer"
-                  />
-                ) : (
-                  <div className="w-7 h-7 rounded-full bg-bloom text-white text-xs flex items-center justify-center font-semibold">
-                    {(user.email?.[0] ?? '?').toUpperCase()}
-                  </div>
-                )}
-              </button>
+          {menuOpen && (
+            <div className="absolute right-0 top-11 w-52 bg-white border border-petal/30 rounded-xl shadow-lg py-1.5 z-50">
+              {menuItems.map(item => (
+                <button
+                  key={item.href}
+                  onClick={() => handleProtectedLink(item.href)}
+                  className={`w-full text-left flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-gray-50 ${
+                    path === item.href ? 'text-bloom font-medium' : 'text-ink'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
 
-              {menuOpen && (
-                <div className="absolute right-0 top-9 w-48 bg-white border border-petal/30 rounded-xl shadow-lg py-1.5 z-50">
-                  <Link
-                    href="/tbr"
-                    onClick={() => setMenuOpen(false)}
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-ink hover:bg-gray-50"
-                  >
-                    My TBR
-                  </Link>
-                  <Link
-                    href="/interests"
-                    onClick={() => setMenuOpen(false)}
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-ink hover:bg-gray-50"
-                  >
-                    Manage Interests
-                  </Link>
-                  <hr className="my-1 border-petal/20" />
-                  <button
-                    onClick={signOut}
-                    className="w-full text-left px-4 py-2 text-sm text-slate hover:bg-gray-50"
-                  >
-                    Sign out
-                  </button>
-                </div>
+              <hr className="my-1 border-petal/20" />
+
+              {user ? (
+                <button
+                  onClick={signOut}
+                  className="w-full text-left px-4 py-2.5 text-sm text-slate hover:bg-gray-50"
+                >
+                  Sign out
+                </button>
+              ) : (
+                <Link
+                  href="/login"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center px-4 py-2.5 text-sm text-bloom font-medium hover:bg-gray-50"
+                >
+                  Sign in
+                </Link>
               )}
             </div>
-          ) : (
-            <Link
-              href="/login"
-              className="text-sm font-medium bg-bloom text-white px-4 py-1.5 rounded-lg hover:opacity-90 transition-opacity"
-            >
-              Sign in
-            </Link>
           )}
-        </nav>
+        </div>
       </div>
     </header>
   )

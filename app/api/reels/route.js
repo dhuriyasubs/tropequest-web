@@ -88,7 +88,7 @@ async function getInstagramText(url) {
 }
 
 async function extractBooksFromText(text) {
-  const model = gemini.getGenerativeModel({ model: 'gemini-2.0-flash' })
+  const model = gemini.getGenerativeModel({ model: 'gemini-2.5-flash' })
   const prompt = `You are a book extraction assistant. Analyze the following text from a video transcript or social media post about books.
 
 Extract every book title mentioned. For each book determine:
@@ -114,6 +114,14 @@ ${text}`
   }
 }
 
+function makeSlug(title, author) {
+  const base = `${title}${author ? '-' + author : ''}`
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+  return `${base}-${Date.now().toString(36)}`
+}
+
 async function matchBooksInDB(books) {
   return Promise.all(books.map(async (book) => {
     // Exact title match
@@ -132,6 +140,20 @@ async function matchBooksInDB(books) {
         .ilike('title', `%${book.title}%`)
         .limit(1)
       data = res.data?.[0] ?? null
+    }
+
+    // Auto-create if still not found
+    if (!data) {
+      const { data: created } = await supabaseAdmin
+        .from('books')
+        .insert({
+          title:  book.title,
+          author: book.author || 'Unknown',
+          slug:   makeSlug(book.title, book.author),
+        })
+        .select('id,title,author,cover_url,slug,rating')
+        .single()
+      data = created ?? null
     }
 
     return {
@@ -172,6 +194,23 @@ export async function POST(request) {
     }
 
     const books = await matchBooksInDB(rawBooks)
+
+    // Persist mentions for future reference (fire-and-forget, non-blocking)
+    const mentions = books
+      .filter(b => b.dbBook?.id)
+      .map(b => ({
+        reel_url:  url,
+        book_id:   b.dbBook.id,
+        suggested: b.suggested,
+        reason:    b.reason ?? null,
+      }))
+    if (mentions.length) {
+      supabaseAdmin
+        .from('reel_mentions')
+        .upsert(mentions, { onConflict: 'reel_url,book_id', ignoreDuplicates: true })
+        .then()
+    }
+
     return NextResponse.json({ books })
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 })

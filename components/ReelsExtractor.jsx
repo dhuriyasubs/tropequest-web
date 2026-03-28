@@ -152,7 +152,7 @@ function BookResultCard({ item }) {
         )}
 
         <div className="flex items-center gap-2 mt-3">
-          {dbBook ? (
+          {dbBook && (
             <>
               <TbrButton bookId={dbBook.id} size="sm" />
               <span className="text-xs text-slate">Add to TBR</span>
@@ -160,8 +160,6 @@ function BookResultCard({ item }) {
                 <span className="text-xs text-slate ml-auto">★ {dbBook.rating.toFixed(1)}</span>
               )}
             </>
-          ) : (
-            <span className="text-xs text-slate/50 italic">Not in our catalog yet</span>
           )}
         </div>
       </div>

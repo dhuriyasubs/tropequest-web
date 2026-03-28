@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createSupabaseServer } from '@/lib/supabase'
-import BookCard from '@/components/BookCard'
+import TbrButton from '@/components/TbrButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,17 +21,68 @@ export default async function TbrPage() {
   const books = (data ?? []).map(r => r.books).filter(Boolean)
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10">
-      <h1 className="font-serif text-3xl font-bold mb-8">My TBR</h1>
+    <div className="max-w-3xl mx-auto px-4 py-10">
+      <h1 className="font-serif text-3xl font-bold mb-2">My TBR</h1>
+      {books.length > 0 && (
+        <p className="text-slate text-sm mb-8">{books.length} book{books.length !== 1 ? 's' : ''} saved</p>
+      )}
 
       {books.length === 0 ? (
         <div className="text-center py-20">
           <p className="text-slate mb-4">No books in your TBR yet.</p>
-          <Link href="/search" className="btn-primary">Browse books</Link>
+          <Link href="/search" className="bg-bloom text-white font-semibold px-6 py-2.5 rounded-xl hover:opacity-90 transition-opacity text-sm">
+            Browse books
+          </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {books.map(book => <BookCard key={book.id} book={book} />)}
+        <div className="grid gap-3">
+          {books.map(book => (
+            <div key={book.id} className="flex gap-4 p-4 rounded-xl border border-petal/30 bg-white">
+              {/* Cover */}
+              <Link
+                href={`/books/${book.slug}`}
+                className="shrink-0 w-14 rounded-lg overflow-hidden bg-gray-100 block"
+                style={{ aspectRatio: '2/3' }}
+              >
+                {book.cover_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={book.cover_url}
+                    alt={book.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-xl">📚</div>
+                )}
+              </Link>
+
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <Link
+                  href={`/books/${book.slug}`}
+                  className="font-semibold text-ink hover:text-bloom line-clamp-1 block"
+                >
+                  {book.title}
+                </Link>
+                <p className="text-sm text-slate mt-0.5">{book.author}</p>
+                {book.series_name && (
+                  <p className="text-xs text-slate/60 mt-0.5 line-clamp-1">{book.series_name}</p>
+                )}
+                {book.tropes?.length > 0 && (
+                  <p className="text-xs text-slate/70 mt-1.5 line-clamp-1">
+                    {book.tropes.slice(0, 3).join(' · ')}
+                  </p>
+                )}
+                <div className="flex items-center gap-2 mt-3">
+                  <TbrButton bookId={book.id} initialSaved={true} size="sm" />
+                  <span className="text-xs text-slate">Remove from TBR</span>
+                  {book.rating && (
+                    <span className="text-xs text-slate ml-auto">★ {book.rating.toFixed(1)}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
