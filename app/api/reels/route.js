@@ -22,43 +22,11 @@ function decodeHTMLEntities(text) {
     .replace(/&#(\d+);/g,           (_, d) => String.fromCodePoint(parseInt(d, 10)))
 }
 
-// Fetches captions via YouTube's InnerTube API (no third-party package needed)
-async function getYoutubeText(url) {
-  const videoId = extractYoutubeId(url)
-  if (!videoId) throw new Error('Could not extract YouTube video ID')
-
-  // Step 1: ask InnerTube for the player response (includes caption track URLs)
-  const playerRes = await fetch('https://www.youtube.com/youtubei/v1/player?prettyPrint=false', {
-    method:  'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'User-Agent':   'com.google.android.youtube/20.10.38 (Linux; U; Android 14)',
-    },
-    body: JSON.stringify({
-      context: { client: { clientName: 'ANDROID', clientVersion: '20.10.38' } },
-      videoId,
-    }),
-  })
-  const player = await playerRes.json()
-
-  const tracks = player?.captions?.playerCaptionsTracklistRenderer?.captionTracks
-  if (!tracks?.length) throw new Error('No captions available for this video. Try a video with subtitles/captions enabled.')
-
-  // Prefer English, fall back to first available track
-  const track = tracks.find(t => t.languageCode === 'en') ?? tracks[0]
-
-  // Step 2: fetch the caption XML
-  const captionRes = await fetch(track.baseUrl, {
-    headers: { 'User-Agent': 'Mozilla/5.0' },
-  })
-  const xml = await captionRes.text()
-
-  // Parse <text> or <p> elements
+function parseCaptionXml(xml) {
   const textParts = []
   const pRe   = /<p\s[^>]*>([\s\S]*?)<\/p>/g
   const textRe = /<text[^>]*>([^<]*)<\/text>/g
   let m
-
   while ((m = pRe.exec(xml)) !== null) {
     textParts.push(decodeHTMLEntities(m[1].replace(/<[^>]+>/g, ' ')).trim())
   }
@@ -67,6 +35,66 @@ async function getYoutubeText(url) {
       textParts.push(decodeHTMLEntities(m[1]).trim())
     }
   }
+  return textParts
+}
+
+async function fetchCaptionTracks(videoId, clientName, clientVersion, extraContext = {}) {
+  const res = await fetch('https://www.youtube.com/youtubei/v1/player?prettyPrint=false', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0' },
+    body: JSON.stringify({
+      context: { client: { clientName, clientVersion, ...extraContext } },
+      videoId,
+    }),
+  })
+  const player = await res.json()
+  return player?.captions?.playerCaptionsTracklistRenderer?.captionTracks ?? []
+}
+
+// Fetch the watch page and extract caption tracks from ytInitialPlayerResponse
+async function fetchCaptionTracksFromPage(videoId) {
+  const res = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      'Accept-Language': 'en-US,en;q=0.9',
+    },
+  })
+  const html = await res.text()
+  const match = html.match(/ytInitialPlayerResponse\s*=\s*(\{.+?\})(?:;|\s*<\/script>)/)
+  if (!match) return []
+  try {
+    const player = JSON.parse(match[1])
+    return player?.captions?.playerCaptionsTracklistRenderer?.captionTracks ?? []
+  } catch {
+    return []
+  }
+}
+
+// Fetches captions trying multiple methods
+async function getYoutubeText(url) {
+  const videoId = extractYoutubeId(url)
+  if (!videoId) throw new Error('Could not extract YouTube video ID')
+
+  // Try clients in order of reliability
+  let tracks = []
+
+  tracks = await fetchCaptionTracks(videoId, 'WEB', '2.20240101.00.00')
+  if (!tracks.length) tracks = await fetchCaptionTracks(videoId, 'TVHTML5', '7.20250101.17.00')
+  if (!tracks.length) tracks = await fetchCaptionTracks(videoId, 'ANDROID', '20.10.38', {
+    androidSdkVersion: 34,
+    userAgent: 'com.google.android.youtube/20.10.38 (Linux; U; Android 14) gzip',
+  })
+  if (!tracks.length) tracks = await fetchCaptionTracksFromPage(videoId)
+
+  if (!tracks.length) throw new Error('No captions available for this video. Try a video with subtitles/captions enabled.')
+
+  // Prefer English, fall back to first available
+  const track = tracks.find(t => t.languageCode === 'en') ?? tracks[0]
+
+  const captionRes = await fetch(track.baseUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } })
+  const xml = await captionRes.text()
+
+  const textParts = parseCaptionXml(xml)
   if (!textParts.length) throw new Error('Could not parse captions for this video.')
   return textParts.join(' ').slice(0, 10000)
 }

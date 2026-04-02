@@ -62,10 +62,24 @@ export default function Nav() {
         <div className="relative" ref={menuRef}>
           <button
             onClick={() => setMenuOpen(o => !o)}
-            className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none"
+            className="flex items-center justify-center focus:outline-none"
             aria-label="Menu"
           >
-            {menuOpen ? (
+            {user ? (
+              user.user_metadata?.avatar_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={user.user_metadata.avatar_url}
+                  alt="avatar"
+                  className="w-8 h-8 rounded-full object-cover ring-2 ring-transparent hover:ring-bloom/40 transition-all"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-bloom text-white text-xs flex items-center justify-center font-semibold">
+                  {(user.email?.[0] ?? '?').toUpperCase()}
+                </div>
+              )
+            ) : menuOpen ? (
               <svg className="w-5 h-5 text-ink" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
               </svg>
