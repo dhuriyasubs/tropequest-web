@@ -62,9 +62,9 @@ export default function ShelfScan({ showLabel = false }) {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Scan failed')
 
-      const matched = (data.books ?? []).filter(b => b.dbBook)
-      setBooks(data.books ?? [])
-      setSelected(new Set(matched.map(b => b.dbBook.id)))
+      const allBooks = data.books ?? []
+      setBooks(allBooks)
+      setSelected(new Set(allBooks.filter(b => b.dbBook).map(b => b.dbBook.id)))
       setPhase('results')
     } catch (err) {
       setError(err.message)
@@ -177,26 +177,21 @@ export default function ShelfScan({ showLabel = false }) {
               )}
               {books.map((b, i) => {
                 const id = b.dbBook?.id
-                const inCatalog = !!b.dbBook
                 return (
                   <label
                     key={i}
                     className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
-                      inCatalog && selected.has(id)
+                      id && selected.has(id)
                         ? 'border-bloom bg-bloom/5'
                         : 'border-petal/30 hover:border-petal/60'
-                    } ${!inCatalog ? 'opacity-50 cursor-default' : ''}`}
+                    }`}
                   >
-                    {inCatalog ? (
-                      <input
-                        type="checkbox"
-                        checked={selected.has(id)}
-                        onChange={() => toggleSelect(id)}
-                        className="accent-bloom w-4 h-4 shrink-0"
-                      />
-                    ) : (
-                      <span className="w-4 h-4 shrink-0" />
-                    )}
+                    <input
+                      type="checkbox"
+                      checked={!!(id && selected.has(id))}
+                      onChange={() => id && toggleSelect(id)}
+                      className="accent-bloom w-4 h-4 shrink-0"
+                    />
                     {b.dbBook?.cover_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={b.dbBook.cover_url} alt="" className="w-8 rounded shrink-0 object-cover" style={{ aspectRatio: '2/3' }} />
@@ -206,7 +201,9 @@ export default function ShelfScan({ showLabel = false }) {
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium line-clamp-1">{b.dbBook?.title ?? b.title}</p>
                       <p className="text-xs text-slate">{b.dbBook?.author ?? b.author}</p>
-                      {!inCatalog && <p className="text-xs text-slate/50 mt-0.5">Not in our catalog</p>}
+                      {!b.dbBook?.cover_url && (
+                        <p className="text-xs text-slate/50 mt-0.5">Will be enriched soon</p>
+                      )}
                     </div>
                   </label>
                 )

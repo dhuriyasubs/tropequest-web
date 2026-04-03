@@ -15,7 +15,15 @@ Return ONLY a valid JSON array — no markdown, no explanation:
 If author is not visible, use an empty string for author.
 If no books are visible, return: []`
 
-async function matchBooksInDB(books) {
+function makeSlug(title, author) {
+  const base = `${title}${author ? '-' + author : ''}`
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+  return `${base}-${Date.now().toString(36)}`
+}
+
+async function matchOrCreateBooks(books) {
   return Promise.all(books.map(async (book) => {
     let { data } = await supabaseAdmin
       .from('books')
@@ -31,6 +39,20 @@ async function matchBooksInDB(books) {
         .ilike('title', `%${book.title}%`)
         .limit(1)
       data = res.data?.[0] ?? null
+    }
+
+    // Not in catalog — auto-create a stub so enrich_missing.py can pick it up
+    if (!data) {
+      const { data: created } = await supabaseAdmin
+        .from('books')
+        .insert({
+          title:  book.title,
+          author: book.author || 'Unknown',
+          slug:   makeSlug(book.title, book.author),
+        })
+        .select('id,title,author,cover_url,slug,rating')
+        .single()
+      data = created ?? null
     }
 
     return {
@@ -66,7 +88,7 @@ export async function POST(request) {
       return NextResponse.json({ books: [], message: 'No books identified in the image.' })
     }
 
-    const books = await matchBooksInDB(identified)
+    const books = await matchOrCreateBooks(identified)
     return NextResponse.json({ books })
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 })
