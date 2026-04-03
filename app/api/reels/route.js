@@ -52,7 +52,7 @@ Return ONLY a valid JSON array — no markdown, no explanation:
 If no books are mentioned, return: []`
 
 async function extractBooksFromYoutube(youtubeUrl) {
-  const model = gemini.getGenerativeModel({ model: 'gemini-2.5-flash' })
+  const model = gemini.getGenerativeModel({ model: 'gemini-2.0-flash-lite' })
   const result = await model.generateContent([
     {
       fileData: {
