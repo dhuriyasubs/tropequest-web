@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createSupabaseServer } from '@/lib/supabase'
 import ShelfButton from '@/components/ShelfButton'
 import ShelfScan from '@/components/ShelfScan'
+import ShelfSearch from '@/components/ShelfSearch'
 import ShelfStatusSelect from '@/components/ShelfStatusSelect'
 
 export const dynamic = 'force-dynamic'
@@ -63,7 +64,10 @@ export default async function ShelfPage({ searchParams }) {
             </p>
           )}
         </div>
-        <ShelfScan />
+        <div className="flex gap-2 items-center flex-wrap justify-end">
+          <ShelfSearch />
+          <ShelfScan />
+        </div>
       </div>
 
       {/* Status tabs */}

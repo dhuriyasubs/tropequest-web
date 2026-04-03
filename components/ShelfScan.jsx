@@ -1,7 +1,74 @@
 'use client'
-import { useRef, useState } from 'react'
+import { useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createSupabaseBrowser } from '@/lib/supabase-browser'
+
+function FeedbackForm({ book, onDone }) {
+  const [correctTitle,  setCorrectTitle]  = useState(book.dbBook?.title  ?? book.title)
+  const [correctAuthor, setCorrectAuthor] = useState(book.dbBook?.author ?? book.author)
+  const [notes,         setNotes]         = useState('')
+  const [saving,        setSaving]        = useState(false)
+  const [done,          setDone]          = useState(false)
+
+  async function submit(e) {
+    e.preventDefault()
+    setSaving(true)
+    await fetch('/api/shelf/scan-feedback', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        identifiedTitle:  book.title,
+        identifiedAuthor: book.author,
+        correctTitle:     correctTitle.trim()  || null,
+        correctAuthor:    correctAuthor.trim() || null,
+        notes:            notes.trim()         || null,
+      }),
+    })
+    setSaving(false)
+    setDone(true)
+    setTimeout(onDone, 1200)
+  }
+
+  if (done) return <p className="text-xs text-green-600 py-1">Thanks for the feedback!</p>
+
+  return (
+    <form onSubmit={submit} className="mt-2 space-y-1.5 border-t border-petal/20 pt-2">
+      <input
+        type="text"
+        value={correctTitle}
+        onChange={e => setCorrectTitle(e.target.value)}
+        placeholder="Correct title"
+        className="w-full text-xs border border-petal/30 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-bloom/40"
+      />
+      <input
+        type="text"
+        value={correctAuthor}
+        onChange={e => setCorrectAuthor(e.target.value)}
+        placeholder="Correct author"
+        className="w-full text-xs border border-petal/30 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-bloom/40"
+      />
+      <input
+        type="text"
+        value={notes}
+        onChange={e => setNotes(e.target.value)}
+        placeholder="Anything else? (optional)"
+        className="w-full text-xs border border-petal/30 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-bloom/40"
+      />
+      <div className="flex gap-2">
+        <button
+          type="submit"
+          disabled={saving}
+          className="text-xs bg-bloom text-white px-3 py-1.5 rounded-lg hover:opacity-90 disabled:opacity-50"
+        >
+          {saving ? 'Sending…' : 'Submit'}
+        </button>
+        <button type="button" onClick={onDone} className="text-xs text-slate hover:text-ink px-2 py-1.5">
+          Cancel
+        </button>
+      </div>
+    </form>
+  )
+}
 
 async function resizeImage(file) {
   return new Promise((resolve) => {
@@ -28,12 +95,13 @@ async function resizeImage(file) {
 export default function ShelfScan({ showLabel = false }) {
   const fileRef   = useRef(null)
   const router    = useRouter()
-  const [phase,   setPhase]   = useState('idle')   // idle | scanning | results
-  const [books,   setBooks]   = useState([])
+  const [phase,    setPhase]    = useState('idle')   // idle | scanning | results
+  const [books,    setBooks]    = useState([])
   const [selected, setSelected] = useState(new Set())
-  const [adding,  setAdding]  = useState(false)
-  const [preview, setPreview] = useState(null)
-  const [error,   setError]   = useState(null)
+  const [adding,   setAdding]   = useState(false)
+  const [preview,  setPreview]  = useState(null)
+  const [error,    setError]    = useState(null)
+  const [feedback, setFeedback] = useState(new Set())  // indices showing feedback form
 
   async function handleFile(e) {
     const file = e.target.files?.[0]
@@ -177,35 +245,52 @@ export default function ShelfScan({ showLabel = false }) {
               )}
               {books.map((b, i) => {
                 const id = b.dbBook?.id
+                const showFeedback = feedback.has(i)
                 return (
-                  <label
+                  <div
                     key={i}
-                    className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
+                    className={`p-3 rounded-xl border transition-colors ${
                       id && selected.has(id)
                         ? 'border-bloom bg-bloom/5'
-                        : 'border-petal/30 hover:border-petal/60'
+                        : 'border-petal/30'
                     }`}
                   >
-                    <input
-                      type="checkbox"
-                      checked={!!(id && selected.has(id))}
-                      onChange={() => id && toggleSelect(id)}
-                      className="accent-bloom w-4 h-4 shrink-0"
-                    />
-                    {b.dbBook?.cover_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={b.dbBook.cover_url} alt="" className="w-8 rounded shrink-0 object-cover" style={{ aspectRatio: '2/3' }} />
-                    ) : (
-                      <span className="w-8 shrink-0 text-center text-base">📚</span>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium line-clamp-1">{b.dbBook?.title ?? b.title}</p>
-                      <p className="text-xs text-slate">{b.dbBook?.author ?? b.author}</p>
-                      {!b.dbBook?.cover_url && (
-                        <p className="text-xs text-slate/50 mt-0.5">Will be enriched soon</p>
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={!!(id && selected.has(id))}
+                        onChange={() => id && toggleSelect(id)}
+                        className="accent-bloom w-4 h-4 shrink-0"
+                      />
+                      {b.dbBook?.cover_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={b.dbBook.cover_url} alt="" className="w-8 rounded shrink-0 object-cover" style={{ aspectRatio: '2/3' }} />
+                      ) : (
+                        <span className="w-8 shrink-0 text-center text-base">📚</span>
                       )}
-                    </div>
-                  </label>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium line-clamp-1">{b.dbBook?.title ?? b.title}</p>
+                        <p className="text-xs text-slate">{b.dbBook?.author ?? b.author}</p>
+                        {!b.dbBook?.cover_url && (
+                          <p className="text-xs text-slate/50 mt-0.5">Will be enriched soon</p>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={e => { e.preventDefault(); setFeedback(s => { const n = new Set(s); n.has(i) ? n.delete(i) : n.add(i); return n }) }}
+                        className="shrink-0 text-xs text-slate/50 hover:text-red-400 transition-colors px-1"
+                        title="Report wrong identification"
+                      >
+                        Wrong?
+                      </button>
+                    </label>
+                    {showFeedback && (
+                      <FeedbackForm
+                        book={b}
+                        onDone={() => setFeedback(s => { const n = new Set(s); n.delete(i); return n })}
+                      />
+                    )}
+                  </div>
                 )
               })}
             </div>
