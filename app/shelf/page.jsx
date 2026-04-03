@@ -4,18 +4,12 @@ import { createSupabaseServer } from '@/lib/supabase'
 import ShelfButton from '@/components/ShelfButton'
 import ShelfScan from '@/components/ShelfScan'
 import ShelfSearch from '@/components/ShelfSearch'
+import ShelfFilter from '@/components/ShelfFilter'
 import ShelfStatusSelect from '@/components/ShelfStatusSelect'
 
 export const dynamic = 'force-dynamic'
 
 export const metadata = { title: 'My Shelf' }
-
-const STATUS_TABS = [
-  { label: 'All',     value: null       },
-  { label: 'Reading', value: 'reading'  },
-  { label: 'Read',    value: 'read'     },
-  { label: 'Owned',   value: 'owned'    },
-]
 
 const UNCATEGORISED_LABEL = 'Off the Map'
 
@@ -45,7 +39,7 @@ export default async function ShelfPage({ searchParams }) {
     genreMap.get(genre).push(entry)
   }
 
-  // Sort genres alphabetically; keep "Off the Map" last
+  // Alphabetical; "Off the Map" always last
   const sortedGenres = [...genreMap.keys()].sort((a, b) => {
     if (a === UNCATEGORISED_LABEL) return 1
     if (b === UNCATEGORISED_LABEL) return -1
@@ -55,7 +49,7 @@ export default async function ShelfPage({ searchParams }) {
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
       {/* Header */}
-      <div className="flex items-start justify-between mb-6 gap-4">
+      <div className="flex items-start justify-between mb-8 gap-4">
         <div>
           <h1 className="font-serif text-3xl font-bold">My Shelf</h1>
           {entries.length > 0 && (
@@ -65,26 +59,10 @@ export default async function ShelfPage({ searchParams }) {
           )}
         </div>
         <div className="flex gap-2 items-center flex-wrap justify-end">
+          <ShelfFilter activeStatus={activeStatus} />
           <ShelfSearch />
           <ShelfScan />
         </div>
-      </div>
-
-      {/* Status tabs */}
-      <div className="flex gap-1.5 mb-6 flex-wrap">
-        {STATUS_TABS.map(tab => (
-          <Link
-            key={tab.label}
-            href={tab.value ? `/shelf?status=${tab.value}` : '/shelf'}
-            className={`text-sm px-4 py-1.5 rounded-full transition-colors ${
-              activeStatus === tab.value
-                ? 'bg-bloom text-white font-medium'
-                : 'bg-gray-100 text-slate hover:bg-petal/30 hover:text-ink'
-            }`}
-          >
-            {tab.label}
-          </Link>
-        ))}
       </div>
 
       {entries.length === 0 ? (
@@ -106,15 +84,15 @@ export default async function ShelfPage({ searchParams }) {
         </div>
       ) : (
         <>
-          {/* Genre count summary chips */}
+          {/* Genre count chips — informational only */}
           <div className="flex flex-wrap gap-2 mb-8">
-            <span className="text-xs px-3 py-1.5 rounded-full font-semibold bg-bloom text-white">
+            <span className="text-xs px-3 py-1 rounded-full font-semibold bg-bloom text-white">
               All · {entries.length}
             </span>
             {sortedGenres.map(genre => (
               <span
                 key={genre}
-                className={`text-xs px-3 py-1.5 rounded-full font-medium ${
+                className={`text-xs px-3 py-1 rounded-full font-medium ${
                   genre === UNCATEGORISED_LABEL
                     ? 'bg-gray-100 text-slate'
                     : 'bg-petal/20 text-plum'
@@ -136,10 +114,10 @@ export default async function ShelfPage({ searchParams }) {
                 <div className="grid gap-3">
                   {genreMap.get(genre).map(({ status, books: book }) => (
                     <div key={book.id} className="flex gap-4 p-4 rounded-xl border border-petal/30 bg-white">
-                      {/* Cover */}
+                      {/* Cover — object-contain so nothing is cropped */}
                       <Link
                         href={`/books/${book.slug}`}
-                        className="shrink-0 w-14 rounded-lg overflow-hidden bg-gray-100 block"
+                        className="shrink-0 w-14 rounded-lg overflow-hidden bg-gray-50 block flex items-center justify-center"
                         style={{ aspectRatio: '2/3' }}
                       >
                         {book.cover_url ? (
@@ -147,7 +125,7 @@ export default async function ShelfPage({ searchParams }) {
                           <img
                             src={book.cover_url}
                             alt={book.title}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-contain"
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-xl">📚</div>
