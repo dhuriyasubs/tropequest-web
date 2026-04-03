@@ -50,7 +50,7 @@ export async function POST(request) {
   if (!image) return NextResponse.json({ error: 'image is required' }, { status: 400 })
 
   try {
-    const model = gemini.getGenerativeModel({ model: 'gemini-2.0-flash' })
+    const model = gemini.getGenerativeModel({ model: 'gemini-2.5-flash' })
     const result = await model.generateContent([
       { inlineData: { data: image, mimeType: mimeType ?? 'image/jpeg' } },
       { text: SCAN_PROMPT },
