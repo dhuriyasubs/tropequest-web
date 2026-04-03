@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 
-export default function InterestsClient({ interests, tropes, allGenres = [], allAuthors }) {
+export default function InterestsClient({ interests, tropes, popularTropes = [], allGenres = [], allAuthors }) {
   const [selTropes,  setSelTropes]  = useState(interests.tropes  ?? [])
   const [selGenres,  setSelGenres]  = useState(interests.genres  ?? [])
   const [selAuthors, setSelAuthors] = useState(interests.authors ?? [])
@@ -33,8 +33,15 @@ export default function InterestsClient({ interests, tropes, allGenres = [], all
     window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Interests saved!' } }))
   }
 
-  const filteredTropes  = tropes.filter(t =>
-    !tropeSearch  || t.toLowerCase().includes(tropeSearch.toLowerCase()))
+  // When no search: show top 50 popular + any selected ones not in that set
+  // When searching: show all tropes matching the query
+  const popularSet = new Set(popularTropes)
+  const filteredTropes = tropeSearch
+    ? tropes.filter(t => t.toLowerCase().includes(tropeSearch.toLowerCase()))
+    : [
+        ...popularTropes,
+        ...selTropes.filter(t => !popularSet.has(t)),
+      ]
   const filteredGenres  = allGenres.filter(g =>
     !genreSearch  || g.toLowerCase().includes(genreSearch.toLowerCase()))
   const filteredAuthors = allAuthors.filter(a =>
@@ -79,11 +86,14 @@ export default function InterestsClient({ interests, tropes, allGenres = [], all
         <p className="text-xs text-slate mb-3">{selTropes.length} selected</p>
         <input
           type="text"
-          placeholder="Search tropes…"
+          placeholder="Search all tropes…"
           value={tropeSearch}
           onChange={e => setTropeSearch(e.target.value)}
           className="w-full border border-petal/30 rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-bloom/30"
         />
+        {!tropeSearch && (
+          <p className="text-xs text-slate/60 mb-2">Showing top 50 popular tropes. Search to find more.</p>
+        )}
         <div className="flex flex-wrap gap-2 max-h-52 overflow-y-auto py-1">
           {filteredTropes.map(t => (
             <button

@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react'
 import { createSupabaseBrowser } from '@/lib/supabase-browser'
 
 const menuItems = [
-  { href: '/reels',     label: 'Reels'            },
+  { href: '/shelf',     label: 'My Shelf'         },
   { href: '/tbr',       label: 'My TBR'           },
   { href: '/interests', label: 'Manage Interests'  },
 ]
