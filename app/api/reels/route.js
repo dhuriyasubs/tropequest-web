@@ -67,27 +67,47 @@ function extractJsonObject(str, startIdx) {
   return null
 }
 
-// Fetch the watch page and extract caption tracks from ytInitialPlayerResponse
-async function fetchCaptionTracksFromPage(videoId) {
-  const res = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
+// Fetch the watch page, extract caption tracks, and immediately fetch the transcript
+async function fetchTranscriptFromPage(videoId) {
+  const pageRes = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
       'Accept-Language': 'en-US,en;q=0.9',
-      'Accept': 'text/html,application/xhtml+xml',
     },
   })
-  const html = await res.text()
-  const marker = 'ytInitialPlayerResponse='
-  const idx = html.indexOf(marker)
-  if (idx === -1) return []
-  const jsonStr = extractJsonObject(html, idx + marker.length)
-  if (!jsonStr) return []
-  try {
-    const player = JSON.parse(jsonStr)
-    return player?.captions?.playerCaptionsTracklistRenderer?.captionTracks ?? []
-  } catch {
-    return []
+  const html = await pageRes.text()
+
+  // Find the captionTracks array in the raw HTML
+  const ctIdx = html.indexOf('"captionTracks":[')
+  if (ctIdx === -1) return null
+
+  // Extract the array string — find the closing ] accounting for nesting
+  let depth = 0, i = html.indexOf('[', ctIdx), start = i
+  for (; i < html.length; i++) {
+    if (html[i] === '[') depth++
+    else if (html[i] === ']') { if (--depth === 0) break }
   }
+  const arrStr = html.slice(start, i + 1)
+
+  let tracks
+  try {
+    // Unescape unicode escapes before parsing
+    tracks = JSON.parse(arrStr.replace(/\\u([0-9a-fA-F]{4})/g, (_, h) => String.fromCharCode(parseInt(h, 16))))
+  } catch {
+    return null
+  }
+
+  if (!tracks?.length) return null
+
+  // Prefer English (auto-generated or manual), fall back to first
+  const track = tracks.find(t => t.languageCode === 'en') ?? tracks[0]
+  if (!track?.baseUrl) return null
+
+  // Fetch the transcript immediately while the signed URL is still valid
+  const captionRes = await fetch(track.baseUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } })
+  const xml = await captionRes.text()
+  const parts = parseCaptionXml(xml)
+  return parts.length ? parts.join(' ').slice(0, 10000) : null
 }
 
 // Direct timedtext API — works for auto-generated captions (no player response needed)
@@ -115,11 +135,15 @@ async function getYoutubeText(url) {
   const videoId = extractYoutubeId(url)
   if (!videoId) throw new Error('Could not extract YouTube video ID')
 
-  // Method 1: direct timedtext API (fastest, handles auto-generated captions)
+  // Method 1: direct timedtext API (unsigned — works for some videos)
   const timedText = await fetchTranscriptFromTimedText(videoId)
   if (timedText) return timedText
 
-  // Method 2-4: InnerTube player API with different clients
+  // Method 2: scrape watch page and use the signed caption URL immediately
+  const pageText = await fetchTranscriptFromPage(videoId)
+  if (pageText) return pageText
+
+  // Method 3-5: InnerTube player API with different clients
   let tracks = []
   tracks = await fetchCaptionTracks(videoId, 'WEB', '2.20240101.00.00')
   if (!tracks.length) tracks = await fetchCaptionTracks(videoId, 'TVHTML5', '7.20250101.17.00')
@@ -128,17 +152,11 @@ async function getYoutubeText(url) {
     userAgent: 'com.google.android.youtube/20.10.38 (Linux; U; Android 14) gzip',
   })
 
-  // Method 5: scrape the watch page HTML
-  if (!tracks.length) tracks = await fetchCaptionTracksFromPage(videoId)
-
   if (!tracks.length) throw new Error('No captions found for this video. Make sure it has subtitles/captions enabled.')
 
-  // Prefer English, fall back to first available
   const track = tracks.find(t => t.languageCode === 'en') ?? tracks[0]
-
   const captionRes = await fetch(track.baseUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } })
   const xml = await captionRes.text()
-
   const textParts = parseCaptionXml(xml)
   if (!textParts.length) throw new Error('Could not parse captions for this video.')
   return textParts.join(' ').slice(0, 10000)
