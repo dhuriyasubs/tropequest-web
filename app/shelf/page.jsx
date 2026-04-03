@@ -20,16 +20,20 @@ export default async function ShelfPage({ searchParams }) {
 
   const activeStatus = searchParams?.status ?? null
 
-  let query = supabase
+  // Fetch all shelf entries (unfiltered) for counts, then filter for display
+  const { data: allData } = await supabase
     .from('shelf')
     .select('status, created_at, books(id, title, author, cover_url, slug, rating, tropes, series_name, primary_genre)')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 
-  if (activeStatus) query = query.eq('status', activeStatus)
+  const allEntries = (allData ?? []).filter(e => e.books)
 
-  const { data } = await query
-  const entries = (data ?? []).filter(e => e.books)
+  // Status counts for filter
+  const statusCounts = { reading: 0, read: 0, owned: 0 }
+  for (const e of allEntries) statusCounts[e.status] = (statusCounts[e.status] ?? 0) + 1
+
+  const entries = activeStatus ? allEntries.filter(e => e.status === activeStatus) : allEntries
 
   // Group by primary_genre
   const genreMap = new Map()
@@ -49,20 +53,24 @@ export default async function ShelfPage({ searchParams }) {
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
       {/* Header */}
-      <div className="flex items-start justify-between mb-8 gap-4">
-        <div>
-          <h1 className="font-serif text-3xl font-bold">My Shelf</h1>
-          {entries.length > 0 && (
-            <p className="text-slate text-sm mt-1">
-              {entries.length} book{entries.length !== 1 ? 's' : ''}
-            </p>
-          )}
+      <div className="mb-8">
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <div>
+            <h1 className="font-serif text-3xl font-bold">My Shelf</h1>
+            {allEntries.length > 0 && (
+              <p className="text-slate text-sm mt-0.5">
+                {allEntries.length} book{allEntries.length !== 1 ? 's' : ''}
+              </p>
+            )}
+          </div>
+          <div className="flex gap-2 items-center shrink-0">
+            <ShelfSearch />
+            <ShelfScan />
+          </div>
         </div>
-        <div className="flex gap-2 items-center flex-wrap justify-end">
-          <ShelfFilter activeStatus={activeStatus} />
-          <ShelfSearch />
-          <ShelfScan />
-        </div>
+        {allEntries.length > 0 && (
+          <ShelfFilter activeStatus={activeStatus} counts={statusCounts} total={allEntries.length} />
+        )}
       </div>
 
       {entries.length === 0 ? (
@@ -84,25 +92,6 @@ export default async function ShelfPage({ searchParams }) {
         </div>
       ) : (
         <>
-          {/* Genre count chips — informational only */}
-          <div className="flex flex-wrap gap-2 mb-8">
-            <span className="text-xs px-3 py-1 rounded-full font-semibold bg-bloom text-white">
-              All · {entries.length}
-            </span>
-            {sortedGenres.map(genre => (
-              <span
-                key={genre}
-                className={`text-xs px-3 py-1 rounded-full font-medium ${
-                  genre === UNCATEGORISED_LABEL
-                    ? 'bg-gray-100 text-slate'
-                    : 'bg-petal/20 text-plum'
-                }`}
-              >
-                {genre} · {genreMap.get(genre).length}
-              </span>
-            ))}
-          </div>
-
           {/* Books grouped by genre */}
           <div className="space-y-8">
             {sortedGenres.map(genre => (
