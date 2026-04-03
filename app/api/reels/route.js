@@ -51,23 +51,63 @@ async function fetchCaptionTracks(videoId, clientName, clientVersion, extraConte
   return player?.captions?.playerCaptionsTracklistRenderer?.captionTracks ?? []
 }
 
+// Brace-aware JSON extraction — handles multi-line JSON
+function extractJsonObject(str, startIdx) {
+  let depth = 0, i = startIdx, inStr = false, esc = false
+  while (i < str.length) {
+    const ch = str[i]
+    if (esc)              { esc = false; i++; continue }
+    if (ch === '\\' && inStr) { esc = true;  i++; continue }
+    if (ch === '"')       { inStr = !inStr; i++; continue }
+    if (inStr)            { i++; continue }
+    if (ch === '{') depth++
+    else if (ch === '}') { if (--depth === 0) return str.slice(startIdx, i + 1) }
+    i++
+  }
+  return null
+}
+
 // Fetch the watch page and extract caption tracks from ytInitialPlayerResponse
 async function fetchCaptionTracksFromPage(videoId) {
   const res = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
       'Accept-Language': 'en-US,en;q=0.9',
+      'Accept': 'text/html,application/xhtml+xml',
     },
   })
   const html = await res.text()
-  const match = html.match(/ytInitialPlayerResponse\s*=\s*(\{.+?\})(?:;|\s*<\/script>)/)
-  if (!match) return []
+  const marker = 'ytInitialPlayerResponse='
+  const idx = html.indexOf(marker)
+  if (idx === -1) return []
+  const jsonStr = extractJsonObject(html, idx + marker.length)
+  if (!jsonStr) return []
   try {
-    const player = JSON.parse(match[1])
+    const player = JSON.parse(jsonStr)
     return player?.captions?.playerCaptionsTracklistRenderer?.captionTracks ?? []
   } catch {
     return []
   }
+}
+
+// Direct timedtext API — works for auto-generated captions (no player response needed)
+async function fetchTranscriptFromTimedText(videoId) {
+  const langs = ['en', 'en-US', 'en-GB']
+  const kinds = ['', 'asr'] // manual first, then auto-generated
+  for (const kind of kinds) {
+    for (const lang of langs) {
+      const params = new URLSearchParams({ v: videoId, lang, fmt: 'srv3' })
+      if (kind) params.set('kind', kind)
+      const res = await fetch(`https://www.youtube.com/api/timedtext?${params}`, {
+        headers: { 'User-Agent': 'Mozilla/5.0' },
+      })
+      if (!res.ok) continue
+      const xml = await res.text()
+      const parts = parseCaptionXml(xml)
+      if (parts.length) return parts.join(' ').slice(0, 10000)
+    }
+  }
+  return null
 }
 
 // Fetches captions trying multiple methods
@@ -75,18 +115,23 @@ async function getYoutubeText(url) {
   const videoId = extractYoutubeId(url)
   if (!videoId) throw new Error('Could not extract YouTube video ID')
 
-  // Try clients in order of reliability
-  let tracks = []
+  // Method 1: direct timedtext API (fastest, handles auto-generated captions)
+  const timedText = await fetchTranscriptFromTimedText(videoId)
+  if (timedText) return timedText
 
+  // Method 2-4: InnerTube player API with different clients
+  let tracks = []
   tracks = await fetchCaptionTracks(videoId, 'WEB', '2.20240101.00.00')
   if (!tracks.length) tracks = await fetchCaptionTracks(videoId, 'TVHTML5', '7.20250101.17.00')
   if (!tracks.length) tracks = await fetchCaptionTracks(videoId, 'ANDROID', '20.10.38', {
     androidSdkVersion: 34,
     userAgent: 'com.google.android.youtube/20.10.38 (Linux; U; Android 14) gzip',
   })
+
+  // Method 5: scrape the watch page HTML
   if (!tracks.length) tracks = await fetchCaptionTracksFromPage(videoId)
 
-  if (!tracks.length) throw new Error('No captions available for this video. Try a video with subtitles/captions enabled.')
+  if (!tracks.length) throw new Error('No captions found for this video. Make sure it has subtitles/captions enabled.')
 
   // Prefer English, fall back to first available
   const track = tracks.find(t => t.languageCode === 'en') ?? tracks[0]
