@@ -104,6 +104,9 @@ export default async function ShelfPage({ searchParams }) {
         <>
           {/* Genre count summary chips */}
           <div className="flex flex-wrap gap-2 mb-8">
+            <span className="text-xs px-3 py-1.5 rounded-full font-semibold bg-bloom text-white">
+              All · {entries.length}
+            </span>
             {sortedGenres.map(genre => (
               <span
                 key={genre}
