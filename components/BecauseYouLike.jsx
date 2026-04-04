@@ -72,7 +72,7 @@ export default function BecauseYouLike() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
       <h1 className="font-serif text-3xl font-bold mb-1">Because you like…</h1>
-      <p className="text-sm text-slate mb-8">Search a book or series you loved — we'll find similar reads.</p>
+      <p className="text-sm text-slate mb-8">Search a book or series you loved — we&apos;ll find similar reads.</p>
 
       {/* Search input */}
       <div ref={wrapperRef} className="relative max-w-lg mb-10">
