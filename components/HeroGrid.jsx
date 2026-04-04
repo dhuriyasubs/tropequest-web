@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 
 // Visual properties for each spine — names get overridden by real DB tropes when available
 const SHELF_A_BASE = [
@@ -94,7 +93,6 @@ function BookShelf({ books, hoveredTrope, onHover }) {
 }
 
 export default function HeroGrid({ tropes }) {
-  const router = useRouter()
   const [hoveredTrope, setHoveredTrope] = useState(null)
 
   // Populate shelf names from real DB tropes when available
@@ -106,13 +104,6 @@ export default function HeroGrid({ tropes }) {
     ...b,
     t: tropes?.[SHELF_A_BASE.length + i] ?? SHELF_B_NAMES[i],
   }))
-  const allTropes = tropes?.length > 0
-    ? tropes
-    : [...SHELF_A_NAMES, ...SHELF_B_NAMES]
-
-  function handleSurprise() {
-    router.push('/surprise')
-  }
 
   return (
     <section className="bg-[#1a1a2e] text-white overflow-hidden">
@@ -136,54 +127,10 @@ export default function HeroGrid({ tropes }) {
             href="/search"
             className="self-start inline-block bg-amber-500 hover:bg-amber-400
                        text-[#1a1a2e] font-bold px-7 py-3 md:px-8 md:py-3.5 rounded-xl text-sm
-                       transition-colors duration-200 shadow-lg shadow-amber-500/25 mb-6 md:mb-10"
+                       transition-colors duration-200 shadow-lg shadow-amber-500/25"
           >
-            Discover Your Tropes
+            Browse Books
           </a>
-
-          {/* Three entry points */}
-          <div className="flex flex-wrap gap-2 md:gap-3">
-            <a
-              href="/search?q=romance"
-              className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-petal/30
-                         bg-petal/5 hover:bg-petal/15 text-petal text-xs font-semibold
-                         transition-colors duration-200"
-            >
-              ♥ The Romance Quest
-            </a>
-            <a
-              href="/search?q=thriller"
-              className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-blue-400/30
-                         bg-blue-400/5 hover:bg-blue-400/15 text-blue-300 text-xs font-semibold
-                         transition-colors duration-200"
-            >
-              ◈ The Thriller Quest
-            </a>
-            <button
-              onClick={handleSurprise}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-amber-400/30
-                         bg-amber-400/5 hover:bg-amber-400/15 text-amber-300 text-xs font-semibold
-                         transition-colors duration-200"
-            >
-              ✦ Surprise Me
-            </button>
-          </div>
-
-          {/* Mobile-only: horizontal scroll trope strip */}
-          <div className="md:hidden mt-7 -mx-6 px-6">
-            <p className="text-white/35 text-[10px] uppercase tracking-widest mb-2.5">Browse by trope</p>
-            <div className="flex gap-2 overflow-x-auto pb-3" style={{ scrollbarWidth: 'none' }}>
-              {allTropes.slice(0, 50).map(t => (
-                <a
-                  key={t}
-                  href={`/search?tropes=${encodeURIComponent(t)}`}
-                  className="flex-shrink-0 text-xs px-3 py-1.5 rounded-full border border-petal/30 bg-petal/10 text-petal whitespace-nowrap"
-                >
-                  {t}
-                </a>
-              ))}
-            </div>
-          </div>
         </div>
 
         {/* ── Right: Library Visualization (desktop only) ── */}
