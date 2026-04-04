@@ -7,6 +7,7 @@ import NavSearch from '@/components/NavSearch'
 
 const browseItems = [
   { href: '/surprise', label: 'Surprise Me ✨'  },
+  { href: '/because',  label: 'Because You Like…' },
   { href: '/tropes',   label: 'Browse Tropes'   },
   { href: '/series',   label: 'Browse Series'   },
   { href: '/author',   label: 'Browse Authors'  },
