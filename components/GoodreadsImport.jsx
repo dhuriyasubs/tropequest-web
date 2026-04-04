@@ -68,7 +68,7 @@ function extractBooks(csvText) {
     return {
       title:         m[1].trim(),
       series_name:   m[2].trim(),
-      series_number: parseFloat(m[3]),
+      series_number: m[3].includes('.') ? parseFloat(m[3]) : parseInt(m[3], 10),
     }
   }
 
