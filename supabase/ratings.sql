@@ -13,8 +13,8 @@ CREATE INDEX ON ratings (book_id);
 
 ALTER TABLE ratings ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users read own ratings"
-  ON ratings FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Anyone reads ratings"
+  ON ratings FOR SELECT USING (true);
 
 CREATE POLICY "Users insert own ratings"
   ON ratings FOR INSERT WITH CHECK (auth.uid() = user_id);

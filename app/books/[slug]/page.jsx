@@ -54,6 +54,18 @@ export default async function BookPage({ params }) {
     userRating = ratingRes.data?.rating ?? null
   }
 
+  // Community ratings for this book (all users — needs public SELECT policy)
+  const { data: communityRatings } = await supabase
+    .from('ratings')
+    .select('rating')
+    .eq('book_id', book.id)
+  const tqCount = communityRatings?.length ?? 0
+  const tqSum = communityRatings?.reduce((s, r) => s + r.rating, 0) ?? 0
+  const grCount = book.rating_count ?? 0
+  const grSum = book.rating ? book.rating * grCount : 0
+  const totalRatingCount = tqCount + grCount
+  const blendedRating = totalRatingCount > 0 ? (tqSum + grSum) / totalRatingCount : null
+
   const [seriesBooks, moreByAuthor] = await Promise.all([
     book.series_name ? getSeriesBooks(book.series_name, book.id) : [],
     getMoreByAuthor(book.author, book.id),
@@ -78,8 +90,8 @@ export default async function BookPage({ params }) {
     author: { '@type': 'Person', name: book.author },
     image: book.cover_url,
     description: book.description,
-    aggregateRating: book.rating
-      ? { '@type': 'AggregateRating', ratingValue: book.rating, reviewCount: book.rating_count || 1 }
+    aggregateRating: blendedRating
+      ? { '@type': 'AggregateRating', ratingValue: blendedRating.toFixed(1), reviewCount: totalRatingCount || 1 }
       : undefined,
   }
 
@@ -128,11 +140,10 @@ export default async function BookPage({ params }) {
               {book.author}
             </Link>
 
-            {book.rating && (
+            {blendedRating && (
               <p className="text-sm text-slate mt-2">
-                ★ {book.rating.toFixed(1)}
-                {book.rating_count ? ` · ${book.rating_count.toLocaleString()} ratings` : ''}
-                {book.rating_source ? ` · via ${book.rating_source}` : ''}
+                ★ {blendedRating.toFixed(1)}
+                {totalRatingCount > 0 ? ` · ${totalRatingCount.toLocaleString()} ratings` : ''}
               </p>
             )}
 
