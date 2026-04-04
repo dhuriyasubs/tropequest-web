@@ -1,8 +1,9 @@
+import { Suspense } from 'react'
 import Link from 'next/link'
 import BookCard from '@/components/BookCard'
 import HeroGrid from '@/components/HeroGrid'
-import { getFeaturedBooks, getPopularTropes, getPersonalizedBooks, getSeriesCompletionBooks, getBecauseYouReadBooks } from '@/lib/search'
 import SeriesCompletionSection from '@/components/SeriesCompletionSection'
+import { getFeaturedBooks, getPopularTropes, getPersonalizedBooks, getSeriesCompletionBooks, getBecauseYouReadBooks } from '@/lib/search'
 import { createSupabaseServer } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
@@ -12,37 +13,27 @@ export const metadata = {
   openGraph: { url: '/' },
 }
 
-export default async function HomePage() {
+// ── Personalized sections — streamed in after shell ───────────────────────
+async function PersonalisedSections({ userId }) {
   const supabase = createSupabaseServer()
-  const { data: { user } } = await supabase.auth.getUser()
 
-  let interests    = null
-  let readBookIds  = []
-  if (user) {
-    const [interestsRes, shelfRes] = await Promise.all([
-      supabase.from('user_interests').select('tropes, subjects, authors').eq('user_id', user.id).single(),
-      supabase.from('shelf').select('book_id').eq('user_id', user.id).eq('status', 'read'),
-    ])
-    if (interestsRes.data && (interestsRes.data.tropes?.length || interestsRes.data.subjects?.length || interestsRes.data.authors?.length)) {
-      interests = interestsRes.data
-    }
-    readBookIds = (shelfRes.data ?? []).map(r => r.book_id)
-  }
+  const [interestsRes, shelfRes] = await Promise.all([
+    supabase.from('user_interests').select('tropes, subjects, authors').eq('user_id', userId).single(),
+    supabase.from('shelf').select('book_id').eq('user_id', userId).eq('status', 'read'),
+  ])
 
-  const [books, popularTropes, personalizedBooks, seriesBooks, becauseYouRead] = await Promise.all([
-    getFeaturedBooks(12),
-    getPopularTropes(50),
+  const interests = (interestsRes.data?.tropes?.length || interestsRes.data?.subjects?.length || interestsRes.data?.authors?.length)
+    ? interestsRes.data : null
+  const readBookIds = (shelfRes.data ?? []).map(r => r.book_id)
+
+  const [personalizedBooks, seriesBooks, becauseYouRead] = await Promise.all([
     interests ? getPersonalizedBooks({ ...interests, excludeIds: readBookIds }) : Promise.resolve([]),
-    user ? getSeriesCompletionBooks(user.id) : Promise.resolve([]),
-    user ? getBecauseYouReadBooks(user.id) : Promise.resolve(null),
+    getSeriesCompletionBooks(userId),
+    getBecauseYouReadBooks(userId),
   ])
 
   return (
     <>
-      {/* Hero — Trope Grid */}
-      <HeroGrid tropes={popularTropes} />
-
-      {/* Personalised picks */}
       {personalizedBooks.length > 0 && (
         <section className="max-w-6xl mx-auto px-4 py-10">
           <h2 className="font-serif text-2xl font-semibold mb-1">Picked for You</h2>
@@ -55,10 +46,8 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* Complete the Series */}
       <SeriesCompletionSection series={seriesBooks} />
 
-      {/* Because you read X */}
       {becauseYouRead?.books?.length > 0 && (
         <section className="max-w-6xl mx-auto px-4 py-10">
           <h2 className="font-serif text-2xl font-semibold mb-1">
@@ -72,8 +61,51 @@ export default async function HomePage() {
           </div>
         </section>
       )}
+    </>
+  )
+}
 
-      {/* Top rated */}
+function PersonalisedSkeleton() {
+  return (
+    <div className="max-w-6xl mx-auto px-4 py-10 space-y-10">
+      {[1, 2].map(i => (
+        <div key={i}>
+          <div className="h-6 w-48 bg-gray-100 rounded animate-pulse mb-2" />
+          <div className="h-4 w-32 bg-gray-100 rounded animate-pulse mb-5" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {Array.from({ length: 6 }).map((_, j) => (
+              <div key={j} className="aspect-[2/3] bg-gray-100 rounded-lg animate-pulse" />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────
+export default async function HomePage() {
+  // Kick off cached public fetches immediately — don't wait for auth
+  const publicPromise = Promise.all([
+    getFeaturedBooks(12),
+    getPopularTropes(50),
+  ])
+
+  const supabase = createSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const [books, popularTropes] = await publicPromise
+
+  return (
+    <>
+      <HeroGrid tropes={popularTropes} />
+
+      {user && (
+        <Suspense fallback={<PersonalisedSkeleton />}>
+          <PersonalisedSections userId={user.id} />
+        </Suspense>
+      )}
+
       <section className="max-w-6xl mx-auto px-4 pb-16">
         <h2 className="font-serif text-2xl font-semibold mb-5">Top Rated</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
