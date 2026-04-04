@@ -57,6 +57,18 @@ export default async function BookPage({ params }) {
     getMoreByAuthor(book.author, book.id),
   ])
 
+  // Fetch shelf status for all books shown in the two sections
+  let sectionShelfMap = {}
+  if (user && (seriesBooks.length || moreByAuthor.length)) {
+    const sectionIds = [...seriesBooks, ...moreByAuthor].map(b => b.id)
+    const { data: sectionShelf } = await supabase
+      .from('shelf')
+      .select('book_id, status')
+      .eq('user_id', user.id)
+      .in('book_id', sectionIds)
+    for (const r of sectionShelf ?? []) sectionShelfMap[r.book_id] = r.status
+  }
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Book',
@@ -172,19 +184,28 @@ export default async function BookPage({ params }) {
               More in {book.series_name}
             </h2>
             <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 gap-4">
-              {seriesBooks.map(b => (
-                <Link key={b.id} href={`/books/${b.slug}`} className="group text-center">
-                  <div className="relative aspect-[2/3] rounded overflow-hidden bg-gray-100 mb-1">
-                    {b.cover_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={b.cover_url} alt={b.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" loading="lazy" />
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center text-2xl">📚</div>
-                    )}
-                  </div>
-                  <p className="text-xs text-slate">Book {b.series_number}</p>
-                </Link>
-              ))}
+              {seriesBooks.map(b => {
+                const status = sectionShelfMap[b.id] ?? null
+                return (
+                  <Link key={b.id} href={`/books/${b.slug}`} className="group text-center">
+                    <div className="relative aspect-[2/3] rounded overflow-hidden bg-gray-100 mb-1">
+                      {b.cover_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={b.cover_url} alt={b.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" loading="lazy" />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center text-2xl">📚</div>
+                      )}
+                      {status === 'read' && (
+                        <div className="absolute bottom-0 left-0 right-0 bg-green-600/90 text-white text-xs font-semibold text-center py-0.5">✓ Read</div>
+                      )}
+                      {(status === 'reading' || status === 'unread') && (
+                        <div className="absolute bottom-0 left-0 right-0 bg-petal/90 text-plum text-xs font-semibold text-center py-0.5">On Shelf</div>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate">Book {b.series_number}</p>
+                  </Link>
+                )
+              })}
             </div>
           </section>
         )}
@@ -196,19 +217,28 @@ export default async function BookPage({ params }) {
               More by {book.author}
             </h2>
             <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 gap-4">
-              {moreByAuthor.map(b => (
-                <Link key={b.id} href={`/books/${b.slug}`} className="group">
-                  <div className="relative aspect-[2/3] rounded overflow-hidden bg-gray-100 mb-1">
-                    {b.cover_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={b.cover_url} alt={b.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" loading="lazy" />
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center text-2xl">📚</div>
-                    )}
-                  </div>
-                  <p className="text-xs font-medium line-clamp-2">{b.title}</p>
-                </Link>
-              ))}
+              {moreByAuthor.map(b => {
+                const status = sectionShelfMap[b.id] ?? null
+                return (
+                  <Link key={b.id} href={`/books/${b.slug}`} className="group">
+                    <div className="relative aspect-[2/3] rounded overflow-hidden bg-gray-100 mb-1">
+                      {b.cover_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={b.cover_url} alt={b.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" loading="lazy" />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center text-2xl">📚</div>
+                      )}
+                      {status === 'read' && (
+                        <div className="absolute bottom-0 left-0 right-0 bg-green-600/90 text-white text-xs font-semibold text-center py-0.5">✓ Read</div>
+                      )}
+                      {(status === 'reading' || status === 'unread') && (
+                        <div className="absolute bottom-0 left-0 right-0 bg-petal/90 text-plum text-xs font-semibold text-center py-0.5">On Shelf</div>
+                      )}
+                    </div>
+                    <p className="text-xs font-medium line-clamp-2">{b.title}</p>
+                  </Link>
+                )
+              })}
             </div>
           </section>
         )}
