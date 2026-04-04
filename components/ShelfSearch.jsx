@@ -63,10 +63,10 @@ export default function ShelfSearch() {
             : 'bg-white text-ink border-petal/40 hover:border-bloom hover:text-bloom'
         }`}
       >
-        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35" strokeLinecap="round"/>
+        <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
         </svg>
-        <span className="hidden sm:inline">Search & Add</span>
+        <span>Add Books</span>
       </button>
 
       {open && (
@@ -77,7 +77,7 @@ export default function ShelfSearch() {
               type="text"
               value={query}
               onChange={e => setQuery(e.target.value)}
-              placeholder="Search by title or author…"
+              placeholder="Search catalogue to add…"
               className="w-full text-sm px-3 py-2 rounded-lg border border-petal/30 focus:outline-none focus:ring-2 focus:ring-bloom/30"
             />
           </div>

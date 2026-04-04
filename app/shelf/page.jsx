@@ -5,6 +5,7 @@ import ShelfButton from '@/components/ShelfButton'
 import ShelfScan from '@/components/ShelfScan'
 import ShelfSearch from '@/components/ShelfSearch'
 import ShelfFilter from '@/components/ShelfFilter'
+import ShelfInlineSearch from '@/components/ShelfInlineSearch'
 import ShelfStatusSelect from '@/components/ShelfStatusSelect'
 
 export const dynamic = 'force-dynamic'
@@ -19,6 +20,7 @@ export default async function ShelfPage({ searchParams }) {
   if (!user) redirect('/login?next=/shelf')
 
   const activeStatus = searchParams?.status ?? null
+  const shelfQuery   = searchParams?.q?.trim().toLowerCase() ?? ''
 
   // Fetch all shelf entries (unfiltered) for counts, then filter for display
   const { data: allData } = await supabase
@@ -33,7 +35,13 @@ export default async function ShelfPage({ searchParams }) {
   const statusCounts = { unread: 0, reading: 0, read: 0 }
   for (const e of allEntries) statusCounts[e.status] = (statusCounts[e.status] ?? 0) + 1
 
-  const entries = activeStatus ? allEntries.filter(e => e.status === activeStatus) : allEntries
+  let entries = activeStatus ? allEntries.filter(e => e.status === activeStatus) : allEntries
+  if (shelfQuery) {
+    entries = entries.filter(e =>
+      e.books.title?.toLowerCase().includes(shelfQuery) ||
+      e.books.author?.toLowerCase().includes(shelfQuery)
+    )
+  }
 
   // Group by primary_genre
   const genreMap = new Map()
@@ -70,6 +78,9 @@ export default async function ShelfPage({ searchParams }) {
         </div>
         {allEntries.length > 0 && (
           <ShelfFilter activeStatus={activeStatus} counts={statusCounts} total={allEntries.length} />
+        )}
+        {allEntries.length > 0 && (
+          <ShelfInlineSearch initialQuery={shelfQuery} activeStatus={activeStatus} className="mt-3" />
         )}
       </div>
 
