@@ -1,33 +1,19 @@
 import { createSupabaseServer } from '@/lib/supabase'
-import { getSurpriseBooks } from '@/lib/search'
 import SwipeStack from '@/components/SwipeStack'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Surprise Me · TropeQuest' }
 
 export default async function SurprisePage() {
+  // Only auth — no heavy book queries; SwipeStack fetches client-side
   const supabase = createSupabaseServer()
   const { data: { user } } = await supabase.auth.getUser()
 
-  let excludeIds = []
-  if (user) {
-    const [tbrRes, shelfRes] = await Promise.all([
-      supabase.from('tbr').select('book_id').eq('user_id', user.id),
-      supabase.from('shelf').select('book_id').eq('user_id', user.id),
-    ])
-    excludeIds = [
-      ...(tbrRes.data ?? []).map(r => r.book_id),
-      ...(shelfRes.data ?? []).map(r => r.book_id),
-    ]
-  }
-
-  const books = await getSurpriseBooks(user?.id ?? null, excludeIds, 20)
-
   return (
     <SwipeStack
-      initialBooks={books}
+      initialBooks={[]}
       userId={user?.id ?? null}
-      initialExcludeIds={excludeIds}
+      initialExcludeIds={[]}
     />
   )
 }

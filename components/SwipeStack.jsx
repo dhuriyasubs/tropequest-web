@@ -8,6 +8,7 @@ const SWIPE_THRESHOLD = 80
 export default function SwipeStack({ initialBooks, userId, initialExcludeIds = [] }) {
   const router = useRouter()
   const [books, setBooks]               = useState(initialBooks)
+  const [loading, setLoading]           = useState(initialBooks.length === 0)
   const [current, setCurrent]           = useState(0)
   const [flyDir, setFlyDir]             = useState(null)
   const [savedCount, setSavedCount]     = useState(0)
@@ -23,6 +24,18 @@ export default function SwipeStack({ initialBooks, userId, initialExcludeIds = [
   const toastShownRef       = useRef(false)
   const rightSwipeCountRef  = useRef(0)
   const loginModalShownRef  = useRef(false)
+
+  // Initial fetch when no books provided (page renders instantly, books load client-side)
+  useEffect(() => {
+    if (initialBooks.length > 0) return
+    fetch('/api/surprise')
+      .then(r => r.json())
+      .then(({ books: fetched }) => {
+        setBooks(fetched ?? [])
+        if (fetched?.length) fetched.forEach(b => seenIdsRef.current.add(String(b.id)))
+      })
+      .finally(() => setLoading(false))
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Flush buffered TBR saves from localStorage when user logs in
   useEffect(() => {
@@ -154,6 +167,37 @@ export default function SwipeStack({ initialBooks, userId, initialExcludeIds = [
 
   const book     = books[current]
   const nextBook = books[current + 1]
+
+  if (loading) {
+    return (
+      <div
+        className="max-w-sm mx-auto px-4 pt-4 pb-4 flex flex-col"
+        style={{ height: 'calc(100dvh - 56px)' }}
+      >
+        <div className="text-center mb-3 flex-shrink-0">
+          <div className="h-7 w-36 bg-gray-100 rounded-full animate-pulse mx-auto" />
+        </div>
+        <div className="relative flex-1 min-h-0">
+          <div className="absolute inset-0 rounded-2xl bg-white shadow-xl overflow-hidden flex flex-col">
+            <div className="w-full h-44 bg-gray-100 animate-pulse flex-shrink-0" />
+            <div className="flex-1 p-4 space-y-3">
+              <div className="h-6 w-3/4 bg-gray-100 rounded animate-pulse" />
+              <div className="h-4 w-1/2 bg-gray-100 rounded animate-pulse" />
+              <div className="h-3 w-1/3 bg-gray-100 rounded animate-pulse" />
+              <div className="flex gap-2 mt-4">
+                {[1,2,3].map(i => <div key={i} className="h-6 w-20 bg-gray-100 rounded-full animate-pulse" />)}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center justify-center gap-10 mt-4 flex-shrink-0">
+          <div className="w-14 h-14 rounded-full bg-gray-100 animate-pulse" />
+          <div className="w-10 h-10 rounded-full bg-gray-100 animate-pulse" />
+          <div className="w-14 h-14 rounded-full bg-gray-100 animate-pulse" />
+        </div>
+      </div>
+    )
+  }
 
   if (!book) {
     return (
