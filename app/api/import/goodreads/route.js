@@ -124,9 +124,16 @@ export async function POST(request) {
     }))
   }
 
-  // Bulk upsert shelf entries
-  if (upserts.length) {
-    const bookIds = upserts.map(u => u.book_id)
+  // Bulk upsert shelf entries — deduplicate by book_id (same book matched via different ISBNs)
+  const seenBookIds = new Set()
+  const dedupedUpserts = upserts.filter(u => {
+    if (seenBookIds.has(u.book_id)) return false
+    seenBookIds.add(u.book_id)
+    return true
+  })
+
+  if (dedupedUpserts.length) {
+    const bookIds = dedupedUpserts.map(u => u.book_id)
     const { data: existing } = await supabase
       .from('shelf')
       .select('book_id')
@@ -134,12 +141,12 @@ export async function POST(request) {
       .in('book_id', bookIds)
 
     const existingSet = new Set((existing ?? []).map(r => r.book_id))
-    results.imported = upserts.filter(u => !existingSet.has(u.book_id)).length
-    results.updated  = upserts.filter(u =>  existingSet.has(u.book_id)).length
+    results.imported = dedupedUpserts.filter(u => !existingSet.has(u.book_id)).length
+    results.updated  = dedupedUpserts.filter(u =>  existingSet.has(u.book_id)).length
 
     const { error } = await supabase
       .from('shelf')
-      .upsert(upserts, { onConflict: 'user_id,book_id' })
+      .upsert(dedupedUpserts, { onConflict: 'user_id,book_id' })
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   }
