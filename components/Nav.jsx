@@ -5,9 +5,10 @@ import { useState, useEffect, useRef } from 'react'
 import { createSupabaseBrowser } from '@/lib/supabase-browser'
 
 const browseItems = [
-  { href: '/tropes',  label: 'Browse Tropes'   },
-  { href: '/series',  label: 'Browse Series'   },
-  { href: '/author',  label: 'Browse Authors'  },
+  { href: '/surprise', label: 'Surprise Me ✨'  },
+  { href: '/tropes',   label: 'Browse Tropes'   },
+  { href: '/series',   label: 'Browse Series'   },
+  { href: '/author',   label: 'Browse Authors'  },
 ]
 
 const menuItems = [
