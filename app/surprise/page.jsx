@@ -1,5 +1,5 @@
 import { createSupabaseServer } from '@/lib/supabase'
-import { getRandomBooks } from '@/lib/search'
+import { getSurpriseBooks } from '@/lib/search'
 import SwipeStack from '@/components/SwipeStack'
 
 export const dynamic = 'force-dynamic'
@@ -21,7 +21,7 @@ export default async function SurprisePage() {
     ]
   }
 
-  const books = await getRandomBooks(20, excludeIds)
+  const books = await getSurpriseBooks(user?.id ?? null, excludeIds, 20)
 
   return (
     <SwipeStack

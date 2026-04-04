@@ -1,9 +1,14 @@
-import { getRandomBooks } from '@/lib/search'
+import { getSurpriseBooks } from '@/lib/search'
+import { createSupabaseServer } from '@/lib/supabase'
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url)
   const excludeParam = searchParams.get('exclude') ?? ''
   const excludeIds = excludeParam ? excludeParam.split(',') : []
-  const books = await getRandomBooks(15, excludeIds)
+
+  const supabase = createSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const books = await getSurpriseBooks(user?.id ?? null, excludeIds)
   return Response.json({ books })
 }
