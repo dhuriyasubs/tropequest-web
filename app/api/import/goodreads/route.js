@@ -181,20 +181,22 @@ export async function POST(request) {
     // Rows with isbn13 — upsert (DB unique index handles cross-import dedup)
     const withIsbn13 = dedupedQueue.filter(b => b.isbn13)
     if (withIsbn13.length) {
-      await supabaseAdmin
+      const { data: upserted } = await supabaseAdmin
         .from('import_queue')
         .upsert(withIsbn13, { onConflict: 'isbn13', ignoreDuplicates: true })
+        .select('id')
+      results.queued += upserted?.length ?? 0
     }
 
     // Rows without isbn13 — plain insert, pipeline deduplicates on title+author
     const withoutIsbn13 = dedupedQueue.filter(b => !b.isbn13)
     if (withoutIsbn13.length) {
-      await supabaseAdmin
+      const { data: inserted } = await supabaseAdmin
         .from('import_queue')
         .insert(withoutIsbn13)
+        .select('id')
+      results.queued += inserted?.length ?? 0
     }
-
-    results.queued = dedupedQueue.length
   }
 
   return NextResponse.json(results)
