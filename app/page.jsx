@@ -36,7 +36,7 @@ async function PersonalisedSections({ userId }) {
   return (
     <>
       {personalizedBooks.length > 0 && (
-        <section className="max-w-6xl mx-auto px-4 py-10">
+        <section className="max-w-6xl mx-auto px-4 py-6 md:py-10">
           <h2 className="font-serif text-2xl font-semibold mb-1">Picked for You</h2>
           <p className="text-sm text-slate mb-5">Based on your interests</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
@@ -50,7 +50,7 @@ async function PersonalisedSections({ userId }) {
       <SeriesCompletionSection series={seriesBooks} />
 
       {becauseYouRead?.books?.length > 0 && (
-        <section className="max-w-6xl mx-auto px-4 py-10">
+        <section className="max-w-6xl mx-auto px-4 py-6 md:py-10">
           <h2 className="font-serif text-2xl font-semibold mb-1">
             Because you read <span className="text-bloom italic">{becauseYouRead.seedTitle}</span>
           </h2>
@@ -68,7 +68,7 @@ async function PersonalisedSections({ userId }) {
 
 function PersonalisedSkeleton() {
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10 space-y-10">
+    <div className="max-w-6xl mx-auto px-4 py-6 md:py-10 space-y-6 md:space-y-10">
       {[1, 2].map(i => (
         <div key={i}>
           <div className="h-6 w-48 bg-gray-100 rounded animate-pulse mb-2" />
@@ -108,7 +108,7 @@ export default async function HomePage() {
         </Suspense>
       )}
 
-      <section className="max-w-6xl mx-auto px-4 pb-16">
+      <section className="max-w-6xl mx-auto px-4 py-6 pb-12 md:py-10 md:pb-16">
         <h2 className="font-serif text-2xl font-semibold mb-5">Top Rated</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
           {books.map(book => (

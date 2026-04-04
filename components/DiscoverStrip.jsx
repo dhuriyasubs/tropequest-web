@@ -50,7 +50,7 @@ const MODES = [
 
 export default function DiscoverStrip() {
   return (
-    <section className="max-w-6xl mx-auto px-4 py-8">
+    <section className="max-w-6xl mx-auto px-4 py-5 md:py-8">
       <h2 className="font-serif text-xl font-semibold mb-4 text-ink">How do you want to discover?</h2>
       {/* Horizontal scroll on mobile, grid on md+ */}
       <div

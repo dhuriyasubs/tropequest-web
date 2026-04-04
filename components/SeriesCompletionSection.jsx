@@ -58,7 +58,7 @@ export default function SeriesCompletionSection({ series }) {
   if (!series?.length) return null
 
   return (
-    <section className="max-w-6xl mx-auto px-4 py-10">
+    <section className="max-w-6xl mx-auto px-4 py-6 md:py-10">
       <h2 className="font-serif text-2xl font-semibold mb-1">Complete the Series</h2>
       <p className="text-sm text-slate mb-6">Pick up where you left off</p>
 
