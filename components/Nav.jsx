@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
 import { createSupabaseBrowser } from '@/lib/supabase-browser'
+import NavSearch from '@/components/NavSearch'
 
 const browseItems = [
   { href: '/surprise', label: 'Surprise Me ✨'  },
@@ -62,11 +63,13 @@ export default function Nav() {
   return (
     <header className="bg-white border-b border-petal/30 sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-        <Link href="/" className="font-serif text-xl font-bold text-bloom">
+        <Link href="/" className="font-serif text-xl font-bold text-bloom flex-shrink-0">
           TropeQuest
         </Link>
 
-        <div className="relative" ref={menuRef}>
+        <NavSearch />
+
+        <div className="relative flex-shrink-0" ref={menuRef}>
           <button
             onClick={() => setMenuOpen(o => !o)}
             className="flex items-center justify-center focus:outline-none"
