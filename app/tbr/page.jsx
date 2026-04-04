@@ -41,7 +41,7 @@ export default async function TbrPage() {
               {/* Cover */}
               <Link
                 href={`/books/${book.slug}`}
-                className="shrink-0 w-14 rounded-lg overflow-hidden bg-gray-100 block"
+                className="shrink-0 w-14 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center block"
                 style={{ aspectRatio: '2/3' }}
               >
                 {book.cover_url ? (
@@ -49,7 +49,7 @@ export default async function TbrPage() {
                   <img
                     src={book.cover_url}
                     alt={book.title}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-xl">📚</div>
@@ -58,12 +58,17 @@ export default async function TbrPage() {
 
               {/* Info */}
               <div className="flex-1 min-w-0">
-                <Link
-                  href={`/books/${book.slug}`}
-                  className="font-semibold text-ink hover:text-bloom line-clamp-1 block"
-                >
-                  {book.title}
-                </Link>
+                <div className="flex items-start justify-between gap-2">
+                  <Link
+                    href={`/books/${book.slug}`}
+                    className="font-semibold text-ink hover:text-bloom line-clamp-1"
+                  >
+                    {book.title}
+                  </Link>
+                  {book.rating && (
+                    <span className="text-xs text-slate shrink-0">★ {book.rating.toFixed(1)}</span>
+                  )}
+                </div>
                 <p className="text-sm text-slate mt-0.5">{book.author}</p>
                 {book.series_name && (
                   <p className="text-xs text-slate/60 mt-0.5 line-clamp-1">{book.series_name}</p>
@@ -73,12 +78,9 @@ export default async function TbrPage() {
                     {book.tropes.slice(0, 3).join(' · ')}
                   </p>
                 )}
-                <div className="flex items-center gap-2 mt-3">
+                <div className="flex items-center gap-3 mt-3">
                   <TbrButton bookId={book.id} initialSaved={true} size="sm" />
                   <span className="text-xs text-slate">Remove from TBR</span>
-                  {book.rating && (
-                    <span className="text-xs text-slate ml-auto">★ {book.rating.toFixed(1)}</span>
-                  )}
                 </div>
               </div>
             </div>
