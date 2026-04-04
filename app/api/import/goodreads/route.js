@@ -110,7 +110,7 @@ export async function POST(request) {
 
         // Store GR rating on the book if it has none
         if (gr_rating && (!match.rating || !match.rating_source)) {
-          ratingUpserts.push({ id: match.id, rating: gr_rating, rating_source: 'Good Reads' })
+          ratingUpserts.push({ id: match.id, rating: gr_rating, rating_source: 'Goodreads' })
         }
 
         // Store series info if book is missing it
