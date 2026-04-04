@@ -1,6 +1,5 @@
-import Link from 'next/link'
 import { getFilterOptions } from '@/lib/search'
-import { slugify } from '@/lib/utils'
+import TropePicker from '@/components/TropePicker'
 
 export const metadata = {
   title: 'Browse by Trope',
@@ -42,26 +41,10 @@ export default async function TropesPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
       <h1 className="font-serif text-3xl font-bold mb-2">Browse by Trope</h1>
-      <p className="text-slate mb-10">
+      <p className="text-slate mb-4">
         {tropes.length} tropes across romance, romantasy, and thriller.
       </p>
-
-      {letters.map(letter => (
-        <section key={letter} className="mb-8">
-          <h2 className="font-serif text-xl font-semibold mb-3 text-bloom">{letter}</h2>
-          <div className="flex flex-wrap gap-2">
-            {grouped[letter].map(t => (
-              <Link
-                key={t}
-                href={`/tropes/${slugify(t)}`}
-                className="chip"
-              >
-                {t}
-              </Link>
-            ))}
-          </div>
-        </section>
-      ))}
+      <TropePicker tropes={tropes} grouped={grouped} letters={letters} />
     </div>
   )
 }
