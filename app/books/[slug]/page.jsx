@@ -4,6 +4,8 @@ import { getBookBySlug, getSeriesBooks, getMoreByAuthor, getAllSlugs } from '@/l
 import { slugify } from '@/lib/utils'
 import { createSupabaseServer } from '@/lib/supabase'
 import TbrButton from '@/components/TbrButton'
+import ShelfButton from '@/components/ShelfButton'
+import ShelfStatusSelect from '@/components/ShelfStatusSelect'
 
 export async function generateStaticParams() {
   const slugs = await getAllSlugs()
@@ -40,14 +42,14 @@ export default async function BookPage({ params }) {
   const supabase = createSupabaseServer()
   const { data: { user } } = await supabase.auth.getUser()
   let isSaved = false
+  let shelfStatus = null
   if (user) {
-    const { data } = await supabase
-      .from('tbr')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('book_id', book.id)
-      .single()
-    isSaved = !!data
+    const [tbrRes, shelfRes] = await Promise.all([
+      supabase.from('tbr').select('id').eq('user_id', user.id).eq('book_id', book.id).single(),
+      supabase.from('shelf').select('status').eq('user_id', user.id).eq('book_id', book.id).single(),
+    ])
+    isSaved = !!tbrRes.data
+    shelfStatus = shelfRes.data?.status ?? null
   }
 
   const [seriesBooks, moreByAuthor] = await Promise.all([
@@ -125,8 +127,8 @@ export default async function BookPage({ params }) {
               </div>
             )}
 
-            {/* Buy Now + TBR */}
-            <div className="flex items-center gap-3 mt-5">
+            {/* Buy Now + TBR + Shelf */}
+            <div className="flex items-center gap-3 mt-5 flex-wrap">
               {book.buy_url_amazon_in && (
                 <a
                   href={book.buy_url_amazon_in}
@@ -138,6 +140,12 @@ export default async function BookPage({ params }) {
                 </a>
               )}
               <TbrButton bookId={book.id} initialSaved={isSaved} />
+              <div className="flex items-center gap-2">
+                <ShelfButton bookId={book.id} initialStatus={shelfStatus} />
+                {shelfStatus && (
+                  <ShelfStatusSelect bookId={book.id} currentStatus={shelfStatus} />
+                )}
+              </div>
             </div>
 
             {/* Description */}
