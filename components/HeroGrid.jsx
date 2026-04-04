@@ -118,7 +118,7 @@ export default function HeroGrid({ tropes }) {
             The ultimate map to your specific{' '}
             <span className="text-petal italic">&lsquo;type&rsquo;.</span>
           </h1>
-          <p className="hidden sm:block text-white/50 text-base sm:text-lg mb-8 md:mb-10 max-w-sm leading-relaxed">
+          <p className="text-white/50 text-base sm:text-lg mb-8 md:mb-10 max-w-sm leading-relaxed">
             Why settle? Choose the tropes that define your perfect escape
             from 1000+ curated titles.
           </p>
@@ -129,7 +129,7 @@ export default function HeroGrid({ tropes }) {
                        text-[#1a1a2e] font-bold px-7 py-3 md:px-8 md:py-3.5 rounded-xl text-sm
                        transition-colors duration-200 shadow-lg shadow-amber-500/25"
           >
-            Browse Books
+            Find your next read
           </a>
         </div>
 
