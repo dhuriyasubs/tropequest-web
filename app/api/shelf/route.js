@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase'
 
-const VALID_STATUSES = ['owned', 'reading', 'read']
+const VALID_STATUSES = ['unread', 'reading', 'read']
 
 // POST { bookId }             → toggle (add as owned / remove)
 // POST { bookId, status }     → set specific status (upsert)
@@ -29,7 +29,7 @@ export async function POST(request) {
     return NextResponse.json({ status: null })
   }
 
-  const newStatus = VALID_STATUSES.includes(status) ? status : 'owned'
+  const newStatus = VALID_STATUSES.includes(status) ? status : 'unread'
 
   if (existing) {
     await supabase.from('shelf').update({ status: newStatus }).eq('id', existing.id)

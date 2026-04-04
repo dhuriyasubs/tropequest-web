@@ -3,13 +3,13 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 const OPTIONS = [
-  { value: 'owned',   label: 'Owned'   },
+  { value: 'unread',  label: 'Unread'  },
   { value: 'reading', label: 'Reading' },
   { value: 'read',    label: 'Read'    },
 ]
 
 const COLORS = {
-  owned:   'bg-petal/30 text-plum',
+  unread:  'bg-petal/30 text-plum',
   reading: 'bg-bloom/20 text-bloom',
   read:    'bg-green-100 text-green-700',
 }

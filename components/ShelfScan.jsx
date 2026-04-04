@@ -157,7 +157,7 @@ export default function ShelfScan({ showLabel = false }) {
       fetch('/api/shelf', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ bookId, status: 'owned' }),
+        body:    JSON.stringify({ bookId, status: 'unread' }),
       })
     ))
     setAdding(false)
@@ -186,7 +186,9 @@ export default function ShelfScan({ showLabel = false }) {
           <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round"/>
           <circle cx="12" cy="13" r="4"/>
         </svg>
-        {showLabel ? 'Scan your shelf' : 'Scan Shelf'}
+        <span className={showLabel ? '' : 'hidden sm:inline'}>
+          {showLabel ? 'Scan your shelf' : 'Scan Shelf'}
+        </span>
       </button>
 
       <input

@@ -30,7 +30,7 @@ export default async function ShelfPage({ searchParams }) {
   const allEntries = (allData ?? []).filter(e => e.books)
 
   // Status counts for filter
-  const statusCounts = { reading: 0, read: 0, owned: 0 }
+  const statusCounts = { unread: 0, reading: 0, read: 0 }
   for (const e of allEntries) statusCounts[e.status] = (statusCounts[e.status] ?? 0) + 1
 
   const entries = activeStatus ? allEntries.filter(e => e.status === activeStatus) : allEntries

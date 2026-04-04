@@ -3,9 +3,9 @@ import { useRouter } from 'next/navigation'
 
 const STATUSES = [
   { value: '', label: 'All' },
+  { value: 'unread', label: 'Unread' },
   { value: 'reading', label: 'Reading' },
   { value: 'read', label: 'Read' },
-  { value: 'owned', label: 'Owned' },
 ]
 
 export default function ShelfFilter({ activeStatus, counts = {}, total = 0 }) {

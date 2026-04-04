@@ -38,7 +38,7 @@ export default function ShelfSearch() {
     const res = await fetch('/api/shelf', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ bookId: book.id, status: 'owned' }),
+      body:    JSON.stringify({ bookId: book.id, status: 'unread' }),
     })
     if (res.ok) {
       const { status } = await res.json()
@@ -66,7 +66,7 @@ export default function ShelfSearch() {
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35" strokeLinecap="round"/>
         </svg>
-        Search & Add
+        <span className="hidden sm:inline">Search & Add</span>
       </button>
 
       {open && (
