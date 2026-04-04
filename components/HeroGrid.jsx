@@ -111,8 +111,7 @@ export default function HeroGrid({ tropes }) {
     : [...SHELF_A_NAMES, ...SHELF_B_NAMES]
 
   function handleSurprise() {
-    const pick = allTropes[Math.floor(Math.random() * allTropes.length)]
-    router.push(`/search?tropes=${encodeURIComponent(pick)}`)
+    router.push('/surprise')
   }
 
   return (
