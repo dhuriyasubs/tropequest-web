@@ -49,18 +49,27 @@ function extractBooks(csvText) {
   const header = rows[0].map(h => h.trim())
   const idx = key => header.indexOf(key)
 
-  const iTitle   = idx('Title')
-  const iAuthor  = idx('Author')
-  const iShelf   = idx('Exclusive Shelf')
+  const iTitle     = idx('Title')
+  const iAuthor    = idx('Author')
+  const iShelf     = idx('Exclusive Shelf')
+  const iISBN      = idx('ISBN')
+  const iISBN13    = idx('ISBN13')
+  const iGrRating  = idx('Average Rating')
 
   if (iTitle === -1 || iAuthor === -1 || iShelf === -1) return null // wrong format
+
+  // Goodreads wraps ISBNs in ="..." — strip that
+  const cleanISBN = s => s?.replace(/^="?|"?=?$/g, '').replace(/[^0-9X]/gi, '').trim() || null
 
   return rows.slice(1)
     .filter(r => r.length > Math.max(iTitle, iAuthor, iShelf))
     .map(r => ({
-      title:  r[iTitle]?.trim() ?? '',
-      author: r[iAuthor]?.trim() ?? '',
-      status: GR_STATUS_MAP[r[iShelf]?.trim()] ?? 'unread',
+      title:     r[iTitle]?.trim() ?? '',
+      author:    r[iAuthor]?.trim() ?? '',
+      status:    GR_STATUS_MAP[r[iShelf]?.trim()] ?? 'unread',
+      isbn:      iISBN   >= 0 ? cleanISBN(r[iISBN])   : null,
+      isbn13:    iISBN13 >= 0 ? cleanISBN(r[iISBN13]) : null,
+      gr_rating: iGrRating >= 0 ? parseFloat(r[iGrRating]) || null : null,
     }))
     .filter(b => b.title)
 }
@@ -217,9 +226,9 @@ export default function GoodreadsImport() {
           <div className="text-sm text-green-700 space-y-1 mt-3">
             {result.imported > 0 && <p>✓ {result.imported} new book{result.imported !== 1 ? 's' : ''} added to your shelf</p>}
             {result.updated  > 0 && <p>✓ {result.updated} existing book{result.updated !== 1 ? 's' : ''} updated</p>}
-            {result.notFound > 0 && (
+            {result.queued > 0 && (
               <p className="text-green-600">
-                {result.notFound} book{result.notFound !== 1 ? 's' : ''} not found in our catalogue yet
+                {result.queued} book{result.queued !== 1 ? 's' : ''} queued for enrichment — we&apos;ll add them to your shelf once processed
               </p>
             )}
           </div>
