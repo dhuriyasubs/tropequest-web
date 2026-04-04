@@ -73,12 +73,6 @@ export default async function ShelfPage({ searchParams }) {
             )}
           </div>
           <div className="flex gap-2 items-center shrink-0">
-            <Link
-              href="/shelf/import"
-              className="text-xs text-slate hover:text-bloom transition-colors border border-petal/40 rounded-lg px-3 py-1.5 font-medium"
-            >
-              Import CSV
-            </Link>
             <ShelfSearch />
             <ShelfScan />
           </div>
