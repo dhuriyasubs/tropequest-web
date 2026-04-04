@@ -50,7 +50,7 @@ export async function POST(request) {
       if (isbn13) {
         const { data } = await supabase
           .from('books')
-          .select('id, title, author, rating, rating_source')
+          .select('id, title, author, rating, rating_source, series_name')
           .eq('isbn13', isbn13)
           .limit(1)
         match = data?.[0] ?? null
@@ -60,7 +60,7 @@ export async function POST(request) {
       if (!match && isbn) {
         const { data } = await supabase
           .from('books')
-          .select('id, title, author, rating, rating_source')
+          .select('id, title, author, rating, rating_source, series_name')
           .eq('isbn', isbn)
           .limit(1)
         match = data?.[0] ?? null
@@ -70,7 +70,7 @@ export async function POST(request) {
       if (!match) {
         const { data: exact } = await supabase
           .from('books')
-          .select('id, title, author, rating, rating_source')
+          .select('id, title, author, rating, rating_source, series_name')
           .ilike('title', title.trim())
           .limit(5)
 
@@ -89,7 +89,7 @@ export async function POST(request) {
         if (words.length) {
           const { data: partial } = await supabase
             .from('books')
-            .select('id, title, author, rating, rating_source')
+            .select('id, title, author, rating, rating_source, series_name')
             .ilike('title', `%${words[0]}%`)
             .limit(10)
 
