@@ -52,27 +52,7 @@ export async function POST(request) {
       const normTitle  = norm(title)
       let match = null
 
-      // 1. ISBN13 exact match (most reliable)
-      if (isbn13) {
-        const { data } = await supabase
-          .from('books')
-          .select('id, title, author, rating, rating_source')
-          .eq('isbn13', isbn13)
-          .limit(1)
-        match = data?.[0] ?? null
-      }
-
-      // 2. ISBN exact match
-      if (!match && isbn) {
-        const { data } = await supabase
-          .from('books')
-          .select('id, title, author, rating, rating_source')
-          .eq('isbn', isbn)
-          .limit(1)
-        match = data?.[0] ?? null
-      }
-
-      // 3. Title ilike + author similarity
+      // 1. Title ilike + author similarity
       if (!match) {
         const { data: exact } = await supabase
           .from('books')
@@ -89,7 +69,7 @@ export async function POST(request) {
         }
       }
 
-      // 4. Partial title fallback
+      // 2. Partial title fallback
       if (!match) {
         const words = normTitle.split(/\s+/).filter(w => w.length > 3).slice(0, 3)
         if (words.length) {
