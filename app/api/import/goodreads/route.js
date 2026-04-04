@@ -159,22 +159,39 @@ export async function POST(request) {
 
   // Queue unmatched books for enrichment
   if (toQueue.length) {
-    // Deduplicate against existing queue rows by isbn13 (handled by DB unique index)
-    // and by title+author for rows without isbn
-    const { error: qErr } = await supabaseAdmin
-      .from('import_queue')
-      .upsert(toQueue, { onConflict: 'isbn13', ignoreDuplicates: true })
-
-    // Also insert rows without isbn13 (upsert won't touch them due to partial index)
-    const noIsbn = toQueue.filter(b => !b.isbn13)
-    if (noIsbn.length) {
-      await supabaseAdmin
-        .from('import_queue')
-        .insert(noIsbn)
-        .select()  // ignore duplicates via DB — pipeline deduplicates on title+author
+    // Deduplicate within the batch by isbn13 first, then by title+author
+    const seenIsbn13 = new Set()
+    const seenTitleAuthor = new Set()
+    const dedupedQueue = []
+    for (const b of toQueue) {
+      const key = `${b.title?.toLowerCase()}||${b.author?.toLowerCase()}`
+      if (b.isbn13) {
+        if (seenIsbn13.has(b.isbn13)) continue
+        seenIsbn13.add(b.isbn13)
+      } else {
+        if (seenTitleAuthor.has(key)) continue
+        seenTitleAuthor.add(key)
+      }
+      dedupedQueue.push(b)
     }
 
-    results.queued = toQueue.length
+    // Rows with isbn13 — upsert (DB unique index handles cross-import dedup)
+    const withIsbn13 = dedupedQueue.filter(b => b.isbn13)
+    if (withIsbn13.length) {
+      await supabaseAdmin
+        .from('import_queue')
+        .upsert(withIsbn13, { onConflict: 'isbn13', ignoreDuplicates: true })
+    }
+
+    // Rows without isbn13 — plain insert, pipeline deduplicates on title+author
+    const withoutIsbn13 = dedupedQueue.filter(b => !b.isbn13)
+    if (withoutIsbn13.length) {
+      await supabaseAdmin
+        .from('import_queue')
+        .insert(withoutIsbn13)
+    }
+
+    results.queued = dedupedQueue.length
   }
 
   return NextResponse.json(results)
