@@ -2,6 +2,7 @@ import Link from 'next/link'
 import BookCard from '@/components/BookCard'
 import HeroGrid from '@/components/HeroGrid'
 import { getFeaturedBooks, getPopularTropes, getPersonalizedBooks, getSeriesCompletionBooks, getBecauseYouReadBooks } from '@/lib/search'
+import SeriesCompletionSection from '@/components/SeriesCompletionSection'
 import { createSupabaseServer } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
@@ -54,17 +55,7 @@ export default async function HomePage() {
       )}
 
       {/* Complete the Series */}
-      {seriesBooks.length > 0 && (
-        <section className="max-w-6xl mx-auto px-4 py-10">
-          <h2 className="font-serif text-2xl font-semibold mb-1">Complete the Series</h2>
-          <p className="text-sm text-slate mb-5">Books from series you&apos;ve started reading</p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {seriesBooks.slice(0, 12).map(book => (
-              <BookCard key={book.id} book={book} />
-            ))}
-          </div>
-        </section>
-      )}
+      <SeriesCompletionSection series={seriesBooks} />
 
       {/* Because you read X */}
       {becauseYouRead?.books?.length > 0 && (
