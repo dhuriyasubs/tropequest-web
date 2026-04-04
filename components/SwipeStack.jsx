@@ -135,18 +135,18 @@ export default function SwipeStack({ initialBooks, userId, initialExcludeIds = [
     : {}
 
   return (
-    <div className="max-w-sm mx-auto px-4 py-6 flex flex-col items-center min-h-[calc(100vh-56px)]">
+    <div className="max-w-sm mx-auto px-4 pt-4 pb-6 flex flex-col items-center" style={{ minHeight: 'calc(100dvh - 56px)' }}>
 
       {/* Header */}
-      <div className="w-full text-center mb-5">
+      <div className="w-full text-center mb-4">
         <h1 className="font-serif text-xl font-bold">Surprise Me ✨</h1>
         {savedCount > 0 && (
           <p className="text-sm text-bloom mt-0.5">{savedCount} added to TBR</p>
         )}
       </div>
 
-      {/* Card stack */}
-      <div className="relative w-full" style={{ height: 520 }}>
+      {/* Card stack — grows to fill available space */}
+      <div className="relative w-full flex-1" style={{ minHeight: 0 }}>
 
         {/* Background card — peek of the next book */}
         {nextBook && (
@@ -155,8 +155,8 @@ export default function SwipeStack({ initialBooks, userId, initialExcludeIds = [
             style={{ transform: 'scale(0.95) translateY(10px)', zIndex: 1 }}
           >
             {nextBook.cover_url
-              ? <img src={nextBook.cover_url} alt="" className="w-full h-52 object-cover opacity-50" />
-              : <div className="w-full h-52 bg-gray-100" />
+              ? <img src={nextBook.cover_url} alt="" className="w-full h-40 object-cover opacity-50" />
+              : <div className="w-full h-40 bg-gray-100" />
             }
             <div className="p-4 space-y-2">
               <div className="h-4 bg-gray-100 rounded w-3/4" />
@@ -196,15 +196,15 @@ export default function SwipeStack({ initialBooks, userId, initialExcludeIds = [
           </div>
 
           {/* Cover */}
-          <div className="relative h-52 bg-gray-100 overflow-hidden">
+          <div className="relative h-40 bg-gray-100 overflow-hidden flex-shrink-0 pointer-events-none">
             {book.cover_url
-              ? <img src={book.cover_url} alt={book.title} className="w-full h-full object-cover pointer-events-none" />
+              ? <img src={book.cover_url} alt={book.title} className="w-full h-full object-cover" />
               : <div className="w-full h-full flex items-center justify-center text-5xl">📚</div>
             }
           </div>
 
-          {/* Info */}
-          <div className="p-4 overflow-y-auto" style={{ maxHeight: 268 }}>
+          {/* Info — pointer-events-none so drag works everywhere on card */}
+          <div className="p-4 pointer-events-none">
             <h2 className="font-serif text-xl font-bold leading-tight">{book.title}</h2>
             <p className="text-bloom text-sm font-medium mt-0.5">{book.author}</p>
 
@@ -245,7 +245,7 @@ export default function SwipeStack({ initialBooks, userId, initialExcludeIds = [
       </div>
 
       {/* Action buttons */}
-      <div className="flex items-center gap-10 mt-6">
+      <div className="flex items-center gap-10 mt-5 flex-shrink-0">
         <button
           onClick={() => decide('left')}
           disabled={!!flyDir}
@@ -276,10 +276,10 @@ export default function SwipeStack({ initialBooks, userId, initialExcludeIds = [
         </button>
       </div>
 
-      <p className="text-xs text-slate/40 mt-3">swipe or tap buttons</p>
+      <p className="text-xs text-slate/40 mt-2 flex-shrink-0">swipe or tap buttons</p>
 
       {!userId && (
-        <p className="text-xs text-slate/60 mt-2">
+        <p className="text-xs text-slate/60 mt-1 flex-shrink-0">
           <Link href="/login" className="text-bloom hover:underline">Sign in</Link> to save books to your TBR
         </p>
       )}
