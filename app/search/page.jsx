@@ -1,5 +1,8 @@
 import { searchBooks, getPopularTropes, getPopularGenres } from '@/lib/search'
+import { createSupabaseServer } from '@/lib/supabase'
 import SearchClient from '@/components/SearchClient'
+
+export const dynamic = 'force-dynamic'
 
 export const metadata = {
   title: 'Browse Books',
@@ -15,12 +18,22 @@ export default async function SearchPage({ searchParams }) {
   const genres   = [searchParams.genres].flat().filter(Boolean)
   const page     = Number(searchParams.page || 1)
 
-  const [{ books, total }, allTropes, allGenres] =
+  const supabase = createSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const [{ books, total }, allTropes, allGenres, shelfRes] =
     await Promise.all([
       searchBooks({ query: query || null, tropes, subjects, genres, page }),
       getPopularTropes(50),
       getPopularGenres(50),
+      user
+        ? supabase.from('shelf').select('book_id, status').eq('user_id', user.id)
+        : Promise.resolve({ data: [] }),
     ])
+
+  // Map bookId → status for badge display in SearchClient
+  const shelfMap = {}
+  for (const r of shelfRes.data ?? []) shelfMap[r.book_id] = r.status
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
@@ -35,6 +48,7 @@ export default async function SearchPage({ searchParams }) {
         initialSelSubjects={subjects}
         initialSelGenres={genres}
         initialPage={page}
+        shelfMap={shelfMap}
       />
     </div>
   )

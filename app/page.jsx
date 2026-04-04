@@ -16,22 +16,23 @@ export default async function HomePage() {
   const supabase = createSupabaseServer()
   const { data: { user } } = await supabase.auth.getUser()
 
-  let interests = null
+  let interests    = null
+  let readBookIds  = []
   if (user) {
-    const { data } = await supabase
-      .from('user_interests')
-      .select('tropes, subjects, authors')
-      .eq('user_id', user.id)
-      .single()
-    if (data && (data.tropes?.length || data.subjects?.length || data.authors?.length)) {
-      interests = data
+    const [interestsRes, shelfRes] = await Promise.all([
+      supabase.from('user_interests').select('tropes, subjects, authors').eq('user_id', user.id).single(),
+      supabase.from('shelf').select('book_id').eq('user_id', user.id).eq('status', 'read'),
+    ])
+    if (interestsRes.data && (interestsRes.data.tropes?.length || interestsRes.data.subjects?.length || interestsRes.data.authors?.length)) {
+      interests = interestsRes.data
     }
+    readBookIds = (shelfRes.data ?? []).map(r => r.book_id)
   }
 
   const [books, popularTropes, personalizedBooks, seriesBooks, becauseYouRead] = await Promise.all([
     getFeaturedBooks(12),
     getPopularTropes(50),
-    interests ? getPersonalizedBooks(interests) : Promise.resolve([]),
+    interests ? getPersonalizedBooks({ ...interests, excludeIds: readBookIds }) : Promise.resolve([]),
     user ? getSeriesCompletionBooks(user.id) : Promise.resolve([]),
     user ? getBecauseYouReadBooks(user.id) : Promise.resolve(null),
   ])

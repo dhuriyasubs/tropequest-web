@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import TbrButton from './TbrButton'
 
-export default function BookCard({ book }) {
+export default function BookCard({ book, shelfStatus = null }) {
   return (
     <Link
       href={`/books/${book.slug}`}
@@ -26,6 +26,11 @@ export default function BookCard({ book }) {
         <div className="absolute top-2 right-2 bg-white/80 backdrop-blur-sm rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <TbrButton bookId={book.id} size="sm" />
         </div>
+        {shelfStatus === 'read' && (
+          <div className="absolute bottom-0 left-0 right-0 bg-green-600/90 text-white text-xs font-semibold text-center py-1">
+            ✓ Read
+          </div>
+        )}
       </div>
       <div className="p-3 flex flex-col gap-1">
         <p className="font-serif font-semibold text-sm leading-tight line-clamp-2">

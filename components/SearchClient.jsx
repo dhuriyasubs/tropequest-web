@@ -7,6 +7,7 @@ import BookCard from './BookCard'
 export default function SearchClient({
   initialBooks, initialTotal, tropes, genres = [],
   initialQuery = '', initialSelTropes = [], initialSelGenres = [], initialPage = 1,
+  shelfMap = {},
 }) {
   const router      = useRouter()
   const pathname    = usePathname()
@@ -95,7 +96,7 @@ export default function SearchClient({
         </p>
 
         <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 transition-opacity ${loading ? 'opacity-40' : ''}`}>
-          {books.map(b => <BookCard key={b.id} book={b} />)}
+          {books.map(b => <BookCard key={b.id} book={b} shelfStatus={shelfMap[b.id] ?? null} />)}
         </div>
 
         {books.length === 0 && !loading && (
