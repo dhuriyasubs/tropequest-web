@@ -63,7 +63,7 @@ function extractBooks(csvText) {
 
   // Parse "Title (Series Name, #1)" or "Title (Series, #1; Other, #2)" — take first series only
   const parseSeries = raw => {
-    const m = raw.trim().match(/^(.*?)\s*\(([^)]+),\s*#(\d+(?:\.\d+)?)\s*(?:;[^)]+)?\)$/)
+    const m = raw.trim().match(/^(.*?)\s*\(([^,)]+),\s*#(\d+(?:\.\d+)?).*\)$/)
     if (!m) return { title: raw.trim(), series_name: null, series_number: null }
     return {
       title:         m[1].trim(),
