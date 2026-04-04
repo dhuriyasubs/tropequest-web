@@ -21,6 +21,17 @@ export async function GET(request) {
         updated_at: new Date().toISOString(),
       }, { onConflict: 'id' })
       if (upsertError) console.error('[auth/callback] profile upsert error:', upsertError)
+
+      // New user check — no interests row means first login, send to onboarding
+      const { data: interests } = await supabase
+        .from('user_interests')
+        .select('user_id')
+        .eq('user_id', user.id)
+        .single()
+
+      if (!interests) {
+        return NextResponse.redirect(`${origin}/welcome`)
+      }
     }
   }
 
