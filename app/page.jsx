@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import BookCard from '@/components/BookCard'
 import HeroGrid from '@/components/HeroGrid'
-import { getFeaturedBooks, getPopularTropes, getPersonalizedBooks } from '@/lib/search'
+import { getFeaturedBooks, getPopularTropes, getPersonalizedBooks, getSeriesCompletionBooks, getBecauseYouReadBooks } from '@/lib/search'
 import { createSupabaseServer } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
@@ -27,10 +27,12 @@ export default async function HomePage() {
     }
   }
 
-  const [books, popularTropes, personalizedBooks] = await Promise.all([
+  const [books, popularTropes, personalizedBooks, seriesBooks, becauseYouRead] = await Promise.all([
     getFeaturedBooks(12),
     getPopularTropes(50),
     interests ? getPersonalizedBooks(interests) : Promise.resolve([]),
+    user ? getSeriesCompletionBooks(user.id) : Promise.resolve([]),
+    user ? getBecauseYouReadBooks(user.id) : Promise.resolve(null),
   ])
 
   return (
@@ -45,6 +47,34 @@ export default async function HomePage() {
           <p className="text-sm text-slate mb-5">Based on your interests</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {personalizedBooks.map(book => (
+              <BookCard key={book.id} book={book} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Complete the Series */}
+      {seriesBooks.length > 0 && (
+        <section className="max-w-6xl mx-auto px-4 py-10">
+          <h2 className="font-serif text-2xl font-semibold mb-1">Complete the Series</h2>
+          <p className="text-sm text-slate mb-5">Books from series you&apos;ve started reading</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {seriesBooks.slice(0, 12).map(book => (
+              <BookCard key={book.id} book={book} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Because you read X */}
+      {becauseYouRead?.books?.length > 0 && (
+        <section className="max-w-6xl mx-auto px-4 py-10">
+          <h2 className="font-serif text-2xl font-semibold mb-1">
+            Because you read <span className="text-bloom italic">{becauseYouRead.seedTitle}</span>
+          </h2>
+          <p className="text-sm text-slate mb-5">Books with similar tropes you might love</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {becauseYouRead.books.slice(0, 12).map(book => (
               <BookCard key={book.id} book={book} />
             ))}
           </div>

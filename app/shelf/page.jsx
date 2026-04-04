@@ -39,7 +39,8 @@ export default async function ShelfPage({ searchParams }) {
   if (shelfQuery) {
     entries = entries.filter(e =>
       e.books.title?.toLowerCase().includes(shelfQuery) ||
-      e.books.author?.toLowerCase().includes(shelfQuery)
+      e.books.author?.toLowerCase().includes(shelfQuery) ||
+      e.books.series_name?.toLowerCase().includes(shelfQuery)
     )
   }
 
