@@ -1,16 +1,13 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { getBookBySlug, getSeriesBooks, getMoreByAuthor, getAllSlugs } from '@/lib/search'
+import { getBookBySlug, getSeriesBooks, getMoreByAuthor } from '@/lib/search'
 import { slugify } from '@/lib/utils'
 import { createSupabaseServer } from '@/lib/supabase'
 import TbrButton from '@/components/TbrButton'
 import ShelfButton from '@/components/ShelfButton'
 import ShelfStatusSelect from '@/components/ShelfStatusSelect'
 
-export async function generateStaticParams() {
-  const slugs = await getAllSlugs()
-  return slugs.map(slug => ({ slug }))
-}
+export const revalidate = 3600
 
 export async function generateMetadata({ params }) {
   const book = await getBookBySlug(params.slug)

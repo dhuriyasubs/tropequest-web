@@ -6,11 +6,6 @@ import { slugify } from '@/lib/utils'
 
 export const revalidate = 3600
 
-export async function generateStaticParams() {
-  const series = await getAllSeries()
-  return series.map(s => ({ slug: slugify(s.series_name) }))
-}
-
 export async function generateMetadata({ params }) {
   const series = await getAllSeries()
   const match  = series.find(s => slugify(s.series_name) === params.slug)

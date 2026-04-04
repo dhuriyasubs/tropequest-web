@@ -1,12 +1,9 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import BookCard from '@/components/BookCard'
-import { getBooksByAuthor, getAllAuthors } from '@/lib/search'
+import { getBooksByAuthor } from '@/lib/search'
 
-export async function generateStaticParams() {
-  const authors = await getAllAuthors()
-  return authors.map(a => ({ slug: encodeURIComponent(a) }))
-}
+export const revalidate = 3600
 
 export async function generateMetadata({ params }) {
   const author = decodeURIComponent(params.slug)
