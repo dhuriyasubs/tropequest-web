@@ -7,12 +7,13 @@ import BookCard from './BookCard'
 export default function SearchClient({
   initialBooks, initialTotal, tropes, genres = [],
   initialQuery = '', initialSelTropes = [], initialSelGenres = [], initialPage = 1,
-  shelfMap = {},
+  shelfMap = {}, autoFocus = false,
 }) {
   const router      = useRouter()
   const pathname    = usePathname()
   const [isPending, startTransition] = useTransition()
   const isMounted   = useRef(false)
+  const searchRef   = useRef(null)
 
   const [query,     setQuery]     = useState(initialQuery)
   const [selTropes, setSelTropes] = useState(initialSelTropes)
@@ -63,6 +64,11 @@ export default function SearchClient({
   // Reset to page 1 on filter change
   useEffect(() => { setPage(1) }, [debouncedQuery, selTropes, selGenres])
 
+  // Auto-focus search input when coming from nav
+  useEffect(() => {
+    if (autoFocus) searchRef.current?.focus()
+  }, [autoFocus])
+
   const toggleTrope = t =>
     setSelTropes(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t])
 
@@ -76,6 +82,7 @@ export default function SearchClient({
       {/* Sidebar filters */}
       <aside className="w-full lg:w-64 shrink-0">
         <input
+          ref={searchRef}
           type="search"
           value={query}
           onChange={e => setQuery(e.target.value)}

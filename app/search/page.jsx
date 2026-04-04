@@ -49,6 +49,7 @@ export default async function SearchPage({ searchParams }) {
         initialSelGenres={genres}
         initialPage={page}
         shelfMap={shelfMap}
+        autoFocus={!query && !tropes.length && !genres.length}
       />
     </div>
   )
