@@ -4,6 +4,12 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
 import { createSupabaseBrowser } from '@/lib/supabase-browser'
 
+const browseItems = [
+  { href: '/tropes',  label: 'Browse Tropes'   },
+  { href: '/series',  label: 'Browse Series'   },
+  { href: '/author',  label: 'Browse Authors'  },
+]
+
 const menuItems = [
   { href: '/shelf',     label: 'My Shelf'         },
   { href: '/tbr',       label: 'My TBR'           },
@@ -92,6 +98,21 @@ export default function Nav() {
 
           {menuOpen && (
             <div className="absolute right-0 top-11 w-52 bg-white border border-petal/30 rounded-xl shadow-lg py-1.5 z-50">
+              {browseItems.map(item => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMenuOpen(false)}
+                  className={`flex items-center px-4 py-2.5 text-sm hover:bg-gray-50 ${
+                    path === item.href ? 'text-bloom font-medium' : 'text-ink'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              ))}
+
+              <hr className="my-1 border-petal/20" />
+
               {menuItems.map(item => (
                 <button
                   key={item.href}
