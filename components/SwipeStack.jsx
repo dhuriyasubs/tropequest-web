@@ -16,8 +16,9 @@ export default function SwipeStack({ initialBooks, userId, initialExcludeIds = [
   const passLabelRef = useRef(null)
   const tbrLabelRef  = useRef(null)
   const dragRef      = useRef({ active: false, startX: 0, dx: 0 })
-  const seenIdsRef   = useRef(new Set(initialExcludeIds.map(String)))
-  const flyDirRef    = useRef(null) // mirrors flyDir for use inside setTimeout
+  const seenIdsRef      = useRef(new Set(initialExcludeIds.map(String)))
+  const flyDirRef       = useRef(null) // mirrors flyDir for use inside setTimeout
+  const toastShownRef   = useRef(false)
 
   useEffect(() => { flyDirRef.current = flyDir }, [flyDir])
 
@@ -56,6 +57,10 @@ export default function SwipeStack({ initialBooks, userId, initialExcludeIds = [
         })
       }
       setSavedCount(c => c + 1)
+      if (!toastShownRef.current) {
+        toastShownRef.current = true
+        window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Added to TBR ♥' } }))
+      }
     }
 
     setTimeout(() => {
