@@ -2,12 +2,6 @@ import { NextResponse } from 'next/server'
 import { createSupabaseServer } from '@/lib/supabase'
 import { supabaseAdmin } from '@/lib/supabase'
 
-const STATUS_MAP = {
-  'read':              'read',
-  'currently-reading': 'reading',
-  'to-read':           'unread',
-}
-
 function norm(s = '') {
   return s
     .toLowerCase()
@@ -38,18 +32,17 @@ export async function POST(request) {
   }
 
   const results = { imported: 0, updated: 0, queued: 0 }
-  const upserts      = []   // { user_id, book_id, status }
-  const ratingUpserts = []  // { id, rating, rating_count, rating_source } for matched books missing ratings
-  const toQueue      = []   // unmatched — goes to import_queue
+  const upserts       = []   // { user_id, book_id } for tbr
+  const ratingUpserts = []   // { id, rating, rating_source } for matched books missing ratings
+  const toQueue       = []   // unmatched — goes to import_queue
 
   const BATCH = 10
   for (let i = 0; i < books.length; i += BATCH) {
     const chunk = books.slice(i, i + BATCH)
-    await Promise.all(chunk.map(async ({ title, author, status, isbn, isbn13, gr_rating }) => {
+    await Promise.all(chunk.map(async ({ title, author, isbn, isbn13, gr_rating }) => {
       if (!title) return
 
-      const grStatus   = STATUS_MAP[status] ?? 'unread'
-      const normTitle  = norm(title)
+      const normTitle = norm(title)
       let match = null
 
       // 1. ISBN13 exact match (most reliable)
@@ -112,7 +105,7 @@ export async function POST(request) {
       }
 
       if (match) {
-        upserts.push({ user_id: user.id, book_id: match.id, status: grStatus })
+        upserts.push({ user_id: user.id, book_id: match.id })
 
         // Store GR rating on the book if it has none (or no source set)
         if (gr_rating && (!match.rating || !match.rating_source)) {
@@ -124,7 +117,7 @@ export async function POST(request) {
     }))
   }
 
-  // Bulk upsert shelf entries — deduplicate by book_id (same book matched via different ISBNs)
+  // Bulk insert into tbr — deduplicate by book_id
   const seenBookIds = new Set()
   const dedupedUpserts = upserts.filter(u => {
     if (seenBookIds.has(u.book_id)) return false
@@ -135,20 +128,23 @@ export async function POST(request) {
   if (dedupedUpserts.length) {
     const bookIds = dedupedUpserts.map(u => u.book_id)
     const { data: existing } = await supabase
-      .from('shelf')
+      .from('tbr')
       .select('book_id')
       .eq('user_id', user.id)
       .in('book_id', bookIds)
 
     const existingSet = new Set((existing ?? []).map(r => r.book_id))
-    results.imported = dedupedUpserts.filter(u => !existingSet.has(u.book_id)).length
-    results.updated  = dedupedUpserts.filter(u =>  existingSet.has(u.book_id)).length
+    const newEntries = dedupedUpserts.filter(u => !existingSet.has(u.book_id))
+    results.imported = newEntries.length
+    results.updated  = dedupedUpserts.length - newEntries.length
 
-    const { error } = await supabase
-      .from('shelf')
-      .upsert(dedupedUpserts, { onConflict: 'user_id,book_id' })
+    if (newEntries.length) {
+      const { error } = await supabase
+        .from('tbr')
+        .insert(newEntries)
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    }
   }
 
   // Update ratings on matched books (admin client, best-effort)
