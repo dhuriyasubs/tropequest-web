@@ -15,8 +15,8 @@ module.exports = {
         plum:  '#3d1f2e',
       },
       fontFamily: {
-        serif: ['Playfair Display', 'Georgia', 'serif'],
-        sans:  ['DM Sans', 'system-ui', 'sans-serif'],
+        serif: ['var(--font-serif)', 'Georgia', 'serif'],
+        sans:  ['var(--font-sans)', 'system-ui', 'sans-serif'],
       },
     },
   },

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import TbrButton from './TbrButton'
 
 export default function BookCard({ book, shelfStatus = null }) {
@@ -9,14 +10,12 @@ export default function BookCard({ book, shelfStatus = null }) {
     >
       <div className="relative aspect-[2/3] bg-gray-100 overflow-hidden">
         {book.cover_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={book.cover_url}
             alt={`${book.title} cover`}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            loading="lazy"
-            width={200}
-            height={300}
+            fill
+            sizes="(max-width: 640px) 45vw, (max-width: 768px) 30vw, (max-width: 1024px) 22vw, 15vw"
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-petal/40 text-4xl">

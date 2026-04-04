@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { getBookBySlug, getSeriesBooks, getMoreByAuthor } from '@/lib/search'
 import { slugify } from '@/lib/utils'
 import { createSupabaseServer } from '@/lib/supabase'
@@ -89,10 +90,16 @@ export default async function BookPage({ params }) {
         <div className="flex flex-col sm:flex-row gap-10">
           {/* Cover */}
           <div className="shrink-0 mx-auto sm:mx-0">
-            <div className="w-44 aspect-[2/3] rounded-lg overflow-hidden shadow-lg bg-gray-100">
+            <div className="w-44 aspect-[2/3] rounded-lg overflow-hidden shadow-lg bg-gray-100 relative">
               {book.cover_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={book.cover_url} alt={`${book.title} cover`} className="w-full h-full object-cover" />
+                <Image
+                  src={book.cover_url}
+                  alt={`${book.title} cover`}
+                  fill
+                  sizes="176px"
+                  className="object-cover"
+                  priority
+                />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-5xl">📚</div>
               )}

@@ -1,7 +1,22 @@
 import './globals.css'
+import { Playfair_Display, DM_Sans } from 'next/font/google'
 import Nav from '@/components/Nav'
 import Toaster from '@/components/Toaster'
 import AuthRedirectHandler from '@/components/AuthRedirectHandler'
+
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['400', '600', '700'],
+  variable: '--font-serif',
+  display: 'swap',
+})
+
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  variable: '--font-sans',
+  display: 'swap',
+})
 
 export const metadata = {
   metadataBase: new URL('https://tropequest.com'),
@@ -21,7 +36,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${playfair.variable} ${dmSans.variable}`}>
       <body className="min-h-screen flex flex-col">
         <Nav />
         <main className="flex-1">{children}</main>

@@ -6,8 +6,13 @@ const nextConfig = {
       { protocol: 'https', hostname: '**.bookbrainz.org' },
       { protocol: 'https', hostname: 'images-na.ssl-images-amazon.com' },
       { protocol: 'https', hostname: 'm.media-amazon.com' },
-      { protocol: 'https', hostname: 'hardcover-app-assets.s3.amazonaws.com' },
+      { protocol: 'https', hostname: '**.amazonaws.com' },
+      { protocol: 'https', hostname: 'books.google.com' },
+      { protocol: 'https', hostname: 'covers.openlibrary.org' },
+      { protocol: 'https', hostname: 'i.gr-assets.com' },
+      { protocol: 'https', hostname: '**.goodreads.com' },
     ],
+    formats: ['image/avif', 'image/webp'],
   },
 }
 
