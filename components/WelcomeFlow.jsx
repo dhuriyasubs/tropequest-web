@@ -83,13 +83,13 @@ export default function WelcomeFlow({ firstName, popularTropes, allGenres, allAu
                 Find books by the tropes and vibes you actually love — not just bestseller lists.
               </p>
               <p className="text-slate/70 text-sm mb-10 max-w-sm">
-                Takes about 30 seconds. Tell us what you love and we'll personalise everything.
+                Takes about 30 seconds. Tell us what you love and we&apos;ll personalise everything.
               </p>
               <button
                 onClick={() => setStep(1)}
                 className="px-10 py-3 bg-bloom text-white font-semibold rounded-xl hover:opacity-90 transition-opacity text-base"
               >
-                Let's go
+                Let&apos;s go
               </button>
             </div>
           )}
@@ -164,7 +164,7 @@ export default function WelcomeFlow({ firstName, popularTropes, allGenres, allAu
               <p className="text-xs font-medium text-bloom uppercase tracking-wider mb-2">Step 3 of 3</p>
               <h2 className="font-serif text-2xl font-bold mb-1">Any favourite authors?</h2>
               <p className="text-slate text-sm mb-4">
-                We'll surface new books by authors you already love. Optional.
+                We&apos;ll surface new books by authors you already love. Optional.
               </p>
               <input
                 type="text"
