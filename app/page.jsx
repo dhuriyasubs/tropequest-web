@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import Link from 'next/link'
 import BookCard from '@/components/BookCard'
 import HeroGrid from '@/components/HeroGrid'
+import DiscoverStrip from '@/components/DiscoverStrip'
 import SeriesCompletionSection from '@/components/SeriesCompletionSection'
 import { getFeaturedBooks, getPopularTropes, getPersonalizedBooks, getSeriesCompletionBooks, getBecauseYouReadBooks } from '@/lib/search'
 import { createSupabaseServer } from '@/lib/supabase'
@@ -99,6 +100,7 @@ export default async function HomePage() {
   return (
     <>
       <HeroGrid tropes={popularTropes} />
+      <DiscoverStrip />
 
       {user && (
         <Suspense fallback={<PersonalisedSkeleton />}>
