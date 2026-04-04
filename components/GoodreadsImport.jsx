@@ -61,16 +61,32 @@ function extractBooks(csvText) {
   // Goodreads wraps ISBNs in ="..." — strip that
   const cleanISBN = s => s?.replace(/^="?|"?=?$/g, '').replace(/[^0-9X]/gi, '').trim() || null
 
+  // Parse "Title (Series Name, #1)" or "Title (Series, #1; Other, #2)" — take first series only
+  const parseSeries = raw => {
+    const m = raw.trim().match(/^(.*?)\s*\(([^)]+),\s*#(\d+(?:\.\d+)?)\s*(?:;[^)]+)?\)$/)
+    if (!m) return { title: raw.trim(), series_name: null, series_number: null }
+    return {
+      title:         m[1].trim(),
+      series_name:   m[2].trim(),
+      series_number: parseFloat(m[3]),
+    }
+  }
+
   return rows.slice(1)
     .filter(r => r.length > Math.max(iTitle, iAuthor, iShelf))
-    .map(r => ({
-      title:     r[iTitle]?.trim() ?? '',
-      author:    r[iAuthor]?.trim() ?? '',
-      status:    GR_STATUS_MAP[r[iShelf]?.trim()] ?? 'unread',
-      isbn:      iISBN   >= 0 ? cleanISBN(r[iISBN])   : null,
-      isbn13:    iISBN13 >= 0 ? cleanISBN(r[iISBN13]) : null,
-      gr_rating: iGrRating >= 0 ? parseFloat(r[iGrRating]) || null : null,
-    }))
+    .map(r => {
+      const { title, series_name, series_number } = parseSeries(r[iTitle]?.trim() ?? '')
+      return {
+        title,
+        series_name,
+        series_number,
+        author:    r[iAuthor]?.trim() ?? '',
+        status:    GR_STATUS_MAP[r[iShelf]?.trim()] ?? 'unread',
+        isbn:      iISBN   >= 0 ? cleanISBN(r[iISBN])   : null,
+        isbn13:    iISBN13 >= 0 ? cleanISBN(r[iISBN13]) : null,
+        gr_rating: iGrRating >= 0 ? parseFloat(r[iGrRating]) || null : null,
+      }
+    })
     .filter(b => b.title)
 }
 

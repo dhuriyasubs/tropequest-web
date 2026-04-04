@@ -32,14 +32,15 @@ export async function POST(request) {
   }
 
   const results = { imported: 0, updated: 0, queued: 0 }
-  const upserts       = []   // { user_id, book_id } for tbr
-  const ratingUpserts = []   // { id, rating, rating_source } for matched books missing ratings
-  const toQueue       = []   // unmatched — goes to import_queue
+  const upserts        = []   // { user_id, book_id } for tbr
+  const ratingUpserts  = []   // { id, rating, rating_source } for matched books missing ratings
+  const seriesUpserts  = []   // { id, series_name, series_number } for matched books missing series
+  const toQueue        = []   // unmatched — goes to import_queue
 
   const BATCH = 10
   for (let i = 0; i < books.length; i += BATCH) {
     const chunk = books.slice(i, i + BATCH)
-    await Promise.all(chunk.map(async ({ title, author, isbn, isbn13, gr_rating }) => {
+    await Promise.all(chunk.map(async ({ title, author, series_name, series_number, isbn, isbn13, gr_rating }) => {
       if (!title) return
 
       const normTitle = norm(title)
@@ -107,12 +108,17 @@ export async function POST(request) {
       if (match) {
         upserts.push({ user_id: user.id, book_id: match.id })
 
-        // Store GR rating on the book if it has none (or no source set)
+        // Store GR rating on the book if it has none
         if (gr_rating && (!match.rating || !match.rating_source)) {
           ratingUpserts.push({ id: match.id, rating: gr_rating, rating_source: 'Goodreads' })
         }
+
+        // Store series info if book is missing it
+        if (series_name && !match.series_name) {
+          seriesUpserts.push({ id: match.id, series_name, series_number: series_number ?? null })
+        }
       } else {
-        toQueue.push({ title, author, isbn: isbn ?? null, isbn13: isbn13 ?? null, gr_rating: gr_rating ?? null })
+        toQueue.push({ title, author, series_name: series_name ?? null, series_number: series_number ?? null, isbn: isbn ?? null, isbn13: isbn13 ?? null, gr_rating: gr_rating ?? null })
       }
     }))
   }
@@ -156,6 +162,19 @@ export async function POST(request) {
           .update({ rating, rating_source })
           .eq('id', id)
           .is('rating_source', null)  // only if not already set
+      )
+    )
+  }
+
+  // Update series info on matched books missing it (admin client, best-effort)
+  if (seriesUpserts.length) {
+    await Promise.all(
+      seriesUpserts.map(({ id, series_name, series_number }) =>
+        supabaseAdmin
+          .from('books')
+          .update({ series_name, series_number })
+          .eq('id', id)
+          .is('series_name', null)  // only if not already set
       )
     )
   }
