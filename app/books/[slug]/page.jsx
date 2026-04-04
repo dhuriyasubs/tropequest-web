@@ -7,6 +7,7 @@ import { createSupabaseServer } from '@/lib/supabase'
 import TbrButton from '@/components/TbrButton'
 import ShelfButton from '@/components/ShelfButton'
 import ShelfStatusSelect from '@/components/ShelfStatusSelect'
+import StarRating from '@/components/StarRating'
 
 export const revalidate = 3600
 
@@ -41,13 +42,16 @@ export default async function BookPage({ params }) {
   const { data: { user } } = await supabase.auth.getUser()
   let isSaved = false
   let shelfStatus = null
+  let userRating = null
   if (user) {
-    const [tbrRes, shelfRes] = await Promise.all([
+    const [tbrRes, shelfRes, ratingRes] = await Promise.all([
       supabase.from('tbr').select('id').eq('user_id', user.id).eq('book_id', book.id).single(),
       supabase.from('shelf').select('status').eq('user_id', user.id).eq('book_id', book.id).single(),
+      supabase.from('ratings').select('rating').eq('user_id', user.id).eq('book_id', book.id).single(),
     ])
     isSaved = !!tbrRes.data
     shelfStatus = shelfRes.data?.status ?? null
+    userRating = ratingRes.data?.rating ?? null
   }
 
   const [seriesBooks, moreByAuthor] = await Promise.all([
@@ -143,8 +147,13 @@ export default async function BookPage({ params }) {
               </div>
             )}
 
+            {/* User rating */}
+            <div className="mt-4">
+              <StarRating bookId={book.id} initialRating={userRating} />
+            </div>
+
             {/* Buy Now + TBR + Shelf */}
-            <div className="flex items-center gap-3 mt-5 flex-wrap">
+            <div className="flex items-center gap-3 mt-4 flex-wrap">
               {book.buy_url_amazon_in && (
                 <a
                   href={book.buy_url_amazon_in}
