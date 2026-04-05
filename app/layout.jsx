@@ -57,6 +57,7 @@ export default function RootLayout({ children }) {
             <div className="space-y-2">
               <p className="text-white font-semibold">TropeQuest</p>
               <div className="flex flex-wrap gap-x-4 gap-y-1">
+                <a href="/blog"    className="hover:text-white transition-colors">Blog</a>
                 <a href="/about"   className="hover:text-white transition-colors">About</a>
                 <a href="/contact" className="hover:text-white transition-colors">Contact</a>
                 <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
