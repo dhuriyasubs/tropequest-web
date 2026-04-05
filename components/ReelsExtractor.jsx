@@ -294,14 +294,20 @@ function BookResultCard({ item, selected, onToggle, shelfStatus, isInTbr }) {
           : 'border-red-200 bg-red-50/20'
       }`}
     >
-      {/* Checkbox */}
-      {onToggle && (
-        <div className="shrink-0 flex items-center">
+      {/* Cover + checkbox overlay */}
+      <div className="relative shrink-0 w-12 sm:w-14 rounded-lg overflow-hidden bg-gray-100" style={{ aspectRatio: '2/3' }}>
+        {dbBook?.cover_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={dbBook.cover_url} alt={title} className="w-full h-full object-contain" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-xl">📚</div>
+        )}
+        {onToggle && (
           <button
             onClick={onToggle}
             aria-label={selected ? 'Deselect' : 'Select'}
-            className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-              selected ? 'bg-bloom border-bloom' : 'border-slate/30 hover:border-bloom'
+            className={`absolute top-1 left-1 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors shadow-sm ${
+              selected ? 'bg-bloom border-bloom' : 'bg-white/80 border-slate/40 hover:border-bloom'
             }`}
           >
             {selected && (
@@ -310,16 +316,6 @@ function BookResultCard({ item, selected, onToggle, shelfStatus, isInTbr }) {
               </svg>
             )}
           </button>
-        </div>
-      )}
-
-      {/* Cover */}
-      <div className="shrink-0 w-12 sm:w-14 rounded-lg overflow-hidden bg-gray-100" style={{ aspectRatio: '2/3' }}>
-        {dbBook?.cover_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={dbBook.cover_url} alt={title} className="w-full h-full object-cover" />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-xl">📚</div>
         )}
       </div>
 
