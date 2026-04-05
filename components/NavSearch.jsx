@@ -29,6 +29,7 @@ export default function NavSearch() {
   const router = useRouter()
   const [placeholder, setPlaceholder] = useState(PLACEHOLDERS[0])
   const [fading, setFading]           = useState(false)
+  const [leaving, setLeaving]         = useState(false)
   const idxRef = useRef(0)
 
   useEffect(() => {
@@ -43,13 +44,24 @@ export default function NavSearch() {
     return () => clearInterval(id)
   }, [])
 
+  function handleClick() {
+    setLeaving(true)
+    setTimeout(() => router.push('/search'), 180)
+  }
+
   return (
     <button
-      onClick={() => router.push('/search')}
+      onClick={handleClick}
       aria-label="Search books"
       className="flex-1 min-w-0 mx-2 sm:mx-3 text-left"
     >
-      <div className="relative flex items-center w-full px-3 py-1.5 bg-gray-50 border border-petal/30 rounded-full hover:border-bloom/50 hover:bg-white transition-colors">
+      <div
+        className={`relative flex items-center w-full px-3 py-1.5 rounded-full transition-all duration-200 ${
+          leaving
+            ? 'bg-white border border-bloom/60 shadow-md scale-[1.02]'
+            : 'bg-gray-50 border border-gray-300 hover:border-bloom/50 hover:bg-white'
+        }`}
+      >
         <svg
           className="w-3.5 h-3.5 text-slate/40 flex-shrink-0 mr-2"
           viewBox="0 0 20 20" fill="currentColor"

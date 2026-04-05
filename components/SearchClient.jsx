@@ -15,6 +15,7 @@ export default function SearchClient({
   const isMounted   = useRef(false)
   const searchRef   = useRef(null)
   const resultsRef  = useRef(null)
+  const searchWrapRef = useRef(null)
 
   const [query,     setQuery]     = useState(initialQuery)
   const [selTropes, setSelTropes] = useState(initialSelTropes)
@@ -71,7 +72,14 @@ export default function SearchClient({
   useEffect(() => { setPage(1) }, [debouncedQuery, selTropes, selGenres])
 
   useEffect(() => {
-    if (autoFocus) searchRef.current?.focus()
+    if (autoFocus && searchRef.current) {
+      searchRef.current.focus()
+      if (searchWrapRef.current) {
+        searchWrapRef.current.classList.add('search-animate-in')
+        const t = setTimeout(() => searchWrapRef.current?.classList.remove('search-animate-in'), 400)
+        return () => clearTimeout(t)
+      }
+    }
   }, [autoFocus])
 
   const toggleTrope = t =>
@@ -94,14 +102,16 @@ export default function SearchClient({
 
       {/* ── Desktop sidebar ── */}
       <aside className="hidden lg:block w-64 shrink-0">
-        <input
-          ref={searchRef}
-          type="search"
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-          placeholder="Title, author, series…"
-          className="w-full border border-petal/40 rounded-lg px-3 py-2 text-sm mb-6 focus:outline-none focus:ring-2 focus:ring-bloom"
-        />
+        <div ref={searchWrapRef} className="mb-6">
+          <input
+            ref={searchRef}
+            type="search"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="Title, author, series…"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bloom shadow-sm"
+          />
+        </div>
         {genres.length > 0 && (
           <FilterSection title="Genres" items={genres} selected={selGenres} onToggle={toggleGenre} />
         )}

@@ -22,3 +22,11 @@
     @apply bg-bloom text-white border-bloom;
   }
 }
+
+@keyframes searchSlideIn {
+  from { transform: translateY(-10px); opacity: 0.5; box-shadow: 0 0 0 3px theme('colors.pink.200'); }
+  to   { transform: translateY(0);     opacity: 1;   box-shadow: none; }
+}
+.search-animate-in {
+  animation: searchSlideIn 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}

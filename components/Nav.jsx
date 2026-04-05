@@ -66,7 +66,7 @@ export default function Nav() {
           TropeQuest
         </Link>
 
-        <NavSearch />
+        {path !== '/search' && <NavSearch />}
 
         <div className="relative flex-shrink-0" ref={menuRef}>
           <button
