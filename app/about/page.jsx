@@ -13,7 +13,7 @@ export default function AboutPage() {
       <h1 className="font-serif text-4xl font-bold mb-6">About TropeQuest</h1>
       <div className="prose prose-slate max-w-none space-y-4 text-slate leading-relaxed">
         <p>
-          TropeQuest exists for readers who know exactly what they want — enemies to lovers, slow burn, dark romance, morally grey anti-heroes — but spend more time searching than reading.
+          TropeQuest exists for readers who know exactly what they want (enemies to lovers, slow burn, dark romance, morally grey anti-heroes) but spend more time searching than reading.
         </p>
         <p>
           We curate 1,000+ titles across romance, fantasy, and thriller so you can filter by the tropes, moods, and vibes that matter to you, not just genre categories that are too broad to be useful.
