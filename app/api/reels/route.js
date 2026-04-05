@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { GoogleAIFileManager } from '@google/generative-ai/server'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export const maxDuration = 60
 
-const gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+const gemini      = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+const fileManager = new GoogleAIFileManager(process.env.GEMINI_API_KEY)
 
 function isYoutube(url)   { return /youtube\.com|youtu\.be/.test(url) }
 function isInstagram(url) { return /instagram\.com/.test(url) }
@@ -18,77 +20,156 @@ function decodeHTMLEntities(text) {
 }
 
 function normaliseYoutubeUrl(url) {
-  // Gemini needs a full youtube.com/watch?v= URL
   const shortMatch = url.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/)
   if (shortMatch) return `https://www.youtube.com/watch?v=${shortMatch[1]}`
   return url
 }
 
-async function getInstagramText(url) {
-  const headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Accept-Language': 'en-US,en;q=0.9',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-  }
+const IG_HEADERS = {
+  'User-Agent':      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Accept-Language': 'en-US,en;q=0.9',
+  'Accept':          'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+}
 
-  // Try main URL first
-  const res = await fetch(url, { headers, redirect: 'follow' })
-  const html = await res.text()
+// ── Instagram: extract video URL from the HTML JSON blobs ─────────────────
+
+function extractInstagramVideoUrl(html) {
+  // Instagram embeds video_url / playback_url in JSON inside <script> tags
+  const patterns = [
+    /"video_url":"(https:[^"]+\.mp4[^"]*)"/,
+    /"playback_url":"(https:[^"]+\.mp4[^"]*)"/,
+    /video_url\\?":\\?"(https:[^"\\]+\.mp4[^"\\]*)/,
+  ]
+  for (const p of patterns) {
+    const m = html.match(p)
+    if (m) {
+      return m[1]
+        .replace(/\\u0026/g, '&')
+        .replace(/\\/g, '')
+    }
+  }
+  return null
+}
+
+// ── Instagram: extract caption text from HTML ─────────────────────────────
+
+function extractInstagramCaption(html) {
   const og = html.match(/<meta property="og:description" content="([^"]*)"/)
   if (og) return decodeHTMLEntities(og[1]).slice(0, 8000)
   const meta = html.match(/<meta name="description" content="([^"]*)"/)
   if (meta) return decodeHTMLEntities(meta[1]).slice(0, 8000)
-
-  // Try embed URL — more likely to return caption content
-  const shortcodeMatch = url.match(/instagram\.com\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/)
-  if (shortcodeMatch) {
-    const embedUrl = `https://www.instagram.com/p/${shortcodeMatch[1]}/embed/`
-    try {
-      const embedRes = await fetch(embedUrl, { headers, redirect: 'follow' })
-      const embedHtml = await embedRes.text()
-      // Caption is typically in a <div class="Caption"> or similar
-      const captionMatch = embedHtml.match(/class="[^"]*[Cc]aption[^"]*"[^>]*>([\s\S]{1,4000}?)<\/div>/)
-      if (captionMatch) {
-        const stripped = captionMatch[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
-        if (stripped.length > 20) return decodeHTMLEntities(stripped).slice(0, 8000)
-      }
-      const ogEmbed = embedHtml.match(/<meta property="og:description" content="([^"]*)"/)
-      if (ogEmbed) return decodeHTMLEntities(ogEmbed[1]).slice(0, 8000)
-    } catch {
-      // ignore
-    }
-  }
-
   return ''
 }
 
-const BOOK_PROMPT = `You are a book extraction assistant. Analyze this content about books.
+// ── Download Instagram video bytes ───────────────────────────────────────
 
-Extract every book title mentioned. For each book determine:
-1. Is the creator recommending/suggesting this book (true), or warning against it / saying it was bad (false)?
-2. The exact book title and the author's full name if mentioned (leave author as empty string if unknown).
+async function downloadInstagramVideo(videoUrl) {
+  const res = await fetch(videoUrl, {
+    headers: { ...IG_HEADERS, 'Referer': 'https://www.instagram.com/' },
+    redirect: 'follow',
+  })
+  if (!res.ok) throw new Error(`Video download failed: ${res.status}`)
+  const buf = await res.arrayBuffer()
+  return Buffer.from(buf)
+}
+
+// ── Upload video buffer to Gemini Files API ───────────────────────────────
+
+async function uploadVideoToGemini(videoBuffer) {
+  // Use the resumable upload REST API directly (SDK uploadFile needs a file path)
+  const apiKey = process.env.GEMINI_API_KEY
+  const initRes = await fetch(
+    `https://generativelanguage.googleapis.com/upload/v1beta/files?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: {
+        'X-Goog-Upload-Protocol':             'resumable',
+        'X-Goog-Upload-Command':              'start',
+        'X-Goog-Upload-Header-Content-Length': videoBuffer.length,
+        'X-Goog-Upload-Header-Content-Type':   'video/mp4',
+        'Content-Type':                        'application/json',
+      },
+      body: JSON.stringify({ file: { display_name: 'instagram_reel' } }),
+    }
+  )
+  if (!initRes.ok) throw new Error(`Gemini upload init failed: ${initRes.status}`)
+
+  const sessionUrl = initRes.headers.get('x-goog-upload-url')
+  if (!sessionUrl) throw new Error('No upload session URL returned')
+
+  const uploadRes = await fetch(sessionUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Length':         videoBuffer.length,
+      'X-Goog-Upload-Offset':   '0',
+      'X-Goog-Upload-Command':  'upload, finalize',
+    },
+    body: videoBuffer,
+  })
+  if (!uploadRes.ok) throw new Error(`Gemini upload failed: ${uploadRes.status}`)
+
+  const data = await uploadRes.json()
+  return data.file.uri
+}
+
+// ── Wait for Gemini file to be ACTIVE ────────────────────────────────────
+
+async function waitForFileActive(fileUri) {
+  const apiKey  = process.env.GEMINI_API_KEY
+  const name    = fileUri.split('/').pop() // files/xxxx
+  const maxWait = 30_000
+  const start   = Date.now()
+
+  while (Date.now() - start < maxWait) {
+    const res  = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/files/${name}?key=${apiKey}`
+    )
+    const data = await res.json()
+    if (data.state === 'ACTIVE') return
+    if (data.state === 'FAILED') throw new Error('Gemini file processing failed')
+    await new Promise(r => setTimeout(r, 2000))
+  }
+  throw new Error('Gemini file processing timed out')
+}
+
+// ── Gemini prompts ────────────────────────────────────────────────────────
+
+const BOOK_PROMPT = `You are a book extraction assistant. Analyze this content carefully — it may be a video, audio, or text.
+
+Look for books in ALL of these ways:
+- Spoken mentions (audio/transcript)
+- Text shown on screen (book covers, overlays, captions)
+- Written captions or descriptions
+
+For each book found, determine:
+1. The exact book title and author's full name (leave author empty if unknown)
+2. Is the creator recommending it (true) or warning against it / saying it was bad (false)?
 
 Return ONLY a valid JSON array — no markdown, no explanation:
-[{"title":"Book Title","author":"Author Name","suggested":true,"reason":"one sentence summary of why suggested or not"}]
+[{"title":"Book Title","author":"Author Name","suggested":true,"reason":"one sentence summary"}]
 
-If no books are mentioned, return: []`
+If no books are found, return: []`
 
 async function extractBooksFromYoutube(youtubeUrl) {
-  const model = gemini.getGenerativeModel({ model: 'gemini-2.5-flash' })
+  const model  = gemini.getGenerativeModel({ model: 'gemini-2.5-flash' })
   const result = await model.generateContent([
-    {
-      fileData: {
-        fileUri:  normaliseYoutubeUrl(youtubeUrl),
-        mimeType: 'video/mp4',
-      },
-    },
+    { fileData: { fileUri: normaliseYoutubeUrl(youtubeUrl), mimeType: 'video/mp4' } },
+    { text: BOOK_PROMPT },
+  ])
+  return parseGeminiResponse(result.response.text())
+}
+
+async function extractBooksFromVideoUri(fileUri) {
+  const model  = gemini.getGenerativeModel({ model: 'gemini-2.5-flash' })
+  const result = await model.generateContent([
+    { fileData: { fileUri, mimeType: 'video/mp4' } },
     { text: BOOK_PROMPT },
   ])
   return parseGeminiResponse(result.response.text())
 }
 
 async function extractBooksFromText(text) {
-  const model = gemini.getGenerativeModel({ model: 'gemini-2.5-flash' })
+  const model  = gemini.getGenerativeModel({ model: 'gemini-2.5-flash' })
   const result = await model.generateContent(`${BOOK_PROMPT}\n\nText:\n${text}`)
   return parseGeminiResponse(result.response.text())
 }
@@ -102,6 +183,52 @@ function parseGeminiResponse(raw) {
     return []
   }
 }
+
+// ── Instagram: full pipeline ──────────────────────────────────────────────
+
+async function handleInstagram(url) {
+  const res  = await fetch(url, { headers: IG_HEADERS, redirect: 'follow' })
+  const html = await res.text()
+
+  // 1. Try to get the video and send it directly to Gemini (handles all 3 cases)
+  const videoUrl = extractInstagramVideoUrl(html)
+  if (videoUrl) {
+    try {
+      const videoBuffer = await downloadInstagramVideo(videoUrl)
+      const fileUri     = await uploadVideoToGemini(videoBuffer)
+      await waitForFileActive(fileUri)
+      return { books: await extractBooksFromVideoUri(fileUri), source: 'video' }
+    } catch (e) {
+      console.warn('Video pipeline failed, falling back to caption:', e.message)
+    }
+  }
+
+  // 2. Fall back to caption/description text (case 1 only)
+  const caption = extractInstagramCaption(html)
+  if (caption.trim()) {
+    return { books: await extractBooksFromText(caption), source: 'caption' }
+  }
+
+  // 3. Try embed URL for caption
+  const shortcodeMatch = url.match(/instagram\.com\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/)
+  if (shortcodeMatch) {
+    try {
+      const embedRes  = await fetch(`https://www.instagram.com/p/${shortcodeMatch[1]}/embed/`, { headers: IG_HEADERS })
+      const embedHtml = await embedRes.text()
+      const capMatch  = embedHtml.match(/class="[^"]*[Cc]aption[^"]*"[^>]*>([\s\S]{1,4000}?)<\/div>/)
+      if (capMatch) {
+        const stripped = capMatch[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+        if (stripped.length > 20) {
+          return { books: await extractBooksFromText(decodeHTMLEntities(stripped)), source: 'caption' }
+        }
+      }
+    } catch { /* ignore */ }
+  }
+
+  return null // caller will surface the manual paste prompt
+}
+
+// ── DB helpers ────────────────────────────────────────────────────────────
 
 function makeSlug(title, author) {
   const base = `${title}${author ? '-' + author : ''}`
@@ -152,6 +279,8 @@ async function matchBooksInDB(books) {
   }))
 }
 
+// ── Route handler ─────────────────────────────────────────────────────────
+
 export async function POST(request) {
   const { url, text: manualText } = await request.json()
   if (!url && !manualText) return NextResponse.json({ error: 'URL or text is required' }, { status: 400 })
@@ -166,16 +295,15 @@ export async function POST(request) {
     if (manualText?.trim()) {
       rawBooks = await extractBooksFromText(manualText.trim())
     } else if (isYoutube(url)) {
-      // Gemini processes the YouTube video directly — no caption extraction needed
       rawBooks = await extractBooksFromYoutube(url)
     } else if (isInstagram(url)) {
-      const text = await getInstagramText(url)
-      if (!text.trim()) {
+      const result = await handleInstagram(url)
+      if (!result) {
         return NextResponse.json({
-          error: 'Instagram couldn\u2019t be scraped automatically. Paste the caption or transcript manually.',
+          error: 'Couldn\u2019t extract content from this Instagram post. Paste the caption or transcript manually.',
         }, { status: 422 })
       }
-      rawBooks = await extractBooksFromText(text)
+      rawBooks = result.books
     } else {
       return NextResponse.json({ error: 'Only YouTube and Instagram URLs are supported' }, { status: 400 })
     }
@@ -190,7 +318,7 @@ export async function POST(request) {
     const mentions = books
       .filter(b => b.dbBook?.id)
       .map(b => ({
-        reel_url:  url,
+        reel_url:  url || 'manual',
         book_id:   b.dbBook.id,
         suggested: b.suggested,
         reason:    b.reason ?? null,
