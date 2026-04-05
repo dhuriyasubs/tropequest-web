@@ -134,7 +134,7 @@ export default function ReelsExtractor() {
           value={url}
           onChange={e => setUrl(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && canSubmit && extract()}
-          placeholder="Paste a YouTube or Instagram URL…"
+          placeholder="Paste a YouTube URL…"
           className="flex-1 border border-petal/40 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-bloom/30"
         />
         <button
