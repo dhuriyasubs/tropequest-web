@@ -268,6 +268,14 @@ async function matchBooksInDB(books) {
         .select('id,title,author,cover_url,slug,rating,tropes')
         .single()
       data = created ?? null
+
+      // Queue for enrichment (cover, rating, description, genres, series)
+      if (created?.id) {
+        supabaseAdmin
+          .from('pending_books')
+          .insert({ title: book.title, author: book.author || 'Unknown', processed: false })
+          .then()
+      }
     }
 
     // Enrich tropes: merge video-extracted tropes with existing ones (fire-and-forget)
