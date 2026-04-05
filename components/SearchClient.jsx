@@ -108,7 +108,7 @@ export default function SearchClient({
             type="search"
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="Title, author, series…"
+            placeholder="Title, author, trope, series…"
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bloom shadow-sm"
           />
         </div>
@@ -122,12 +122,12 @@ export default function SearchClient({
       <div className="flex-1">
 
         {/* Mobile: search + filter bar */}
-        <div className="flex gap-2 mb-4 lg:hidden">
+        <div className="flex gap-2 mb-2 lg:hidden">
           <input
             type="search"
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="Title, author, series…"
+            placeholder="Title, author, trope, series…"
             className="flex-1 border border-petal/40 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bloom"
           />
           <button
@@ -148,7 +148,7 @@ export default function SearchClient({
 
         {/* Active filter chips (mobile) */}
         {activeFilterCount > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-3 lg:hidden">
+          <div className="flex flex-wrap gap-1.5 mb-2 lg:hidden">
             {selGenres.map(g => (
               <button key={g} onClick={() => toggleGenre(g)} className="chip chip-active text-xs flex items-center gap-1">
                 {g} <span className="opacity-60">×</span>
@@ -166,7 +166,7 @@ export default function SearchClient({
         )}
 
         <div ref={resultsRef}>
-          <p className="text-sm text-slate mb-4">
+          <p className="text-sm text-slate mb-2 sm:mb-4">
             {loading ? 'Searching…' : `${total.toLocaleString()} books found`}
           </p>
 

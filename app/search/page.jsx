@@ -36,8 +36,8 @@ export default async function SearchPage({ searchParams }) {
   for (const r of shelfRes.data ?? []) shelfMap[r.book_id] = r.status
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10">
-      <h1 className="font-serif text-3xl font-bold mb-8">Browse Books</h1>
+    <div className="max-w-6xl mx-auto px-4 py-4 sm:py-10">
+      <h1 className="hidden sm:block font-serif text-3xl font-bold mb-8">Browse Books</h1>
       <SearchClient
         initialBooks={books}
         initialTotal={total}
