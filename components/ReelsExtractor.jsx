@@ -13,7 +13,7 @@ export default function ReelsExtractor() {
   const [books,      setBooks]      = useState(null)
   const [message,    setMessage]    = useState(null)
   const [selected,   setSelected]   = useState(new Set())
-  const [shelfIds,   setShelfIds]   = useState(new Set())
+  const [shelfMap,   setShelfMap]   = useState({}) // bookId -> status
   const [tbrIds,     setTbrIds]     = useState(new Set())
   const [bulkLoading, setBulkLoading] = useState(false)
   const router = useRouter()
@@ -30,10 +30,12 @@ export default function ReelsExtractor() {
       if (!user) return
 
       const [{ data: shelf }, { data: tbr }] = await Promise.all([
-        supabase.from('shelf').select('book_id').eq('user_id', user.id).in('book_id', dbIds),
+        supabase.from('shelf').select('book_id, status').eq('user_id', user.id).in('book_id', dbIds),
         supabase.from('tbr').select('book_id').eq('user_id', user.id).in('book_id', dbIds),
       ])
-      setShelfIds(new Set((shelf ?? []).map(r => r.book_id)))
+      const map = {}
+      ;(shelf ?? []).forEach(r => { map[r.book_id] = r.status })
+      setShelfMap(map)
       setTbrIds(new Set((tbr ?? []).map(r => r.book_id)))
     }
     fetchUserData()
@@ -48,7 +50,7 @@ export default function ReelsExtractor() {
     setBooks(null)
     setMessage(null)
     setSelected(new Set())
-    setShelfIds(new Set())
+    setShelfMap({})
     setTbrIds(new Set())
 
     try {
@@ -122,6 +124,7 @@ export default function ReelsExtractor() {
   }
 
   const eligibleBooks  = (books ?? []).filter(b => b.dbBook?.id)
+  const allInTbr       = eligibleBooks.length > 0 && eligibleBooks.every(b => tbrIds.has(b.dbBook.id))
   const allSelected    = eligibleBooks.length > 0 && selected.size === eligibleBooks.length
   const canSubmit      = !loading && (url.trim() || text.trim())
 
@@ -224,7 +227,7 @@ export default function ReelsExtractor() {
                 item={item}
                 selected={item.dbBook?.id ? selected.has(item.dbBook.id) : false}
                 onToggle={item.dbBook?.id ? () => toggleSelect(item.dbBook.id) : null}
-                isOnShelf={item.dbBook?.id ? shelfIds.has(item.dbBook.id) : false}
+                shelfStatus={item.dbBook?.id ? (shelfMap[item.dbBook.id] ?? null) : null}
                 isInTbr={item.dbBook?.id ? tbrIds.has(item.dbBook.id) : false}
               />
             ))}
@@ -233,19 +236,25 @@ export default function ReelsExtractor() {
           {/* Bulk add bar */}
           {eligibleBooks.length > 0 && (
             <div className="sticky bottom-4 mt-6 flex items-center justify-between gap-4 bg-white border border-petal/30 rounded-2xl shadow-lg px-5 py-3">
-              <p className="text-sm text-slate">
-                {selected.size > 0
-                  ? <><span className="font-semibold text-ink">{selected.size}</span> book{selected.size !== 1 ? 's' : ''} selected</>
-                  : 'Select books to add to TBR'
-                }
-              </p>
-              <button
-                onClick={addSelectedToTbr}
-                disabled={!selected.size || bulkLoading}
-                className="bg-bloom text-white text-sm font-semibold px-5 py-2 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-40 whitespace-nowrap"
-              >
-                {bulkLoading ? 'Adding…' : 'Add to TBR'}
-              </button>
+              {allInTbr ? (
+                <p className="text-sm text-slate italic">Nothing new to add to TBR</p>
+              ) : (
+                <>
+                  <p className="text-sm text-slate">
+                    {selected.size > 0
+                      ? <><span className="font-semibold text-ink">{selected.size}</span> book{selected.size !== 1 ? 's' : ''} selected</>
+                      : 'Select books to add to TBR'
+                    }
+                  </p>
+                  <button
+                    onClick={addSelectedToTbr}
+                    disabled={!selected.size || bulkLoading}
+                    className="bg-bloom text-white text-sm font-semibold px-5 py-2 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-40 whitespace-nowrap"
+                  >
+                    {bulkLoading ? 'Adding…' : 'Add to TBR'}
+                  </button>
+                </>
+              )}
             </div>
           )}
         </>
@@ -254,7 +263,7 @@ export default function ReelsExtractor() {
   )
 }
 
-function BookResultCard({ item, selected, onToggle, isOnShelf, isInTbr }) {
+function BookResultCard({ item, selected, onToggle, shelfStatus, isInTbr }) {
   const { title, author, suggested, reason, dbBook } = item
 
   return (
@@ -323,12 +332,17 @@ function BookResultCard({ item, selected, onToggle, isOnShelf, isInTbr }) {
 
         {/* Tags */}
         <div className="flex items-center gap-2 mt-2 flex-wrap">
-          {isOnShelf && (
+          {shelfStatus === 'read' && (
+            <span className="text-xs bg-purple-50 text-purple-700 border border-purple-200 rounded-full px-2 py-0.5 font-medium">
+              Already read
+            </span>
+          )}
+          {shelfStatus && shelfStatus !== 'read' && (
             <span className="text-xs bg-green-50 text-green-700 border border-green-200 rounded-full px-2 py-0.5 font-medium">
               On shelf
             </span>
           )}
-          {isInTbr && !isOnShelf && (
+          {isInTbr && !shelfStatus && (
             <span className="text-xs bg-bloom/10 text-bloom border border-bloom/20 rounded-full px-2 py-0.5 font-medium">
               In TBR
             </span>
