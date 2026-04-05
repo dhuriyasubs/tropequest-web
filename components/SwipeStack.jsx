@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { createSupabaseBrowser } from '@/lib/supabase-browser'
 
 const SWIPE_THRESHOLD = 80
 
@@ -14,6 +15,8 @@ export default function SwipeStack({ initialBooks, userId, initialExcludeIds = [
   const [savedCount, setSavedCount]     = useState(0)
   const [fetchingMore, setFetchingMore] = useState(false)
   const [showLoginModal, setShowLoginModal] = useState(false)
+  const [tbrIds,  setTbrIds]  = useState(new Set())
+  const [shelfMap, setShelfMap] = useState({})
 
   const cardRef      = useRef(null)
   const passLabelRef = useRef(null)
@@ -62,6 +65,21 @@ export default function SwipeStack({ initialBooks, userId, initialExcludeIds = [
     } catch (_) {}
   }, [userId])
 
+  // Fetch user's TBR + shelf to show status badges on cards
+  useEffect(() => {
+    if (!userId) return
+    const supabase = createSupabaseBrowser()
+    Promise.all([
+      supabase.from('tbr').select('book_id').eq('user_id', userId),
+      supabase.from('shelf').select('book_id, status').eq('user_id', userId),
+    ]).then(([{ data: tbr }, { data: shelf }]) => {
+      setTbrIds(new Set((tbr ?? []).map(r => r.book_id)))
+      const map = {}
+      ;(shelf ?? []).forEach(r => { map[r.book_id] = r.status })
+      setShelfMap(map)
+    })
+  }, [userId])
+
   useEffect(() => { flyDirRef.current = flyDir }, [flyDir])
 
   useEffect(() => {
@@ -105,6 +123,7 @@ export default function SwipeStack({ initialBooks, userId, initialExcludeIds = [
         } catch (_) {}
       }
       setSavedCount(c => c + 1)
+      setTbrIds(prev => new Set([...prev, book.id]))
 
       if (!toastShownRef.current) {
         toastShownRef.current = true
@@ -293,6 +312,20 @@ export default function SwipeStack({ initialBooks, userId, initialExcludeIds = [
                 ★ {book.rating.toFixed(1)}
                 {book.rating_count ? ` · ${book.rating_count.toLocaleString()} ratings` : ''}
               </p>
+            )}
+            {/* TBR / shelf status badges */}
+            {(tbrIds.has(book.id) || shelfMap[book.id]) && (
+              <div className="flex gap-1.5 mt-2 flex-wrap">
+                {shelfMap[book.id] === 'read' && (
+                  <span className="text-xs bg-purple-50 text-purple-700 border border-purple-200 rounded-full px-2 py-0.5 font-medium">Already read</span>
+                )}
+                {shelfMap[book.id] && shelfMap[book.id] !== 'read' && (
+                  <span className="text-xs bg-green-50 text-green-700 border border-green-200 rounded-full px-2 py-0.5 font-medium">On shelf</span>
+                )}
+                {tbrIds.has(book.id) && !shelfMap[book.id] && (
+                  <span className="text-xs bg-bloom/10 text-bloom border border-bloom/20 rounded-full px-2 py-0.5 font-medium">In TBR</span>
+                )}
+              </div>
             )}
             {book.tropes?.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-3">
