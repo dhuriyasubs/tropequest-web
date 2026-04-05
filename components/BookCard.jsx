@@ -22,7 +22,7 @@ export default function BookCard({ book, shelfStatus = null }) {
             📚
           </div>
         )}
-        <div className="absolute top-2 right-2 bg-white/80 backdrop-blur-sm rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute top-2 right-2 bg-white/80 backdrop-blur-sm rounded-full p-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
           <TbrButton bookId={book.id} size="sm" />
         </div>
         {shelfStatus === 'read' && (
