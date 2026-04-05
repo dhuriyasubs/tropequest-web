@@ -210,7 +210,7 @@ export default function ReelsExtractor() {
                 <>, <span className="text-red-500">{books.filter(b => !b.suggested).length} not suggested</span></>
               )}
             </p>
-            {eligibleBooks.length > 0 && (
+            {eligibleBooks.length > 0 && !allInTbr && (
               <button
                 onClick={toggleAll}
                 className="text-xs text-bloom hover:underline underline-offset-2 font-medium"

@@ -144,9 +144,10 @@ Look for books in ALL of these ways:
 For each book found, determine:
 1. The exact book title and author's full name (leave author empty if unknown)
 2. Is the creator recommending it (true) or warning against it / saying it was bad (false)?
+3. Any tropes mentioned for this specific book (e.g. "enemies to lovers", "slow burn", "villain love interest", "found family"). List only tropes explicitly mentioned or clearly implied for that book. Use the exact phrasing from the content where possible.
 
 Return ONLY a valid JSON array — no markdown, no explanation:
-[{"title":"Book Title","author":"Author Name","suggested":true,"reason":"one sentence summary"}]
+[{"title":"Book Title","author":"Author Name","suggested":true,"reason":"one sentence summary","tropes":["trope one","trope two"]}]
 
 If no books are found, return: []`
 
@@ -242,7 +243,7 @@ async function matchBooksInDB(books) {
   return Promise.all(books.map(async (book) => {
     let { data } = await supabaseAdmin
       .from('books')
-      .select('id,title,author,cover_url,slug,rating')
+      .select('id,title,author,cover_url,slug,rating,tropes')
       .ilike('title', book.title)
       .limit(1)
       .maybeSingle()
@@ -250,7 +251,7 @@ async function matchBooksInDB(books) {
     if (!data) {
       const res = await supabaseAdmin
         .from('books')
-        .select('id,title,author,cover_url,slug,rating')
+        .select('id,title,author,cover_url,slug,rating,tropes')
         .ilike('title', `%${book.title}%`)
         .limit(1)
       data = res.data?.[0] ?? null
@@ -264,9 +265,25 @@ async function matchBooksInDB(books) {
           author: book.author || 'Unknown',
           slug:   makeSlug(book.title, book.author),
         })
-        .select('id,title,author,cover_url,slug,rating')
+        .select('id,title,author,cover_url,slug,rating,tropes')
         .single()
       data = created ?? null
+    }
+
+    // Enrich tropes: merge video-extracted tropes with existing ones (fire-and-forget)
+    const newTropes = (book.tropes ?? []).filter(t => t?.trim())
+    if (data?.id && newTropes.length) {
+      const existing = data.tropes ?? []
+      const existingLower = new Set(existing.map(t => t.toLowerCase()))
+      const toAdd = newTropes.filter(t => !existingLower.has(t.toLowerCase()))
+      if (toAdd.length) {
+        supabaseAdmin
+          .from('books')
+          .update({ tropes: [...existing, ...toAdd] })
+          .eq('id', data.id)
+          .then()
+        data = { ...data, tropes: [...existing, ...toAdd] }
+      }
     }
 
     return {
@@ -274,6 +291,7 @@ async function matchBooksInDB(books) {
       author:    book.author,
       suggested: book.suggested,
       reason:    book.reason,
+      tropes:    book.tropes ?? [],
       dbBook:    data ?? null,
     }
   }))
