@@ -1,5 +1,6 @@
 import './globals.css'
 import { Playfair_Display, DM_Sans } from 'next/font/google'
+import Script from 'next/script'
 import Nav from '@/components/Nav'
 import Toaster from '@/components/Toaster'
 import AuthRedirectHandler from '@/components/AuthRedirectHandler'
@@ -37,6 +38,15 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${playfair.variable} ${dmSans.variable}`}>
+      <head>
+        <Script src="https://www.googletagmanager.com/gtag/js?id=G-BT9KM61B0S" strategy="afterInteractive" />
+        <Script id="ga-init" strategy="afterInteractive">{`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-BT9KM61B0S');
+        `}</Script>
+      </head>
       <body className="min-h-screen flex flex-col">
         <Nav />
         <main className="flex-1">{children}</main>
