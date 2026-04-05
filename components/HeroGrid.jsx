@@ -107,18 +107,18 @@ export default function HeroGrid({ tropes }) {
 
   return (
     <section className="bg-[#1a1a2e] text-white overflow-hidden">
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:min-h-[580px]">
+      <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:min-h-[380px]">
 
         {/* ── Left: Hero Copy ── */}
-        <div className="flex-1 flex flex-col justify-center px-6 py-10 md:py-20 md:px-8 lg:px-16">
-          <p className="text-amber-400/65 text-xs font-semibold tracking-widest uppercase mb-4 md:mb-5">
+        <div className="flex-1 flex flex-col justify-center px-6 py-8 md:py-10 md:px-8 lg:px-16">
+          <p className="text-amber-400/65 text-xs font-semibold tracking-widest uppercase mb-3">
             Romance · Thriller · Dark Fiction
           </p>
-          <h1 className="font-serif text-3xl sm:text-4xl lg:text-[3.25rem] font-bold leading-tight mb-4 md:mb-6 max-w-lg">
+          <h1 className="font-serif text-3xl sm:text-4xl lg:text-[2.75rem] font-bold leading-tight mb-3 md:mb-4 max-w-lg">
             The ultimate map to your specific{' '}
             <span className="text-petal italic">&lsquo;type&rsquo;.</span>
           </h1>
-          <p className="text-white/50 text-base sm:text-lg mb-8 md:mb-10 max-w-sm leading-relaxed">
+          <p className="text-white/50 text-sm sm:text-base mb-6 md:mb-7 max-w-sm leading-relaxed">
             Why settle? Choose the tropes that define your perfect escape
             from 1000+ curated titles.
           </p>
@@ -134,7 +134,7 @@ export default function HeroGrid({ tropes }) {
         </div>
 
         {/* ── Right: Library Visualization (desktop only) ── */}
-        <div className="hidden md:flex flex-1 relative flex-col justify-center px-6 py-12 md:py-20 md:pr-12 overflow-hidden">
+        <div className="hidden md:flex flex-1 relative flex-col justify-center px-6 py-8 md:py-10 md:pr-12 overflow-hidden">
 
           {/* Warm candlelight glow */}
           <div
