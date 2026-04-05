@@ -286,7 +286,7 @@ function BookResultCard({ item, selected, onToggle, shelfStatus, isInTbr }) {
 
   return (
     <div
-      className={`flex gap-4 p-4 rounded-xl border transition-colors ${
+      className={`flex gap-3 p-3 sm:gap-4 sm:p-4 rounded-xl border transition-colors ${
         selected
           ? 'border-bloom/40 bg-bloom/5'
           : suggested
@@ -314,7 +314,7 @@ function BookResultCard({ item, selected, onToggle, shelfStatus, isInTbr }) {
       )}
 
       {/* Cover */}
-      <div className="shrink-0 w-14 rounded-lg overflow-hidden bg-gray-100" style={{ aspectRatio: '2/3' }}>
+      <div className="shrink-0 w-12 sm:w-14 rounded-lg overflow-hidden bg-gray-100" style={{ aspectRatio: '2/3' }}>
         {dbBook?.cover_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={dbBook.cover_url} alt={title} className="w-full h-full object-cover" />
@@ -325,23 +325,15 @@ function BookResultCard({ item, selected, onToggle, shelfStatus, isInTbr }) {
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-2 flex-wrap">
-          <div className="min-w-0">
-            {dbBook ? (
-              <Link href={`/books/${dbBook.slug}`} className="font-semibold text-ink hover:text-bloom line-clamp-1 block">
-                {dbBook.title}
-              </Link>
-            ) : (
-              <p className="font-semibold text-ink line-clamp-1">{title}</p>
-            )}
-            <p className="text-sm text-slate mt-0.5">{dbBook?.author || author || 'Unknown author'}</p>
-          </div>
-
-          <span className={`shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full ${
-            suggested ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
-          }`}>
-            {suggested ? '✓ Suggested' : '✗ Not Suggested'}
-          </span>
+        <div className="min-w-0">
+          {dbBook ? (
+            <Link href={`/books/${dbBook.slug}`} className="font-semibold text-ink hover:text-bloom line-clamp-1 block">
+              {dbBook.title}
+            </Link>
+          ) : (
+            <p className="font-semibold text-ink line-clamp-1">{title}</p>
+          )}
+          <p className="text-sm text-slate mt-0.5 line-clamp-1">{dbBook?.author || author || 'Unknown author'}</p>
         </div>
 
         {reason && (
@@ -350,6 +342,11 @@ function BookResultCard({ item, selected, onToggle, shelfStatus, isInTbr }) {
 
         {/* Tags */}
         <div className="flex items-center gap-2 mt-2 flex-wrap">
+          <span className={`shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full ${
+            suggested ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
+          }`}>
+            {suggested ? '✓ Suggested' : '✗ Not suggested'}
+          </span>
           {shelfStatus === 'read' && (
             <span className="text-xs bg-purple-50 text-purple-700 border border-purple-200 rounded-full px-2 py-0.5 font-medium">
               Already read
