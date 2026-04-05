@@ -185,7 +185,7 @@ export default function ReelsExtractor() {
         onClick={() => setShowText(v => !v)}
         className="text-xs text-slate hover:text-bloom underline underline-offset-2 mb-6 block"
       >
-        {showText ? 'Hide text input' : 'Instagram not working? Paste the caption or transcript instead'}
+        {showText ? 'Hide text input' : 'Paste caption or transcript instead'}
       </button>
 
       {showText && (
