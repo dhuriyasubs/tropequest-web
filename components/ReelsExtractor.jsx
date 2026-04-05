@@ -68,7 +68,16 @@ export default function ReelsExtractor() {
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ url: hasUrl || null, text: hasText || null }),
       })
-      const data = await res.json()
+      let data
+      try {
+        data = await res.json()
+      } catch {
+        // Vercel timeout or non-JSON response
+        setError(res.status === 504 || res.status === 408
+          ? 'The request timed out — the video may be too long. Try a shorter video.'
+          : `Server error (${res.status}). Please try again.`)
+        return
+      }
       if (!res.ok) {
         setError(data.error || 'Something went wrong. Please try again.')
       } else {
