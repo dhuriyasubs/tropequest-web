@@ -137,6 +137,15 @@ export default function ReelsExtractor() {
   const allSelected    = eligibleBooks.length > 0 && selected.size === eligibleBooks.length
   const canSubmit      = !loading && (url.trim() || text.trim())
 
+  function bookSortKey(item) {
+    const id = item.dbBook?.id
+    if (!id) return 1                          // no db match — after eligible
+    if (shelfMap[id] === 'read') return 3      // read — last
+    if (tbrIds.has(id)) return 2               // in TBR — second to last
+    return 0                                   // eligible — first
+  }
+  const sortedBooks = (books ?? []).slice().sort((a, b) => bookSortKey(a) - bookSortKey(b))
+
   return (
     <div>
       {/* URL input */}
@@ -230,7 +239,7 @@ export default function ReelsExtractor() {
           </div>
 
           <div className="grid gap-3">
-            {books.map((item, i) => (
+            {sortedBooks.map((item, i) => (
               <BookResultCard
                 key={i}
                 item={item}
