@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { MDXRemote } from 'next-mdx-remote/rsc'
 import { getAllPosts, getPost } from '@/lib/blog'
 import Breadcrumb from '@/components/Breadcrumb'
+import BookCover from '@/components/BlogBookCover'
 
 export const revalidate = 3600
 
@@ -70,7 +71,7 @@ export default function BlogPostPage({ params }) {
         prose-a:text-bloom prose-a:no-underline hover:prose-a:underline
         prose-strong:text-ink
         prose-li:text-slate prose-p:text-slate prose-p:leading-relaxed">
-        <MDXRemote source={content} />
+        <MDXRemote source={content} components={{ BookCover }} />
       </article>
 
       <div className="mt-16 pt-8 border-t border-petal/30">
