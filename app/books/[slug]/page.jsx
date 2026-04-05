@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { getBookBySlug, getSeriesBooks, getMoreByAuthor } from '@/lib/search'
+import { getPostsFeaturingBook } from '@/lib/blog'
 import { slugify } from '@/lib/utils'
 import { createSupabaseServer } from '@/lib/supabase'
 import TbrButton from '@/components/TbrButton'
@@ -66,6 +67,8 @@ export default async function BookPage({ params }) {
   const grSum = book.rating ? book.rating * grCount : 0
   const totalRatingCount = tqCount + grCount
   const blendedRating = totalRatingCount > 0 ? (tqSum + grSum) / totalRatingCount : null
+
+  const featuredInPosts = getPostsFeaturingBook(params.slug)
 
   const [seriesBooks, moreByAuthor] = await Promise.all([
     book.series_name ? getSeriesBooks(book.series_name, book.id) : [],
@@ -269,6 +272,29 @@ export default async function BookPage({ params }) {
                   </Link>
                 )
               })}
+            </div>
+          </section>
+        )}
+        {/* Featured in blog posts */}
+        {featuredInPosts.length > 0 && (
+          <section className="mt-14">
+            <h2 className="font-serif text-xl font-semibold mb-4">This book is featured in</h2>
+            <div className="flex flex-col gap-3">
+              {featuredInPosts.map(post => (
+                <Link
+                  key={post.slug}
+                  href={`/blog/${post.slug}`}
+                  className="group flex items-center justify-between p-4 rounded-lg border border-petal/40 hover:border-bloom/40 hover:bg-petal/10 transition-colors no-underline"
+                >
+                  <div>
+                    <p className="font-medium text-sm text-ink group-hover:text-bloom leading-snug">{post.title}</p>
+                    {post.readingTime && (
+                      <p className="text-xs text-slate/50 mt-0.5">{post.readingTime} min read</p>
+                    )}
+                  </div>
+                  <span className="text-bloom text-sm shrink-0 ml-4">Read →</span>
+                </Link>
+              ))}
             </div>
           </section>
         )}

@@ -6,6 +6,7 @@ import DiscoverStrip from '@/components/DiscoverStrip'
 import SeriesCompletionSection from '@/components/SeriesCompletionSection'
 import { getFeaturedBooks, getPopularTropes, getPersonalizedBooks, getSeriesCompletionBooks, getBecauseYouReadBooks } from '@/lib/search'
 import { createSupabaseServer } from '@/lib/supabase'
+import { getAllPosts } from '@/lib/blog'
 
 export const dynamic = 'force-dynamic'
 
@@ -96,6 +97,7 @@ export default async function HomePage() {
   const { data: { user } } = await supabase.auth.getUser()
 
   const [books, popularTropes] = await publicPromise
+  const latestPosts = getAllPosts().slice(0, 3)
 
   return (
     <>
@@ -106,6 +108,35 @@ export default async function HomePage() {
         <Suspense fallback={<PersonalisedSkeleton />}>
           <PersonalisedSections userId={user.id} />
         </Suspense>
+      )}
+
+      {latestPosts.length > 0 && (
+        <section className="max-w-6xl mx-auto px-4 py-6 md:py-10">
+          <div className="flex items-baseline justify-between mb-5">
+            <h2 className="font-serif text-2xl font-semibold">From the Blog</h2>
+            <Link href="/blog" className="text-sm text-bloom hover:underline">View all →</Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {latestPosts.map(post => (
+              <Link
+                key={post.slug}
+                href={`/blog/${post.slug}`}
+                className="group block p-5 rounded-xl border border-petal/40 hover:border-bloom/40 hover:bg-petal/10 transition-colors no-underline"
+              >
+                <p className="text-xs text-slate/50 mb-2">
+                  {new Date(post.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  {post.readingTime && ` · ${post.readingTime} min read`}
+                </p>
+                <p className="font-serif font-semibold text-ink group-hover:text-bloom leading-snug mb-2">
+                  {post.title}
+                </p>
+                <p className="text-sm text-slate/70 line-clamp-2 leading-relaxed">
+                  {post.description}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
       )}
 
       <section className="max-w-6xl mx-auto px-4 py-6 pb-12 md:py-10 md:pb-16">
