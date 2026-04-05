@@ -63,10 +63,6 @@ export default function RootLayout({ children }) {
               </div>
               <p>© {new Date().getFullYear()} TropeQuest</p>
             </div>
-            <p className="text-white/40 text-xs max-w-sm self-end">
-              TropeQuest participates in affiliate programmes. Purchases via our
-              links may earn us a small commission at no extra cost to you.
-            </p>
           </div>
         </footer>
       </body>

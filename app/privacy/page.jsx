@@ -26,13 +26,6 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="font-serif text-xl font-bold text-ink mb-2">Affiliate links</h2>
-          <p>
-            Some book links are affiliate links (Amazon). If you purchase through them, we may earn a small commission at no extra cost to you. This helps keep TropeQuest free.
-          </p>
-        </section>
-
-        <section>
           <h2 className="font-serif text-xl font-bold text-ink mb-2">Cookies</h2>
           <p>
             We use cookies to keep you logged in and to power analytics. We do not use cookies for advertising or sell your data to third parties.
