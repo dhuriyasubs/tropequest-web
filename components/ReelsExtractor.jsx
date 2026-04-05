@@ -35,8 +35,17 @@ export default function ReelsExtractor() {
       ])
       const map = {}
       ;(shelf ?? []).forEach(r => { map[r.book_id] = r.status })
+      const tbrSet = new Set((tbr ?? []).map(r => r.book_id))
       setShelfMap(map)
-      setTbrIds(new Set((tbr ?? []).map(r => r.book_id)))
+      setTbrIds(tbrSet)
+      // Remove already-read or already-in-TBR books from selection
+      setSelected(prev => {
+        const next = new Set(prev)
+        for (const id of next) {
+          if (tbrSet.has(id) || map[id] === 'read') next.delete(id)
+        }
+        return next
+      })
     }
     fetchUserData()
   }, [books])
@@ -123,7 +132,7 @@ export default function ReelsExtractor() {
     setBulkLoading(false)
   }
 
-  const eligibleBooks  = (books ?? []).filter(b => b.dbBook?.id)
+  const eligibleBooks  = (books ?? []).filter(b => b.dbBook?.id && !tbrIds.has(b.dbBook.id) && shelfMap[b.dbBook.id] !== 'read')
   const allInTbr       = eligibleBooks.length > 0 && eligibleBooks.every(b => tbrIds.has(b.dbBook.id))
   const allSelected    = eligibleBooks.length > 0 && selected.size === eligibleBooks.length
   const canSubmit      = !loading && (url.trim() || text.trim())
@@ -226,7 +235,7 @@ export default function ReelsExtractor() {
                 key={i}
                 item={item}
                 selected={item.dbBook?.id ? selected.has(item.dbBook.id) : false}
-                onToggle={item.dbBook?.id ? () => toggleSelect(item.dbBook.id) : null}
+                onToggle={item.dbBook?.id && !tbrIds.has(item.dbBook.id) && shelfMap[item.dbBook.id] !== 'read' ? () => toggleSelect(item.dbBook.id) : null}
                 shelfStatus={item.dbBook?.id ? (shelfMap[item.dbBook.id] ?? null) : null}
                 isInTbr={item.dbBook?.id ? tbrIds.has(item.dbBook.id) : false}
               />
