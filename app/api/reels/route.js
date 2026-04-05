@@ -316,6 +316,25 @@ export async function POST(request) {
   }
 
   try {
+    // ── Cache check: return stored results if this URL was already extracted ─
+    if (url) {
+      const { data: cached } = await supabaseAdmin
+        .from('reel_mentions')
+        .select('suggested, reason, books(id,title,author,cover_url,slug,rating,tropes)')
+        .eq('reel_url', url)
+      if (cached?.length) {
+        const books = cached.map(r => ({
+          title:     r.books?.title ?? '',
+          author:    r.books?.author ?? '',
+          suggested: r.suggested,
+          reason:    r.reason,
+          tropes:    r.books?.tropes ?? [],
+          dbBook:    r.books ?? null,
+        }))
+        return NextResponse.json({ books, cached: true })
+      }
+    }
+
     let rawBooks = []
 
     if (manualText?.trim()) {
