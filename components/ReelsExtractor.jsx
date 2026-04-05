@@ -4,14 +4,18 @@ import Link from 'next/link'
 import TbrButton from './TbrButton'
 
 export default function ReelsExtractor() {
-  const [url,     setUrl]     = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error,   setError]   = useState(null)
-  const [books,   setBooks]   = useState(null)
-  const [message, setMessage] = useState(null)
+  const [url,       setUrl]       = useState('')
+  const [text,      setText]      = useState('')
+  const [showText,  setShowText]  = useState(false)
+  const [loading,   setLoading]   = useState(false)
+  const [error,     setError]     = useState(null)
+  const [books,     setBooks]     = useState(null)
+  const [message,   setMessage]   = useState(null)
 
   async function extract() {
-    if (!url.trim()) return
+    const hasUrl  = url.trim()
+    const hasText = text.trim()
+    if (!hasUrl && !hasText) return
     setLoading(true)
     setError(null)
     setBooks(null)
@@ -21,7 +25,7 @@ export default function ReelsExtractor() {
       const res  = await fetch('/api/reels', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ url: url.trim() }),
+        body:    JSON.stringify({ url: hasUrl || null, text: hasText || null }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -37,26 +41,46 @@ export default function ReelsExtractor() {
     }
   }
 
+  const canSubmit = !loading && (url.trim() || text.trim())
+
   return (
     <div>
       {/* URL input */}
-      <div className="flex gap-3 mb-8">
+      <div className="flex gap-3 mb-3">
         <input
           type="url"
           value={url}
           onChange={e => setUrl(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && !loading && extract()}
-          placeholder="Paste a YouTube or Instagram reel URL…"
+          onKeyDown={e => e.key === 'Enter' && canSubmit && extract()}
+          placeholder="Paste a YouTube or Instagram URL…"
           className="flex-1 border border-petal/40 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-bloom/30"
         />
         <button
           onClick={extract}
-          disabled={loading || !url.trim()}
+          disabled={!canSubmit}
           className="bg-bloom text-white font-semibold px-6 py-3 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 text-sm whitespace-nowrap"
         >
           {loading ? 'Extracting…' : 'Extract Books'}
         </button>
       </div>
+
+      {/* Toggle manual paste */}
+      <button
+        onClick={() => setShowText(v => !v)}
+        className="text-xs text-slate hover:text-bloom underline underline-offset-2 mb-6 block"
+      >
+        {showText ? 'Hide text input' : 'Instagram not working? Paste the caption or transcript instead'}
+      </button>
+
+      {showText && (
+        <textarea
+          value={text}
+          onChange={e => setText(e.target.value)}
+          placeholder="Paste the video caption, comments, or transcript here…"
+          rows={5}
+          className="w-full border border-petal/40 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-bloom/30 mb-6 resize-none"
+        />
+      )}
 
       {/* Loading */}
       {loading && (
@@ -71,6 +95,14 @@ export default function ReelsExtractor() {
       {error && !loading && (
         <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
           {error}
+          {error.toLowerCase().includes('instagram') && !showText && (
+            <button
+              onClick={() => setShowText(true)}
+              className="block mt-2 underline underline-offset-2 font-medium"
+            >
+              Paste the caption manually instead
+            </button>
+          )}
         </div>
       )}
 

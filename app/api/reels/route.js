@@ -25,18 +25,40 @@ function normaliseYoutubeUrl(url) {
 }
 
 async function getInstagramText(url) {
-  const res = await fetch(url, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Accept-Language': 'en-US,en;q=0.9',
-    },
-    redirect: 'follow',
-  })
+  const headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+  }
+
+  // Try main URL first
+  const res = await fetch(url, { headers, redirect: 'follow' })
   const html = await res.text()
   const og = html.match(/<meta property="og:description" content="([^"]*)"/)
   if (og) return decodeHTMLEntities(og[1]).slice(0, 8000)
   const meta = html.match(/<meta name="description" content="([^"]*)"/)
   if (meta) return decodeHTMLEntities(meta[1]).slice(0, 8000)
+
+  // Try embed URL — more likely to return caption content
+  const shortcodeMatch = url.match(/instagram\.com\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/)
+  if (shortcodeMatch) {
+    const embedUrl = `https://www.instagram.com/p/${shortcodeMatch[1]}/embed/`
+    try {
+      const embedRes = await fetch(embedUrl, { headers, redirect: 'follow' })
+      const embedHtml = await embedRes.text()
+      // Caption is typically in a <div class="Caption"> or similar
+      const captionMatch = embedHtml.match(/class="[^"]*[Cc]aption[^"]*"[^>]*>([\s\S]{1,4000}?)<\/div>/)
+      if (captionMatch) {
+        const stripped = captionMatch[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+        if (stripped.length > 20) return decodeHTMLEntities(stripped).slice(0, 8000)
+      }
+      const ogEmbed = embedHtml.match(/<meta property="og:description" content="([^"]*)"/)
+      if (ogEmbed) return decodeHTMLEntities(ogEmbed[1]).slice(0, 8000)
+    } catch {
+      // ignore
+    }
+  }
+
   return ''
 }
 
@@ -131,8 +153,8 @@ async function matchBooksInDB(books) {
 }
 
 export async function POST(request) {
-  const { url } = await request.json()
-  if (!url) return NextResponse.json({ error: 'URL is required' }, { status: 400 })
+  const { url, text: manualText } = await request.json()
+  if (!url && !manualText) return NextResponse.json({ error: 'URL or text is required' }, { status: 400 })
 
   if (!process.env.GEMINI_API_KEY) {
     return NextResponse.json({ error: 'GEMINI_API_KEY not configured' }, { status: 500 })
@@ -141,14 +163,16 @@ export async function POST(request) {
   try {
     let rawBooks = []
 
-    if (isYoutube(url)) {
+    if (manualText?.trim()) {
+      rawBooks = await extractBooksFromText(manualText.trim())
+    } else if (isYoutube(url)) {
       // Gemini processes the YouTube video directly — no caption extraction needed
       rawBooks = await extractBooksFromYoutube(url)
     } else if (isInstagram(url)) {
       const text = await getInstagramText(url)
       if (!text.trim()) {
         return NextResponse.json({
-          error: 'No content could be extracted. Make sure the Instagram post is public.',
+          error: 'Instagram couldn\u2019t be scraped automatically. Paste the caption or transcript manually.',
         }, { status: 422 })
       }
       rawBooks = await extractBooksFromText(text)
