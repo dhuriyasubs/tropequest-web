@@ -53,7 +53,7 @@ export default function NavSearch() {
     <button
       onClick={handleClick}
       aria-label="Search books"
-      className="flex-1 min-w-0 mx-2 sm:mx-3 text-left"
+      className="flex-1 min-w-0 max-w-xs mx-2 sm:mx-4 text-left"
     >
       <div
         className={`relative flex items-center w-full px-3 py-1.5 rounded-full transition-all duration-200 ${
