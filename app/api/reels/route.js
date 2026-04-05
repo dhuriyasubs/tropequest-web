@@ -143,7 +143,7 @@ Look for books in ALL of these ways:
 
 For each book found, determine:
 1. The exact book title and author's full name (leave author empty if unknown)
-2. Is the creator recommending it (true) or warning against it / saying it was bad (false)?
+2. Is the creator recommending/praising/mentioning it positively (suggested: true) OR explicitly warning against it / saying it was bad / a DNF (suggested: false)? Default to true — most book videos are recommendations. Only set false if there is a clear negative signal.
 3. Any tropes mentioned for this specific book (e.g. "enemies to lovers", "slow burn", "villain love interest", "found family"). List only tropes explicitly mentioned or clearly implied for that book. Use the exact phrasing from the content where possible.
 
 Return ONLY a valid JSON array — no markdown, no explanation:
