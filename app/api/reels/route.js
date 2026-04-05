@@ -239,8 +239,45 @@ function makeSlug(title, author) {
   return `${base}-${Date.now().toString(36)}`
 }
 
+async function enrichAndReturn(book, data) {
+  // Merge video-extracted tropes into DB (fire-and-forget)
+  const newTropes = (book.tropes ?? []).filter(t => t?.trim())
+  if (data?.id && newTropes.length) {
+    const existing = data.tropes ?? []
+    const existingLower = new Set(existing.map(t => t.toLowerCase()))
+    const toAdd = newTropes.filter(t => !existingLower.has(t.toLowerCase()))
+    if (toAdd.length) {
+      supabaseAdmin.from('books').update({ tropes: [...existing, ...toAdd] }).eq('id', data.id).then()
+      data = { ...data, tropes: [...existing, ...toAdd] }
+    }
+  }
+  return {
+    title:     book.title,
+    author:    book.author,
+    suggested: book.suggested,
+    reason:    book.reason,
+    tropes:    book.tropes ?? [],
+    dbBook:    data ?? null,
+  }
+}
+
 async function matchBooksInDB(books) {
   return Promise.all(books.map(async (book) => {
+    const hasAuthor = book.author?.trim()
+
+    // 1. Exact title + author
+    if (hasAuthor) {
+      const { data } = await supabaseAdmin
+        .from('books')
+        .select('id,title,author,cover_url,slug,rating,tropes')
+        .ilike('title', book.title)
+        .ilike('author', `%${book.author}%`)
+        .limit(1)
+        .maybeSingle()
+      if (data) return enrichAndReturn(book, data)
+    }
+
+    // 2. Exact title only (fallback when no author)
     let { data } = await supabaseAdmin
       .from('books')
       .select('id,title,author,cover_url,slug,rating,tropes')
@@ -248,6 +285,18 @@ async function matchBooksInDB(books) {
       .limit(1)
       .maybeSingle()
 
+    // 3. Fuzzy title + author
+    if (!data && hasAuthor) {
+      const res = await supabaseAdmin
+        .from('books')
+        .select('id,title,author,cover_url,slug,rating,tropes')
+        .ilike('title', `%${book.title}%`)
+        .ilike('author', `%${book.author}%`)
+        .limit(1)
+      data = res.data?.[0] ?? null
+    }
+
+    // 4. Fuzzy title only
     if (!data) {
       const res = await supabaseAdmin
         .from('books')
@@ -278,30 +327,7 @@ async function matchBooksInDB(books) {
       }
     }
 
-    // Enrich tropes: merge video-extracted tropes with existing ones (fire-and-forget)
-    const newTropes = (book.tropes ?? []).filter(t => t?.trim())
-    if (data?.id && newTropes.length) {
-      const existing = data.tropes ?? []
-      const existingLower = new Set(existing.map(t => t.toLowerCase()))
-      const toAdd = newTropes.filter(t => !existingLower.has(t.toLowerCase()))
-      if (toAdd.length) {
-        supabaseAdmin
-          .from('books')
-          .update({ tropes: [...existing, ...toAdd] })
-          .eq('id', data.id)
-          .then()
-        data = { ...data, tropes: [...existing, ...toAdd] }
-      }
-    }
-
-    return {
-      title:     book.title,
-      author:    book.author,
-      suggested: book.suggested,
-      reason:    book.reason,
-      tropes:    book.tropes ?? [],
-      dbBook:    data ?? null,
-    }
+    return enrichAndReturn(book, data)
   }))
 }
 
