@@ -1,9 +1,10 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { MDXRemote } from 'next-mdx-remote/rsc'
-import { getAllPosts, getPost } from '@/lib/blog'
+import { getAllPosts, getPost, getRelatedPosts } from '@/lib/blog'
 import Breadcrumb from '@/components/Breadcrumb'
 import BookCover from '@/components/BlogBookCover'
+import RelatedPosts from '@/components/RelatedPosts'
 
 export const revalidate = 3600
 
@@ -34,6 +35,7 @@ export default function BlogPostPage({ params }) {
   if (!post) notFound()
 
   const { frontmatter, content } = post
+  const related = getRelatedPosts(params.slug, frontmatter.tags || [])
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-16">
@@ -74,7 +76,9 @@ export default function BlogPostPage({ params }) {
         <MDXRemote source={content} components={{ BookCover }} />
       </article>
 
-      <div className="mt-16 pt-8 border-t border-petal/30">
+      <RelatedPosts posts={related} />
+
+      <div className="mt-8">
         <Link href="/blog" className="text-sm text-bloom hover:underline">
           ← Back to Blog
         </Link>
