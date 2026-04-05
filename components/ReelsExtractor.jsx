@@ -180,24 +180,6 @@ export default function ReelsExtractor() {
         </button>
       </div>
 
-      {/* Toggle manual paste */}
-      <button
-        onClick={() => setShowText(v => !v)}
-        className="text-xs text-slate hover:text-bloom underline underline-offset-2 mb-6 block"
-      >
-        {showText ? 'Hide text input' : 'Paste caption or transcript instead'}
-      </button>
-
-      {showText && (
-        <textarea
-          value={text}
-          onChange={e => setText(e.target.value)}
-          placeholder="Paste the video caption, comments, or transcript here…"
-          rows={5}
-          className="w-full border border-petal/40 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-bloom/30 mb-6 resize-none"
-        />
-      )}
-
       {/* Loading */}
       {loading && (
         <div className="text-center py-16">
