@@ -14,6 +14,7 @@ export default function SearchClient({
   const [isPending, startTransition] = useTransition()
   const isMounted   = useRef(false)
   const searchRef   = useRef(null)
+  const resultsRef  = useRef(null)
 
   const [query,     setQuery]     = useState(initialQuery)
   const [selTropes, setSelTropes] = useState(initialSelTropes)
@@ -23,10 +24,18 @@ export default function SearchClient({
   const [books,    setBooks]    = useState(initialBooks ?? [])
   const [total,    setTotal]    = useState(initialTotal ?? 0)
   const [loading,  setLoading]  = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
   const [debouncedQuery] = useDebounce(query, 350)
 
-  // Push updated filters into URL (enables shareable links + SSR on refresh)
+  const activeFilterCount = selTropes.length + selGenres.length
+
+  // Lock body scroll when drawer is open
+  useEffect(() => {
+    document.body.style.overflow = drawerOpen ? 'hidden' : ''
+    return () => { document.body.style.overflow = '' }
+  }, [drawerOpen])
+
   const syncUrl = useCallback((q, tropes, genres, p) => {
     const sp = new URLSearchParams()
     if (q) sp.set('q', q)
@@ -38,8 +47,6 @@ export default function SearchClient({
     })
   }, [pathname, router])
 
-  // Fetch results from API route whenever filters change.
-  // Skip the very first run — the server already provided correct initialBooks/initialTotal.
   useEffect(() => {
     if (!isMounted.current) {
       isMounted.current = true
@@ -61,10 +68,8 @@ export default function SearchClient({
     syncUrl(debouncedQuery, selTropes, selGenres, page)
   }, [debouncedQuery, selTropes, selGenres, page, syncUrl])
 
-  // Reset to page 1 on filter change
   useEffect(() => { setPage(1) }, [debouncedQuery, selTropes, selGenres])
 
-  // Auto-focus search input when coming from nav
   useEffect(() => {
     if (autoFocus) searchRef.current?.focus()
   }, [autoFocus])
@@ -75,12 +80,20 @@ export default function SearchClient({
   const toggleGenre = g =>
     setSelGenres(prev => prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g])
 
+  const clearAll = () => { setSelTropes([]); setSelGenres([]) }
+
+  const closeDrawer = () => {
+    setDrawerOpen(false)
+    resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   const totalPages = Math.ceil(total / 20)
 
   return (
     <div className="flex flex-col lg:flex-row gap-8">
-      {/* Sidebar filters */}
-      <aside className="w-full lg:w-64 shrink-0">
+
+      {/* ── Desktop sidebar ── */}
+      <aside className="hidden lg:block w-64 shrink-0">
         <input
           ref={searchRef}
           type="search"
@@ -89,50 +102,142 @@ export default function SearchClient({
           placeholder="Title, author, series…"
           className="w-full border border-petal/40 rounded-lg px-3 py-2 text-sm mb-6 focus:outline-none focus:ring-2 focus:ring-bloom"
         />
-
         {genres.length > 0 && (
           <FilterSection title="Genres" items={genres} selected={selGenres} onToggle={toggleGenre} />
         )}
         <FilterSection title="Tropes" items={tropes} selected={selTropes} onToggle={toggleTrope} />
       </aside>
 
-      {/* Results */}
+      {/* ── Results column ── */}
       <div className="flex-1">
-        <p className="text-sm text-slate mb-4">
-          {loading ? 'Searching…' : `${total.toLocaleString()} books found`}
-        </p>
 
-        <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 transition-opacity ${loading ? 'opacity-40' : ''}`}>
-          {books.map(b => <BookCard key={b.id} book={b} shelfStatus={shelfMap[b.id] ?? null} />)}
+        {/* Mobile: search + filter bar */}
+        <div className="flex gap-2 mb-4 lg:hidden">
+          <input
+            type="search"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="Title, author, series…"
+            className="flex-1 border border-petal/40 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bloom"
+          />
+          <button
+            onClick={() => setDrawerOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-petal/40 text-sm shrink-0"
+          >
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M1 3h13M3 7.5h9M5.5 12h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            Filters
+            {activeFilterCount > 0 && (
+              <span className="bg-bloom text-white text-xs font-semibold rounded-full w-4 h-4 flex items-center justify-center leading-none">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
         </div>
 
-        {books.length === 0 && !loading && (
-          <p className="text-slate text-center py-16">No books found. Try different filters.</p>
-        )}
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex justify-center gap-2 mt-10">
-            <button
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="px-4 py-2 rounded-lg border border-petal/40 text-sm disabled:opacity-40"
-            >
-              ← Prev
-            </button>
-            <span className="px-4 py-2 text-sm text-slate">
-              {page} / {totalPages}
-            </span>
-            <button
-              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-              className="px-4 py-2 rounded-lg border border-petal/40 text-sm disabled:opacity-40"
-            >
-              Next →
+        {/* Active filter chips (mobile) */}
+        {activeFilterCount > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-3 lg:hidden">
+            {selGenres.map(g => (
+              <button key={g} onClick={() => toggleGenre(g)} className="chip chip-active text-xs flex items-center gap-1">
+                {g} <span className="opacity-60">×</span>
+              </button>
+            ))}
+            {selTropes.map(t => (
+              <button key={t} onClick={() => toggleTrope(t)} className="chip chip-active text-xs flex items-center gap-1">
+                {t} <span className="opacity-60">×</span>
+              </button>
+            ))}
+            <button onClick={clearAll} className="text-xs text-bloom hover:underline ml-1">
+              Clear all
             </button>
           </div>
         )}
+
+        <div ref={resultsRef}>
+          <p className="text-sm text-slate mb-4">
+            {loading ? 'Searching…' : `${total.toLocaleString()} books found`}
+          </p>
+
+          <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 transition-opacity ${loading ? 'opacity-40' : ''}`}>
+            {books.map(b => <BookCard key={b.id} book={b} shelfStatus={shelfMap[b.id] ?? null} />)}
+          </div>
+
+          {books.length === 0 && !loading && (
+            <p className="text-slate text-center py-16">No books found. Try different filters.</p>
+          )}
+
+          {totalPages > 1 && (
+            <div className="flex justify-center gap-2 mt-10">
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="px-4 py-2 rounded-lg border border-petal/40 text-sm disabled:opacity-40"
+              >
+                ← Prev
+              </button>
+              <span className="px-4 py-2 text-sm text-slate">
+                {page} / {totalPages}
+              </span>
+              <button
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="px-4 py-2 rounded-lg border border-petal/40 text-sm disabled:opacity-40"
+              >
+                Next →
+              </button>
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* ── Mobile filter drawer ── */}
+      {drawerOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+            onClick={closeDrawer}
+          />
+          {/* Sheet */}
+          <div className="fixed inset-x-0 bottom-0 z-50 lg:hidden bg-white rounded-t-2xl shadow-xl flex flex-col max-h-[85dvh]">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-4 border-b border-petal/30">
+              <span className="font-semibold text-sm">Filters</span>
+              <div className="flex items-center gap-3">
+                {activeFilterCount > 0 && (
+                  <button onClick={clearAll} className="text-sm text-bloom hover:underline">
+                    Clear all
+                  </button>
+                )}
+                <button onClick={closeDrawer} className="text-slate/60 hover:text-ink">
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 4l10 10M14 4L4 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Scrollable filter content */}
+            <div className="overflow-y-auto flex-1 px-4 py-4">
+              {genres.length > 0 && (
+                <FilterSection title="Genres" items={genres} selected={selGenres} onToggle={toggleGenre} />
+              )}
+              <FilterSection title="Tropes" items={tropes} selected={selTropes} onToggle={toggleTrope} />
+            </div>
+
+            {/* Footer CTA */}
+            <div className="px-4 py-4 border-t border-petal/30">
+              <button
+                onClick={closeDrawer}
+                className="w-full py-3 bg-bloom text-white font-semibold text-sm rounded-xl"
+              >
+                {loading ? 'Searching…' : `Show ${total.toLocaleString()} books`}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
     </div>
   )
 }
@@ -140,7 +245,6 @@ export default function SearchClient({
 function FilterSection({ title, items, selected, onToggle }) {
   const [expanded, setExpanded] = useState(false)
 
-  // Always show selected items even if they fall outside the first 10
   const selectedSet = new Set(selected)
   const unselected  = items.filter(i => !selectedSet.has(i))
   const visible     = expanded
