@@ -1,16 +1,43 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import TbrButton from './TbrButton'
+import { useRouter } from 'next/navigation'
+import { createSupabaseBrowser } from '@/lib/supabase-browser'
 
 export default function ReelsExtractor() {
-  const [url,       setUrl]       = useState('')
-  const [text,      setText]      = useState('')
-  const [showText,  setShowText]  = useState(false)
-  const [loading,   setLoading]   = useState(false)
-  const [error,     setError]     = useState(null)
-  const [books,     setBooks]     = useState(null)
-  const [message,   setMessage]   = useState(null)
+  const [url,        setUrl]        = useState('')
+  const [text,       setText]       = useState('')
+  const [showText,   setShowText]   = useState(false)
+  const [loading,    setLoading]    = useState(false)
+  const [error,      setError]      = useState(null)
+  const [books,      setBooks]      = useState(null)
+  const [message,    setMessage]    = useState(null)
+  const [selected,   setSelected]   = useState(new Set())
+  const [shelfIds,   setShelfIds]   = useState(new Set())
+  const [tbrIds,     setTbrIds]     = useState(new Set())
+  const [bulkLoading, setBulkLoading] = useState(false)
+  const router = useRouter()
+
+  // Fetch user's shelf + TBR once books are extracted
+  useEffect(() => {
+    if (!books?.length) return
+    const dbIds = books.map(b => b.dbBook?.id).filter(Boolean)
+    if (!dbIds.length) return
+
+    async function fetchUserData() {
+      const supabase = createSupabaseBrowser()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const [{ data: shelf }, { data: tbr }] = await Promise.all([
+        supabase.from('shelf').select('book_id').eq('user_id', user.id).in('book_id', dbIds),
+        supabase.from('tbr').select('book_id').eq('user_id', user.id).in('book_id', dbIds),
+      ])
+      setShelfIds(new Set((shelf ?? []).map(r => r.book_id)))
+      setTbrIds(new Set((tbr ?? []).map(r => r.book_id)))
+    }
+    fetchUserData()
+  }, [books])
 
   async function extract() {
     const hasUrl  = url.trim()
@@ -20,6 +47,9 @@ export default function ReelsExtractor() {
     setError(null)
     setBooks(null)
     setMessage(null)
+    setSelected(new Set())
+    setShelfIds(new Set())
+    setTbrIds(new Set())
 
     try {
       const res  = await fetch('/api/reels', {
@@ -31,8 +61,15 @@ export default function ReelsExtractor() {
       if (!res.ok) {
         setError(data.error || 'Something went wrong. Please try again.')
       } else {
-        setBooks(data.books)
+        setBooks(data.books ?? [])
         if (data.message) setMessage(data.message)
+        // Pre-select all suggested books that have a dbBook
+        const preSelected = new Set(
+          (data.books ?? [])
+            .filter(b => b.suggested && b.dbBook?.id)
+            .map(b => b.dbBook.id)
+        )
+        setSelected(preSelected)
       }
     } catch {
       setError('Failed to reach the server. Please try again.')
@@ -41,7 +78,52 @@ export default function ReelsExtractor() {
     }
   }
 
-  const canSubmit = !loading && (url.trim() || text.trim())
+  function toggleSelect(id) {
+    setSelected(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  function toggleAll() {
+    const eligible = (books ?? []).filter(b => b.dbBook?.id).map(b => b.dbBook.id)
+    if (selected.size === eligible.length) {
+      setSelected(new Set())
+    } else {
+      setSelected(new Set(eligible))
+    }
+  }
+
+  async function addSelectedToTbr() {
+    if (!selected.size) return
+    const supabase = createSupabaseBrowser()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      sessionStorage.setItem('authRedirect', '/reels')
+      router.push('/login')
+      return
+    }
+
+    setBulkLoading(true)
+    const res = await fetch('/api/tbr', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ bookIds: [...selected], source: 'video' }),
+    })
+    if (res.ok) {
+      setTbrIds(prev => new Set([...prev, ...selected]))
+      window.dispatchEvent(new CustomEvent('toast', {
+        detail: { message: `${selected.size} book${selected.size !== 1 ? 's' : ''} added to TBR` },
+      }))
+      setSelected(new Set())
+    }
+    setBulkLoading(false)
+  }
+
+  const eligibleBooks  = (books ?? []).filter(b => b.dbBook?.id)
+  const allSelected    = eligibleBooks.length > 0 && selected.size === eligibleBooks.length
+  const canSubmit      = !loading && (url.trim() || text.trim())
 
   return (
     <div>
@@ -116,40 +198,99 @@ export default function ReelsExtractor() {
       {/* Results */}
       {!loading && books?.length > 0 && (
         <>
-          <p className="text-sm text-slate mb-4">
-            {books.length} book{books.length !== 1 ? 's' : ''} found &mdash;{' '}
-            <span className="text-green-600">{books.filter(b => b.suggested).length} suggested</span>
-            {books.some(b => !b.suggested) && (
-              <>, <span className="text-red-500">{books.filter(b => !b.suggested).length} not suggested</span></>
+          {/* Header row */}
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm text-slate">
+              {books.length} book{books.length !== 1 ? 's' : ''} found &mdash;{' '}
+              <span className="text-green-600">{books.filter(b => b.suggested).length} suggested</span>
+              {books.some(b => !b.suggested) && (
+                <>, <span className="text-red-500">{books.filter(b => !b.suggested).length} not suggested</span></>
+              )}
+            </p>
+            {eligibleBooks.length > 0 && (
+              <button
+                onClick={toggleAll}
+                className="text-xs text-bloom hover:underline underline-offset-2 font-medium"
+              >
+                {allSelected ? 'Deselect all' : 'Select all'}
+              </button>
             )}
-          </p>
-          <div className="grid gap-3">
-            {books.map((item, i) => <BookResultCard key={i} item={item} />)}
           </div>
+
+          <div className="grid gap-3">
+            {books.map((item, i) => (
+              <BookResultCard
+                key={i}
+                item={item}
+                selected={item.dbBook?.id ? selected.has(item.dbBook.id) : false}
+                onToggle={item.dbBook?.id ? () => toggleSelect(item.dbBook.id) : null}
+                isOnShelf={item.dbBook?.id ? shelfIds.has(item.dbBook.id) : false}
+                isInTbr={item.dbBook?.id ? tbrIds.has(item.dbBook.id) : false}
+              />
+            ))}
+          </div>
+
+          {/* Bulk add bar */}
+          {eligibleBooks.length > 0 && (
+            <div className="sticky bottom-4 mt-6 flex items-center justify-between gap-4 bg-white border border-petal/30 rounded-2xl shadow-lg px-5 py-3">
+              <p className="text-sm text-slate">
+                {selected.size > 0
+                  ? <><span className="font-semibold text-ink">{selected.size}</span> book{selected.size !== 1 ? 's' : ''} selected</>
+                  : 'Select books to add to TBR'
+                }
+              </p>
+              <button
+                onClick={addSelectedToTbr}
+                disabled={!selected.size || bulkLoading}
+                className="bg-bloom text-white text-sm font-semibold px-5 py-2 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-40 whitespace-nowrap"
+              >
+                {bulkLoading ? 'Adding…' : 'Add to TBR'}
+              </button>
+            </div>
+          )}
         </>
       )}
     </div>
   )
 }
 
-function BookResultCard({ item }) {
+function BookResultCard({ item, selected, onToggle, isOnShelf, isInTbr }) {
   const { title, author, suggested, reason, dbBook } = item
 
   return (
-    <div className={`flex gap-4 p-4 rounded-xl border ${
-      suggested
-        ? 'border-green-200 bg-green-50/40'
-        : 'border-red-200 bg-red-50/20'
-    }`}>
+    <div
+      className={`flex gap-4 p-4 rounded-xl border transition-colors ${
+        selected
+          ? 'border-bloom/40 bg-bloom/5'
+          : suggested
+          ? 'border-green-200 bg-green-50/40'
+          : 'border-red-200 bg-red-50/20'
+      }`}
+    >
+      {/* Checkbox */}
+      {onToggle && (
+        <div className="shrink-0 flex items-center">
+          <button
+            onClick={onToggle}
+            aria-label={selected ? 'Deselect' : 'Select'}
+            className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+              selected ? 'bg-bloom border-bloom' : 'border-slate/30 hover:border-bloom'
+            }`}
+          >
+            {selected && (
+              <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M2 6l3 3 5-5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+          </button>
+        </div>
+      )}
+
       {/* Cover */}
       <div className="shrink-0 w-14 rounded-lg overflow-hidden bg-gray-100" style={{ aspectRatio: '2/3' }}>
         {dbBook?.cover_url ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={dbBook.cover_url}
-            alt={title}
-            className="w-full h-full object-cover"
-          />
+          <img src={dbBook.cover_url} alt={title} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-xl">📚</div>
         )}
@@ -160,10 +301,7 @@ function BookResultCard({ item }) {
         <div className="flex items-start justify-between gap-2 flex-wrap">
           <div className="min-w-0">
             {dbBook ? (
-              <Link
-                href={`/books/${dbBook.slug}`}
-                className="font-semibold text-ink hover:text-bloom line-clamp-1 block"
-              >
+              <Link href={`/books/${dbBook.slug}`} className="font-semibold text-ink hover:text-bloom line-clamp-1 block">
                 {dbBook.title}
               </Link>
             ) : (
@@ -183,15 +321,20 @@ function BookResultCard({ item }) {
           <p className="text-xs text-slate/80 mt-1.5 line-clamp-2 italic">{reason}</p>
         )}
 
-        <div className="flex items-center gap-2 mt-3">
-          {dbBook && (
-            <>
-              <TbrButton bookId={dbBook.id} size="sm" />
-              <span className="text-xs text-slate">Add to TBR</span>
-              {dbBook.rating && (
-                <span className="text-xs text-slate ml-auto">★ {dbBook.rating.toFixed(1)}</span>
-              )}
-            </>
+        {/* Tags */}
+        <div className="flex items-center gap-2 mt-2 flex-wrap">
+          {isOnShelf && (
+            <span className="text-xs bg-green-50 text-green-700 border border-green-200 rounded-full px-2 py-0.5 font-medium">
+              On shelf
+            </span>
+          )}
+          {isInTbr && !isOnShelf && (
+            <span className="text-xs bg-bloom/10 text-bloom border border-bloom/20 rounded-full px-2 py-0.5 font-medium">
+              In TBR
+            </span>
+          )}
+          {dbBook?.rating && (
+            <span className="text-xs text-slate ml-auto">★ {dbBook.rating.toFixed(1)}</span>
           )}
         </div>
       </div>

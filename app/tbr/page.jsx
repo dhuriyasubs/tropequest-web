@@ -12,13 +12,20 @@ export default async function TbrPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login?next=/tbr')
 
-  const { data } = await supabase
-    .from('tbr')
-    .select('book_id, created_at, books(id, title, author, cover_url, slug, rating, tropes, series_name)')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
+  const [{ data }, { data: shelfData }] = await Promise.all([
+    supabase
+      .from('tbr')
+      .select('book_id, source, created_at, books(id, title, author, cover_url, slug, rating, tropes, series_name)')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('shelf')
+      .select('book_id')
+      .eq('user_id', user.id),
+  ])
 
-  const books = (data ?? []).map(r => r.books).filter(Boolean)
+  const shelfIds = new Set((shelfData ?? []).map(r => r.book_id))
+  const books    = (data ?? []).map(r => ({ ...r.books, source: r.source })).filter(Boolean)
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
@@ -86,7 +93,22 @@ export default async function TbrPage() {
                     {book.tropes.slice(0, 3).join(' · ')}
                   </p>
                 )}
-                <div className="flex items-center gap-3 mt-3">
+
+                {/* Tags row */}
+                <div className="flex items-center gap-2 mt-2 flex-wrap">
+                  {book.source === 'video' && (
+                    <span className="text-xs bg-rose-50 text-rose-600 border border-rose-200 rounded-full px-2 py-0.5 font-medium">
+                      🎬 From video
+                    </span>
+                  )}
+                  {shelfIds.has(book.id) && (
+                    <span className="text-xs bg-green-50 text-green-700 border border-green-200 rounded-full px-2 py-0.5 font-medium">
+                      On shelf
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-3 mt-2">
                   <TbrButton bookId={book.id} initialSaved={true} size="sm" />
                   <span className="text-xs text-slate">Remove from TBR</span>
                 </div>
