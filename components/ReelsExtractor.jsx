@@ -290,7 +290,7 @@ function BookResultCard({ item, selected, onToggle, shelfStatus, isInTbr }) {
       }`}
     >
       {/* Cover + checkbox overlay */}
-      <div className="relative shrink-0 w-16 rounded-lg overflow-hidden bg-gray-100" style={{ aspectRatio: '2/3' }}>
+      <div className="relative shrink-0 w-14 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center" style={{ aspectRatio: '2/3' }}>
         {dbBook?.cover_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={dbBook.cover_url} alt={title} className="w-full h-full object-contain" />
