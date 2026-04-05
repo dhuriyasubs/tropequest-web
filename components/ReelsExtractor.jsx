@@ -150,14 +150,27 @@ export default function ReelsExtractor() {
     <div>
       {/* URL input */}
       <div className="flex gap-3 mb-3">
-        <input
-          type="url"
-          value={url}
-          onChange={e => setUrl(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && canSubmit && extract()}
-          placeholder="Paste a YouTube URL…"
-          className="flex-1 border border-petal/40 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-bloom/30"
-        />
+        <div className="relative flex-1">
+          <input
+            type="url"
+            value={url}
+            onChange={e => setUrl(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && canSubmit && extract()}
+            placeholder="Paste a YouTube URL…"
+            className="w-full border border-petal/40 rounded-xl px-4 py-3 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-bloom/30"
+          />
+          {url && (
+            <button
+              onClick={() => setUrl('')}
+              aria-label="Clear URL"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate/40 hover:text-slate transition-colors"
+            >
+              <svg viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
+                <path d="M4.293 4.293a1 1 0 011.414 0L8 6.586l2.293-2.293a1 1 0 111.414 1.414L9.414 8l2.293 2.293a1 1 0 01-1.414 1.414L8 9.414l-2.293 2.293a1 1 0 01-1.414-1.414L6.586 8 4.293 5.707a1 1 0 010-1.414z" />
+              </svg>
+            </button>
+          )}
+        </div>
         <button
           onClick={extract}
           disabled={!canSubmit}
