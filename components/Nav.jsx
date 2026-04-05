@@ -66,9 +66,8 @@ export default function Nav() {
           TropeQuest
         </Link>
 
-        {path !== '/search' && <NavSearch />}
-
-        <div className="relative flex-shrink-0" ref={menuRef}>
+        <div className="flex items-center gap-2 flex-shrink-0" ref={menuRef}>
+          {path !== '/search' && <NavSearch />}
           <button
             onClick={() => setMenuOpen(o => !o)}
             className="flex items-center justify-center focus:outline-none"
