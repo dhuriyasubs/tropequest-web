@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import BookCard from '@/components/BookCard'
+import Breadcrumb from '@/components/Breadcrumb'
 import { getBooksByAuthor } from '@/lib/search'
 
 export const revalidate = 3600
@@ -44,6 +45,11 @@ export default async function AuthorPage({ params }) {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
+      <Breadcrumb crumbs={[
+        { label: 'Home', href: '/' },
+        { label: author },
+      ]} />
+
       <h1 className="font-serif text-3xl font-bold mb-1">{author}</h1>
       <p className="text-slate mb-10">{books.length} books on TropeQuest</p>
 

@@ -1,3 +1,5 @@
+import Breadcrumb from '@/components/Breadcrumb'
+
 export const metadata = {
   title: 'About TropeQuest',
   description: 'TropeQuest helps readers discover romance, fantasy, and thriller books by the tropes they actually love.',
@@ -7,6 +9,7 @@ export const metadata = {
 export default function AboutPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-16">
+      <Breadcrumb crumbs={[{ label: 'Home', href: '/' }, { label: 'About' }]} />
       <h1 className="font-serif text-4xl font-bold mb-6">About TropeQuest</h1>
       <div className="prose prose-slate max-w-none space-y-4 text-slate leading-relaxed">
         <p>

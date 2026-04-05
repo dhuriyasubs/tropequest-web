@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import BookCard from '@/components/BookCard'
+import Breadcrumb from '@/components/Breadcrumb'
 import { getFilterOptions, getBooksByTrope } from '@/lib/search'
 import { slugify } from '@/lib/utils'
 
@@ -37,9 +38,11 @@ export default async function TropeDetailPage({ params }) {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
-      <Link href="/tropes" className="text-sm text-bloom hover:underline mb-6 inline-block">
-        ← All Tropes
-      </Link>
+      <Breadcrumb crumbs={[
+        { label: 'Home', href: '/' },
+        { label: 'Tropes', href: '/tropes' },
+        { label: trope },
+      ]} />
 
       <h1 className="font-serif text-3xl font-bold mb-2">{trope}</h1>
       <p className="text-slate mb-10">{books.length} book{books.length !== 1 ? 's' : ''}</p>

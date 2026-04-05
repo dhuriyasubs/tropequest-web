@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import BookCard from '@/components/BookCard'
+import Breadcrumb from '@/components/Breadcrumb'
 import { getAllSeries, getBooksBySeries } from '@/lib/search'
 import { slugify } from '@/lib/utils'
 
@@ -37,9 +38,11 @@ export default async function SeriesDetailPage({ params }) {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
-      <Link href="/series" className="text-sm text-bloom hover:underline mb-6 inline-block">
-        ← All Series
-      </Link>
+      <Breadcrumb crumbs={[
+        { label: 'Home', href: '/' },
+        { label: 'Series', href: '/series' },
+        { label: match.series_name },
+      ]} />
 
       <h1 className="font-serif text-3xl font-bold mb-1">{match.series_name}</h1>
       <Link

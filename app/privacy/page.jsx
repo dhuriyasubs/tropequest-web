@@ -1,3 +1,5 @@
+import Breadcrumb from '@/components/Breadcrumb'
+
 export const metadata = {
   title: 'Privacy Policy',
   description: 'Privacy policy for TropeQuest.',
@@ -7,6 +9,7 @@ export const metadata = {
 export default function PrivacyPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-16">
+      <Breadcrumb crumbs={[{ label: 'Home', href: '/' }, { label: 'Privacy Policy' }]} />
       <h1 className="font-serif text-4xl font-bold mb-2">Privacy Policy</h1>
       <p className="text-sm text-slate/60 mb-8">Last updated: April 2025</p>
 

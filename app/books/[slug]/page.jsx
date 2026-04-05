@@ -8,6 +8,7 @@ import TbrButton from '@/components/TbrButton'
 import ShelfButton from '@/components/ShelfButton'
 import ShelfStatusSelect from '@/components/ShelfStatusSelect'
 import StarRating from '@/components/StarRating'
+import Breadcrumb from '@/components/Breadcrumb'
 
 export const revalidate = 3600
 
@@ -103,6 +104,11 @@ export default async function BookPage({ params }) {
       />
 
       <div className="max-w-5xl mx-auto px-4 py-10">
+        <Breadcrumb crumbs={[
+          { label: 'Home', href: '/' },
+          { label: 'Browse', href: '/search' },
+          { label: book.title },
+        ]} />
         <div className="flex flex-col sm:flex-row gap-10">
           {/* Cover */}
           <div className="shrink-0 mx-auto sm:mx-0">
