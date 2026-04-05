@@ -42,20 +42,16 @@ export default function PrivacyPage() {
         <section>
           <h2 className="font-serif text-xl font-bold text-ink mb-2">Your data</h2>
           <p>
-            You can delete your account and all associated data at any time by emailing{' '}
-            <a href="mailto:hello@tropequest.com" className="text-bloom hover:underline underline-offset-2">
-              hello@tropequest.com
-            </a>.
+            You can delete your account and all associated data at any time by reaching out via our{' '}
+            <a href="/contact" className="text-bloom hover:underline underline-offset-2">contact page</a>.
           </p>
         </section>
 
         <section>
           <h2 className="font-serif text-xl font-bold text-ink mb-2">Contact</h2>
           <p>
-            Questions about this policy? Email{' '}
-            <a href="mailto:hello@tropequest.com" className="text-bloom hover:underline underline-offset-2">
-              hello@tropequest.com
-            </a>.
+            Questions about this policy? Reach us via our{' '}
+            <a href="/contact" className="text-bloom hover:underline underline-offset-2">contact page</a>.
           </p>
         </section>
       </div>
