@@ -46,6 +46,15 @@ const MODES = [
     border: 'border-indigo-200',
     iconColor: 'text-indigo-400',
   },
+  {
+    href: '/reels',
+    icon: '🎬',
+    label: 'Books from Videos',
+    hook: 'Paste a video link, get every book mentioned',
+    bg: 'bg-rose-50',
+    border: 'border-rose-200',
+    iconColor: 'text-rose-500',
+  },
 ]
 
 export default function DiscoverStrip() {
@@ -54,7 +63,7 @@ export default function DiscoverStrip() {
       <h2 className="font-serif text-xl font-semibold mb-4 text-ink">How do you want to discover?</h2>
       {/* Horizontal scroll on mobile, grid on md+ */}
       <div
-        className="flex gap-3 overflow-x-auto pb-2 md:grid md:grid-cols-5 md:overflow-visible md:pb-0"
+        className="flex gap-3 overflow-x-auto pb-2 md:grid md:grid-cols-6 md:overflow-visible md:pb-0"
         style={{ scrollbarWidth: 'none' }}
       >
         {MODES.map(m => (
