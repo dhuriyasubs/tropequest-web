@@ -88,11 +88,6 @@ export default function TropePicker({ tropes, grouped, letters }) {
         </div>
       )}
 
-      {/* Hint text */}
-      <p className="text-xs text-slate/60 mb-8">
-        Tap one trope to browse it · select multiple to combine
-      </p>
-
       {filteredLetters.letters.length === 0 && (
         <p className="text-slate text-sm">No tropes match &ldquo;{query}&rdquo;</p>
       )}

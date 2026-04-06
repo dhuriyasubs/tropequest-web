@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import BookCard from '@/components/BookCard'
 import Breadcrumb from '@/components/Breadcrumb'
+import TropeBookList from '@/components/TropeBookList'
 import { getFilterOptions, getBooksByTrope } from '@/lib/search'
 import { slugify } from '@/lib/utils'
 
@@ -93,20 +93,12 @@ export default async function TropeDetailPage({ params }) {
           <p className="text-ink/80 leading-relaxed mb-3">{editorial.intro}</p>
           <p className="text-ink/70 text-sm leading-relaxed">{editorial.whyLove}</p>
         </div>
-      ) : (
-        <p className="text-slate mb-8">{books.length} book{books.length !== 1 ? 's' : ''}</p>
-      )}
-
-      {editorial && (
-        <p className="text-slate text-sm mb-8">{books.length} book{books.length !== 1 ? 's' : ''}</p>
-      )}
+      ) : null}
 
       {books.length === 0 ? (
         <p className="text-slate">No books found for this trope yet.</p>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {books.map(b => <BookCard key={b.id} book={b} />)}
-        </div>
+        <TropeBookList books={books} />
       )}
 
       {relatedTropes.length > 0 && (
