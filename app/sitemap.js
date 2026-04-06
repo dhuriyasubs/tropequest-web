@@ -37,6 +37,16 @@ export default async function sitemap() {
     priority: 0.7,
   }))
 
+  const booksLikeUrls = [
+    'fourth-wing',
+    'a-court-of-thorns-and-roses',
+    'colleen-hoover',
+  ].map(slug => ({
+    url: `${BASE}/books-like/${slug}`,
+    changeFrequency: 'weekly',
+    priority: 0.85,
+  }))
+
   return [
     { url: BASE, changeFrequency: 'daily', priority: 1 },
     { url: `${BASE}/search`, changeFrequency: 'daily', priority: 0.9 },
@@ -45,6 +55,7 @@ export default async function sitemap() {
     { url: `${BASE}/about`, changeFrequency: 'monthly', priority: 0.5 },
     { url: `${BASE}/contact`, changeFrequency: 'monthly', priority: 0.4 },
     { url: `${BASE}/privacy`, changeFrequency: 'monthly', priority: 0.3 },
+    ...booksLikeUrls,
     ...tropeUrls,
     ...blogUrls,
     ...bookUrls,
