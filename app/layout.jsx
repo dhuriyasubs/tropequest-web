@@ -53,16 +53,25 @@ export default function RootLayout({ children }) {
         <Toaster />
         <AuthRedirectHandler />
         <footer className="bg-ink text-white/60 text-sm py-10 px-4 mt-16">
-          <div className="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between gap-6">
+          <div className="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between gap-8">
             <div className="space-y-2">
               <p className="text-white font-semibold">TropeQuest</p>
               <div className="flex flex-wrap gap-x-4 gap-y-1">
-                <a href="/blog"    className="hover:text-white transition-colors">Blog</a>
                 <a href="/about"   className="hover:text-white transition-colors">About</a>
                 <a href="/contact" className="hover:text-white transition-colors">Contact</a>
                 <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
               </div>
               <p>© {new Date().getFullYear()} TropeQuest</p>
+            </div>
+            <div className="space-y-2">
+              <p className="text-white font-semibold">Blog</p>
+              <div className="flex flex-col gap-1">
+                <a href="/blog"                              className="hover:text-white transition-colors">All posts</a>
+                <a href="/blog?category=trope-pages"        className="hover:text-white transition-colors">Trope pages</a>
+                <a href="/blog?category=books-like"         className="hover:text-white transition-colors">Books like X</a>
+                <a href="/blog?category=tool-platform"      className="hover:text-white transition-colors">Tool/platform</a>
+                <a href="/blog?category=blog-informational" className="hover:text-white transition-colors">Blog/informational</a>
+              </div>
             </div>
           </div>
         </footer>

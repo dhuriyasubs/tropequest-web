@@ -8,17 +8,46 @@ export const metadata = {
   alternates: { canonical: '/blog' },
 }
 
-export default function BlogPage() {
-  const posts = getAllPosts()
+const CATEGORIES = [
+  { slug: 'all',               label: 'All' },
+  { slug: 'trope-pages',       label: 'Trope pages' },
+  { slug: 'books-like',        label: 'Books like X' },
+  { slug: 'tool-platform',     label: 'Tool/platform' },
+  { slug: 'blog-informational',label: 'Blog/informational' },
+]
+
+export default function BlogPage({ searchParams }) {
+  const active = searchParams?.category ?? 'all'
+  const allPosts = getAllPosts()
+  const posts = active === 'all'
+    ? allPosts
+    : allPosts.filter(p => p.category === active)
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-16">
       <Breadcrumb crumbs={[{ label: 'Home', href: '/' }, { label: 'Blog' }]} />
       <h1 className="font-serif text-4xl font-bold mb-2">Blog</h1>
-      <p className="text-slate mb-10">Trope guides, reading lists, and book recommendations.</p>
+      <p className="text-slate mb-6">Trope guides, reading lists, and book recommendations.</p>
+
+      {/* Filter tabs */}
+      <div className="flex flex-wrap gap-2 mb-8">
+        {CATEGORIES.map(cat => (
+          <Link
+            key={cat.slug}
+            href={cat.slug === 'all' ? '/blog' : `/blog?category=${cat.slug}`}
+            className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${
+              active === cat.slug
+                ? 'bg-bloom text-white border-bloom'
+                : 'border-petal/50 text-slate hover:border-bloom hover:text-bloom'
+            }`}
+          >
+            {cat.label}
+          </Link>
+        ))}
+      </div>
 
       {posts.length === 0 ? (
-        <p className="text-slate">No posts yet — check back soon.</p>
+        <p className="text-slate">No posts in this category yet.</p>
       ) : (
         <div className="divide-y divide-petal/30">
           {posts.map(post => (
