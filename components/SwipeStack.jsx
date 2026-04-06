@@ -247,8 +247,8 @@ export default function SwipeStack({ initialBooks, userId, initialExcludeIds = [
 
   return (
     <div
-      className="max-w-sm mx-auto px-4 pt-4 pb-4 flex flex-col"
-      style={{ height: 'calc(100dvh - 56px)' }}
+      className="max-w-sm mx-auto px-4 pt-6 pb-4 flex flex-col"
+      style={{ height: 'calc(100svh - 56px)' }}
     >
       {/* Header */}
       <div className="text-center mb-3 flex-shrink-0">
