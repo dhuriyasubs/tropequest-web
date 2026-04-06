@@ -244,7 +244,7 @@ export default function GoodreadsImport() {
             {result.updated  > 0 && <p>✓ {result.updated} existing book{result.updated !== 1 ? 's' : ''} updated</p>}
             {result.queued > 0 && (
               <p className="text-green-600">
-                {result.queued} book{result.queued !== 1 ? 's' : ''} queued for enrichment — we&apos;ll add them to your shelf once processed
+                {result.queued} book{result.queued !== 1 ? 's' : ''} queued for enrichment. We&apos;ll add them to your shelf once processed.
               </p>
             )}
           </div>

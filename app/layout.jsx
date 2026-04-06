@@ -22,7 +22,7 @@ const dmSans = DM_Sans({
 export const metadata = {
   metadataBase: new URL('https://tropequest.com'),
   title: {
-    default: 'TropeQuest — Find Books by Trope',
+    default: 'TropeQuest: Find Books by Trope',
     template: '%s | TropeQuest',
   },
   description:

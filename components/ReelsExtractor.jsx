@@ -74,7 +74,7 @@ export default function ReelsExtractor() {
       } catch {
         // Vercel timeout or non-JSON response
         setError(res.status === 504 || res.status === 408
-          ? 'The request timed out — the video may be too long. Try a shorter video.'
+          ? 'The request timed out. The video may be too long. Try a shorter video.'
           : `Server error (${res.status}). Please try again.`)
         return
       }

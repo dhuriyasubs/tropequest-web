@@ -8,7 +8,7 @@ export const revalidate = 3600
 
 export async function generateMetadata({ params }) {
   const author = decodeURIComponent(params.slug)
-  const description = `Browse all books by ${author} on TropeQuest — series, standalones, ratings, and tropes.`
+  const description = `Browse all books by ${author} on TropeQuest: series, standalones, ratings, and tropes.`
   return {
     title: `Books by ${author}`,
     description,

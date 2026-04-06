@@ -395,7 +395,7 @@ export default function SwipeStack({ initialBooks, userId, initialExcludeIds = [
             <div className="text-3xl text-center mb-3">♥</div>
             <h3 className="font-serif text-xl font-bold text-center mb-2">Save your picks</h3>
             <p className="text-slate text-sm text-center mb-6 leading-relaxed">
-              Sign in to keep your TBR — your {savedCount} saved book{savedCount !== 1 ? 's' : ''} will sync automatically.
+              Sign in to keep your TBR. Your {savedCount} saved book{savedCount !== 1 ? 's' : ''} will sync automatically.
             </p>
             <button
               onClick={() => {

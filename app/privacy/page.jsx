@@ -17,7 +17,7 @@ export default function PrivacyPage() {
         <section>
           <h2 className="font-serif text-xl font-bold text-ink mb-2">What we collect</h2>
           <p>
-            When you create an account, we store your email address and the data you add to TropeQuest — your TBR list, shelf, and reading interests. This data is stored securely in Supabase.
+            When you create an account, we store your email address and the data you add to TropeQuest: your TBR list, shelf, and reading interests. This data is stored securely in Supabase.
           </p>
         </section>
 

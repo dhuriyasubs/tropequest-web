@@ -15,9 +15,9 @@ const BOOKS_LIKE = {
     bookId: 623,
     bookSlug: 'fourth-wing',
     tropes: ['Enemies to Lovers', 'Dragon Riders', 'Deadly Trials', 'Romantasy', 'Slow Burn'],
-    description: 'If you loved Fourth Wing, you\'ll love these books — romantasy picks with enemies-to-lovers tension, dangerous magic, and slow-burn romance.',
+    description: 'If you loved Fourth Wing, you\'ll love these books: romantasy picks with enemies-to-lovers tension, dangerous magic, and slow-burn romance.',
     intro: 'Fourth Wing hooked readers with its rare combination: a high-stakes fantasy world built on dragon-riding warriors, and a slow-burn enemies-to-lovers romance that crackles from chapter one. If you finished it and immediately needed something to fill the void, you\'re in the right place.',
-    what: 'You\'re probably looking for: a fantasy world with real rules and danger, a love interest who starts as an obstacle, slow-burn tension that pays off, and writing that moves fast. The books below hit at least two of those — most hit all four.',
+    what: 'You\'re probably looking for: a fantasy world with real rules and danger, a love interest who starts as an obstacle, slow-burn tension that pays off, and writing that moves fast. The books below hit at least two of those. Most hit all four.',
     searchQuery: 'enemies to lovers romantasy',
     relatedTropes: ['Enemies to Lovers', 'Slow Burn', 'Romantasy', 'Dark Romance'],
   },
@@ -27,8 +27,8 @@ const BOOKS_LIKE = {
     bookId: 622,
     bookSlug: 'a-court-of-thorns-and-roses',
     tropes: ['Fae', 'Beauty and the Beast', 'Enemies to Lovers', 'Romantasy', 'Forbidden Love'],
-    description: 'Books like A Court of Thorns and Roses — fae romance, Beauty and the Beast retellings, and romantasy with morally complex love interests.',
-    intro: 'A Court of Thorns and Roses set the template for the modern romantasy boom: a mortal girl pulled into a dangerous fae world, a Beauty and the Beast retelling with teeth, and a love interest who is more threat than comfort — until he isn\'t. If ACOTAR is your benchmark, these picks will feel familiar in the best way.',
+    description: 'Books like A Court of Thorns and Roses: fae romance, Beauty and the Beast retellings, and romantasy with morally complex love interests.',
+    intro: 'A Court of Thorns and Roses set the template for the modern romantasy boom: a mortal girl pulled into a dangerous fae world, a Beauty and the Beast retelling with teeth, and a love interest who is more threat than comfort. If ACOTAR is your benchmark, these picks will feel familiar in the best way.',
     what: 'The ACOTAR formula: lush world-building, a heroine who grows into her power, fae courts with politics and danger, and romance that is slow, complicated, and absolutely worth it. The books below share that DNA.',
     searchQuery: 'fae romance romantasy',
     relatedTropes: ['Fae', 'Enemies to Lovers', 'Romantasy', 'Forbidden Love'],
@@ -39,8 +39,8 @@ const BOOKS_LIKE = {
     bookId: null,
     bookSlug: null,
     tropes: ['Angst', 'Forbidden Love', 'Second Chance', 'Slow Burn', 'Friends to Lovers', 'Forced Proximity'],
-    description: 'Books like Colleen Hoover — emotional contemporary romance with angst, forbidden love, and the kind of endings that stay with you.',
-    intro: 'Colleen Hoover built one of the most devoted readerships in romance by writing contemporary stories that feel emotionally raw and completely real. Her books are not comfortable reads — they deal with difficult relationships, moral complexity, and endings that leave readers genuinely shaken. If you\'ve burned through her backlist, here are the books most likely to hit the same nerve.',
+    description: 'Books like Colleen Hoover: emotional contemporary romance with angst, forbidden love, and the kind of endings that stay with you.',
+    intro: 'Colleen Hoover built one of the most devoted readerships in romance by writing contemporary stories that feel emotionally raw and completely real. Her books are not comfortable reads. They deal with difficult relationships, moral complexity, and endings that leave readers genuinely shaken. If you\'ve burned through her backlist, here are the books most likely to hit the same nerve.',
     what: 'What makes a CoHo-style read: contemporary setting, deeply flawed characters who are hard to judge, relationships that feel complicated rather than idealistic, and emotional gut-punches that you didn\'t see coming. These picks deliver on that brief.',
     searchQuery: 'contemporary romance angst',
     relatedTropes: ['Angst', 'Second Chance', 'Forbidden Love', 'Friends to Lovers'],
@@ -111,7 +111,7 @@ export default async function BooksLikePage({ params }) {
           <Link href={`/books/${entry.bookSlug}`} className="text-bloom hover:underline">
             {entry.title}
           </Link>{' '}
-          itself — then come back here.
+          itself first, then come back here.
         </p>
       )}
 

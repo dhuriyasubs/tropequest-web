@@ -3,7 +3,7 @@ import { getAllAuthors } from '@/lib/search'
 
 export const metadata = {
   title: 'Browse Authors',
-  description: 'Explore all authors on TropeQuest — find books by your favourite romance, romantasy, and thriller writers.',
+  description: 'Explore all authors on TropeQuest: find books by your favourite romance, romantasy, and thriller writers.',
   alternates: { canonical: '/author' },
   openGraph: {
     title: 'Browse Authors | TropeQuest',

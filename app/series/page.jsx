@@ -4,17 +4,17 @@ import SeriesList from '@/components/SeriesList'
 
 export const metadata = {
   title: 'Browse Series',
-  description: 'Explore all book series on TropeQuest — romance, romantasy, thriller, and more.',
+  description: 'Explore all book series on TropeQuest: romance, romantasy, thriller, and more.',
   alternates: { canonical: '/series' },
   openGraph: {
     title: 'Browse Book Series | TropeQuest',
-    description: 'Explore all book series on TropeQuest — romance, romantasy, thriller, and more.',
+    description: 'Explore all book series on TropeQuest: romance, romantasy, thriller, and more.',
     url: '/series',
   },
   twitter: {
     card: 'summary',
     title: 'Browse Book Series | TropeQuest',
-    description: 'Explore all book series on TropeQuest — romance, romantasy, thriller, and more.',
+    description: 'Explore all book series on TropeQuest: romance, romantasy, thriller, and more.',
   },
 }
 
