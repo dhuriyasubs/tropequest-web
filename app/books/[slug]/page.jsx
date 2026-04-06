@@ -6,8 +6,7 @@ import { getPostsFeaturingBook } from '@/lib/blog'
 import { slugify } from '@/lib/utils'
 import { createSupabaseServer } from '@/lib/supabase'
 import TbrButton from '@/components/TbrButton'
-import ShelfButton from '@/components/ShelfButton'
-import ShelfStatusSelect from '@/components/ShelfStatusSelect'
+import ShelfControls from '@/components/ShelfControls'
 import StarRating from '@/components/StarRating'
 import Breadcrumb from '@/components/Breadcrumb'
 
@@ -185,12 +184,7 @@ export default async function BookPage({ params }) {
                 </a>
               )}
               <TbrButton bookId={book.id} initialSaved={isSaved} />
-              <div className="flex items-center gap-2">
-                <ShelfButton bookId={book.id} initialStatus={shelfStatus} />
-                {shelfStatus && (
-                  <ShelfStatusSelect bookId={book.id} currentStatus={shelfStatus} />
-                )}
-              </div>
+              <ShelfControls bookId={book.id} initialStatus={shelfStatus} />
             </div>
 
             {/* Description */}

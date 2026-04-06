@@ -14,7 +14,7 @@ const COLORS = {
   read:    'bg-green-100 text-green-700',
 }
 
-export default function ShelfStatusSelect({ bookId, currentStatus }) {
+export default function ShelfStatusSelect({ bookId, currentStatus, onStatusChange }) {
   const [status,  setStatus]  = useState(currentStatus)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -22,6 +22,7 @@ export default function ShelfStatusSelect({ bookId, currentStatus }) {
   async function onChange(e) {
     const newStatus = e.target.value
     setStatus(newStatus)
+    onStatusChange?.(newStatus)
     setLoading(true)
     await fetch('/api/shelf', {
       method:  'POST',
