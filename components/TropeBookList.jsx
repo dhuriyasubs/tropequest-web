@@ -11,7 +11,8 @@ export default function TropeBookList({ books }) {
     const q = query.toLowerCase()
     return books.filter(b =>
       b.title?.toLowerCase().includes(q) ||
-      b.author?.toLowerCase().includes(q)
+      b.author?.toLowerCase().includes(q) ||
+      b.tropes?.some(t => t.toLowerCase().includes(q))
     )
   }, [query, books])
 
