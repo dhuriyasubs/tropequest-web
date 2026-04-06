@@ -53,15 +53,28 @@ export default function RootLayout({ children }) {
         <Toaster />
         <AuthRedirectHandler />
         <footer className="bg-ink text-white/60 text-sm py-10 px-4 mt-16">
-          <div className="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between gap-8">
-            <div className="space-y-2">
+          <div className="max-w-6xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-8">
+            <div className="space-y-2 col-span-2 sm:col-span-1">
               <p className="text-white font-semibold">TropeQuest</p>
-              <div className="flex flex-wrap gap-x-4 gap-y-1">
+              <div className="flex flex-col gap-1">
                 <a href="/about"   className="hover:text-white transition-colors">About</a>
                 <a href="/contact" className="hover:text-white transition-colors">Contact</a>
                 <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
               </div>
-              <p>© {new Date().getFullYear()} TropeQuest</p>
+              <p className="pt-2">© {new Date().getFullYear()} TropeQuest</p>
+            </div>
+            <div className="space-y-2">
+              <p className="text-white font-semibold">Discover</p>
+              <div className="flex flex-col gap-1">
+                <a href="/search"   className="hover:text-white transition-colors">Search books</a>
+                <a href="/tropes"   className="hover:text-white transition-colors">Browse tropes</a>
+                <a href="/series"   className="hover:text-white transition-colors">Browse series</a>
+                <a href="/surprise" className="hover:text-white transition-colors">Surprise me</a>
+                <a href="/because"  className="hover:text-white transition-colors">Because you like</a>
+                <a href="/books-like/fourth-wing"               className="hover:text-white transition-colors">Books like Fourth Wing</a>
+                <a href="/books-like/a-court-of-thorns-and-roses" className="hover:text-white transition-colors">Books like ACOTAR</a>
+                <a href="/books-like/colleen-hoover"            className="hover:text-white transition-colors">Books like Colleen Hoover</a>
+              </div>
             </div>
             <div className="space-y-2">
               <p className="text-white font-semibold">Blog</p>

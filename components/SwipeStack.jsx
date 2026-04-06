@@ -198,7 +198,9 @@ export default function SwipeStack({ initialBooks, userId, initialExcludeIds = [
         </div>
         <div className="relative flex-1 min-h-0">
           <div className="absolute inset-0 rounded-2xl bg-white shadow-xl overflow-hidden flex flex-col">
-            <div className="w-full h-44 bg-gray-100 animate-pulse flex-shrink-0" />
+            <div className="w-full flex justify-center px-6 pt-5 pb-3 flex-shrink-0">
+              <div className="w-36 aspect-[2/3] rounded-lg bg-gray-100 animate-pulse" />
+            </div>
             <div className="flex-1 p-4 space-y-3">
               <div className="h-6 w-3/4 bg-gray-100 rounded animate-pulse" />
               <div className="h-4 w-1/2 bg-gray-100 rounded animate-pulse" />
@@ -265,10 +267,13 @@ export default function SwipeStack({ initialBooks, userId, initialExcludeIds = [
             className="absolute inset-0 rounded-2xl bg-white shadow-md overflow-hidden pointer-events-none"
             style={{ transform: 'scale(0.95) translateY(10px)', zIndex: 1 }}
           >
-            {nextBook.cover_url
-              ? <img src={nextBook.cover_url} alt="" className="w-full h-44 object-cover object-top opacity-50" />
-              : <div className="w-full h-44 bg-gray-100" />
-            }
+            <div className="w-full flex justify-center px-6 pt-5 pb-3">
+              <div className="w-36 aspect-[2/3] rounded-lg overflow-hidden opacity-50 bg-gray-100">
+                {nextBook.cover_url && (
+                  <img src={nextBook.cover_url} alt="" className="w-full h-full object-cover" />
+                )}
+              </div>
+            </div>
           </div>
         )}
 
@@ -290,12 +295,14 @@ export default function SwipeStack({ initialBooks, userId, initialExcludeIds = [
             <span className="border-2 border-green-500 text-green-500 font-bold text-base px-3 py-1 rounded-lg bg-white/90">TBR ♥</span>
           </div>
 
-          {/* Cover — flex-shrink-0 so it always renders at full height */}
-          <div className="w-full h-44 flex-shrink-0 bg-gray-100 pointer-events-none">
-            {book.cover_url
-              ? <img src={book.cover_url} alt={book.title} className="w-full h-full object-cover object-top" />
-              : <div className="w-full h-full flex items-center justify-center text-5xl">📚</div>
-            }
+          {/* Cover — portrait aspect ratio, no cropping */}
+          <div className="w-full flex justify-center px-6 pt-5 pb-3 flex-shrink-0 pointer-events-none">
+            <div className="w-36 aspect-[2/3] rounded-lg overflow-hidden shadow-md bg-gray-100">
+              {book.cover_url
+                ? <img src={book.cover_url} alt={book.title} className="w-full h-full object-cover" />
+                : <div className="w-full h-full flex items-center justify-center text-5xl">📚</div>
+              }
+            </div>
           </div>
 
           {/* Info — takes remaining space, no scroll (pointer-events-none keeps swipe working) */}
