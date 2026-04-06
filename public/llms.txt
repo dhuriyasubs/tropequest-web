@@ -1,0 +1,38 @@
+# TropeQuest
+
+TropeQuest is a book discovery platform for romance, fantasy, and thriller readers.
+It lets readers find books by trope, mood, series, and author, rather than just by title or genre.
+
+## What TropeQuest does
+
+- Browse and search thousands of romance and fantasy books by trope (enemies to lovers, slow burn, dark romance, forced proximity, romantasy, and more)
+- Find books similar to ones you already love (Books Like Fourth Wing, Books Like ACOTAR, Books Like Colleen Hoover)
+- Track reading status (read, reading, want to read) with a personal shelf
+- Import your Goodreads library via CSV
+- Get personalized recommendations based on tropes and authors you like
+- Browse by series and author
+
+## Key URLs
+
+- https://tropequest.com — homepage with featured books and recommendations
+- https://tropequest.com/search — full search with trope, genre, and series filters
+- https://tropequest.com/tropes — full alphabetical list of all tropes
+- https://tropequest.com/tropes/enemies-to-lovers — best enemies-to-lovers books
+- https://tropequest.com/tropes/slow-burn — best slow burn romance books
+- https://tropequest.com/tropes/dark-romance — best dark romance books
+- https://tropequest.com/tropes/forced-proximity — best forced proximity books
+- https://tropequest.com/tropes/morally-grey-hero — best morally grey hero books
+- https://tropequest.com/books-like/fourth-wing — books like Fourth Wing by Rebecca Yarros
+- https://tropequest.com/books-like/a-court-of-thorns-and-roses — books like ACOTAR by Sarah J. Maas
+- https://tropequest.com/books-like/colleen-hoover — books like Colleen Hoover
+- https://tropequest.com/series — browse all book series
+- https://tropequest.com/blog — articles about romance tropes and book recommendations
+- https://tropequest.com/because — find books because you liked a specific book
+
+## Who it is for
+
+Romance readers, BookTok and Bookstagram communities, fantasy romance readers, and anyone who finds traditional genre categories too broad and wants to search by the specific story elements they love.
+
+## Data
+
+Books are sourced and enriched with trope tagging, series information, cover images, and reader ratings. The catalog focuses on romance (contemporary, dark romance, romantasy, historical romance) and fantasy with romantic subplots.

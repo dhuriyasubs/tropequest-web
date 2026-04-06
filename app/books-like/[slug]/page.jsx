@@ -90,8 +90,33 @@ export default async function BooksLikePage({ params }) {
 
   const relatedSlugs = entry.relatedTropes.map(t => ({ name: t, slug: slugify(t) }))
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: pageTitle,
+    description: entry.description,
+    url: `https://tropequest.com/books-like/${params.slug}`,
+    mainEntity: {
+      '@type': 'ItemList',
+      numberOfItems: books.length,
+      itemListElement: books.slice(0, 10).map((b, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        item: {
+          '@type': 'Book',
+          name: b.title,
+          author: { '@type': 'Person', name: b.author },
+          ...(b.slug ? { url: `https://tropequest.com/books/${b.slug}` } : {}),
+          ...(b.cover_url ? { image: b.cover_url } : {}),
+        },
+      })),
+    },
+  }
+
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10">
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <div className="max-w-6xl mx-auto px-4 py-10">
       <Breadcrumb crumbs={[
         { label: 'Home', href: '/' },
         { label: 'Browse', href: '/search' },
@@ -151,5 +176,6 @@ export default async function BooksLikePage({ params }) {
         </div>
       </div>
     </div>
+    </>
   )
 }

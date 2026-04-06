@@ -78,8 +78,36 @@ export default async function TropeDetailPage({ params }) {
     .map(name => ({ name, slug: slugify(name), exists: tropes.includes(name) }))
     .filter(r => r.exists)
 
+  const description = editorial?.description
+    ?? `Find the best ${trope} books on TropeQuest, sorted by rating, with covers, series info, and buy links.`
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: `Best ${trope} Books`,
+    description,
+    url: `https://tropequest.com/tropes/${params.slug}`,
+    mainEntity: {
+      '@type': 'ItemList',
+      numberOfItems: books.length,
+      itemListElement: books.slice(0, 10).map((b, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        item: {
+          '@type': 'Book',
+          name: b.title,
+          author: { '@type': 'Person', name: b.author },
+          ...(b.slug ? { url: `https://tropequest.com/books/${b.slug}` } : {}),
+          ...(b.cover_url ? { image: b.cover_url } : {}),
+        },
+      })),
+    },
+  }
+
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10">
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <div className="max-w-6xl mx-auto px-4 py-10">
       <Breadcrumb crumbs={[
         { label: 'Home', href: '/' },
         { label: 'Tropes', href: '/tropes' },
@@ -118,5 +146,6 @@ export default async function TropeDetailPage({ params }) {
         </div>
       )}
     </div>
+    </>
   )
 }
