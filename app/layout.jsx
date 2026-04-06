@@ -53,7 +53,7 @@ export default function RootLayout({ children }) {
         <Toaster />
         <AuthRedirectHandler />
         <footer className="bg-ink text-white/60 text-sm py-10 px-4 mt-16">
-          <div className="max-w-6xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-8">
+          <div className="max-w-6xl mx-auto grid grid-cols-2 sm:grid-cols-5 gap-8">
             <div className="space-y-2 col-span-2 sm:col-span-1">
               <p className="text-white font-semibold">TropeQuest</p>
               <div className="flex flex-col gap-1">
@@ -74,6 +74,13 @@ export default function RootLayout({ children }) {
                 <a href="/books-like/fourth-wing"               className="hover:text-white transition-colors">Books like Fourth Wing</a>
                 <a href="/books-like/a-court-of-thorns-and-roses" className="hover:text-white transition-colors">Books like ACOTAR</a>
                 <a href="/books-like/colleen-hoover"            className="hover:text-white transition-colors">Books like Colleen Hoover</a>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <p className="text-white font-semibold">Tools</p>
+              <div className="flex flex-col gap-1">
+                <a href="/shelf/scan" className="hover:text-white transition-colors">Scan your Shelf</a>
+                <a href="/reels"      className="hover:text-white transition-colors">Books from Videos</a>
               </div>
             </div>
             <div className="space-y-2">
