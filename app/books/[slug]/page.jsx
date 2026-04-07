@@ -1,10 +1,10 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { getBookBySlug, getSeriesBooks, getMoreByAuthor } from '@/lib/search'
+import { getBookBySlug, getSeriesBooks, getMoreByAuthor, getSimilarBooks } from '@/lib/search'
 import { getPostsFeaturingBook } from '@/lib/blog'
 import { slugify } from '@/lib/utils'
-import { createSupabaseServer } from '@/lib/supabase'
+import { createSupabaseServer, supabaseAdmin } from '@/lib/supabase'
 import TbrButton from '@/components/TbrButton'
 import DescriptionExpander from '@/components/DescriptionExpander'
 import ShelfControls from '@/components/ShelfControls'
@@ -70,10 +70,18 @@ export default async function BookPage({ params }) {
 
   const featuredInPosts = getPostsFeaturingBook(params.slug)
 
-  const [seriesBooks, moreByAuthor] = await Promise.all([
+  const [seriesBooks, moreByAuthor, readersAlsoEnjoyed, authorBioRow] = await Promise.all([
     book.series_name ? getSeriesBooks(book.series_name, book.id) : [],
     getMoreByAuthor(book.author, book.id),
+    getSimilarBooks({ tropes: book.tropes ?? [], excludeId: book.id, limit: 8 }),
+    supabaseAdmin.from('author_bios').select('bio').eq('author_name', book.author).maybeSingle(),
   ])
+  const authorBio = authorBioRow.data?.bio ?? null
+  const authorIntro = authorBio?.intro
+    ? authorBio.intro.length > 220
+      ? authorBio.intro.slice(0, 220).replace(/\s+\S*$/, '') + '…'
+      : authorBio.intro
+    : null
 
   // Fetch shelf status for all books shown in the two sections
   let sectionShelfMap = {}
@@ -201,8 +209,45 @@ export default async function BookPage({ params }) {
                   .map(p => p.trim())
               } />
             )}
+
+            {/* About the Author */}
+            {authorIntro && (
+              <div className="mt-6 border-t border-gray-100 pt-5">
+                <p className="text-xs font-semibold text-slate uppercase tracking-wide mb-2">About the Author</p>
+                <p className="text-sm text-ink/80 leading-relaxed">{authorIntro}</p>
+                <Link
+                  href={`/author/${encodeURIComponent(book.author)}`}
+                  className="inline-block mt-2 text-xs font-medium text-bloom hover:underline"
+                >
+                  More about {book.author} →
+                </Link>
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Readers also enjoyed */}
+        {readersAlsoEnjoyed.length > 0 && (
+          <section className="mt-14">
+            <h2 className="font-serif text-xl font-semibold mb-4">Readers also enjoyed</h2>
+            <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-8 gap-4">
+              {readersAlsoEnjoyed.map(b => (
+                <Link key={b.id} href={`/books/${b.slug}`} className="group">
+                  <div className="relative aspect-[2/3] rounded overflow-hidden bg-gray-100 mb-1">
+                    {b.cover_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={b.cover_url} alt={b.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" loading="lazy" />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center text-2xl">📚</div>
+                    )}
+                  </div>
+                  <p className="text-xs font-medium line-clamp-2">{b.title}</p>
+                  <p className="text-xs text-slate line-clamp-1">{b.author}</p>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Series nav */}
         {seriesBooks.length > 0 && (
