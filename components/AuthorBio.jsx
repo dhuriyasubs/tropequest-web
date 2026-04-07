@@ -1,7 +1,19 @@
+function renderExtras(text) {
+  // Allow only <b> tags; strip everything else
+  const safe = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '<')
+    .replace(/>/g, '>')
+    // re-allow <b> and </b>
+    .replace(/&lt;b&gt;/g, '<b>')
+    .replace(/&lt;\/b&gt;/g, '</b>')
+  return safe
+}
+
 export default function AuthorBio({ bio }) {
   if (!bio) return null
 
-  const { intro, profile, writing_style, series, reader_tip } = bio
+  const { intro, profile, writing_style, series, reader_tip, extras } = bio
 
   return (
     <div className="max-w-2xl mb-12 space-y-6">
@@ -64,6 +76,14 @@ export default function AuthorBio({ bio }) {
           <p className="text-xs font-semibold text-bloom mb-1">Reader Tip</p>
           <p className="text-sm text-slate leading-relaxed">{reader_tip}</p>
         </div>
+      )}
+
+      {/* Extras */}
+      {extras && (
+        <div
+          className="text-sm text-slate leading-relaxed whitespace-pre-wrap"
+          dangerouslySetInnerHTML={{ __html: renderExtras(extras) }}
+        />
       )}
     </div>
   )

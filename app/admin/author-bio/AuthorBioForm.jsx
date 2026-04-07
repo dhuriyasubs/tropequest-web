@@ -14,6 +14,7 @@ const EMPTY_BIO = {
   writing_style: '',
   series: [{ ...EMPTY_SERIES }],
   reader_tip: '',
+  extras: '',
 }
 
 export default function AuthorBioForm({ authors }) {
@@ -44,6 +45,7 @@ export default function AuthorBioForm({ authors }) {
         writing_style: data.bio.writing_style ?? '',
         series:        data.bio.series?.length ? data.bio.series : [{ ...EMPTY_SERIES }],
         reader_tip:    data.bio.reader_tip     ?? '',
+        extras:        data.bio.extras         ?? '',
       })
       setPasteText('')
     } catch (err) {
@@ -85,6 +87,7 @@ export default function AuthorBioForm({ authors }) {
           writing_style: existing.writing_style ?? '',
           series: existing.series?.length ? existing.series : [{ ...EMPTY_SERIES }],
           reader_tip: existing.reader_tip ?? '',
+          extras: existing.extras ?? '',
         })
       }
     } finally {
@@ -285,6 +288,17 @@ export default function AuthorBioForm({ authors }) {
           value={bio.reader_tip}
           onChange={e => setBio(b => ({ ...b, reader_tip: e.target.value }))}
           placeholder="Optional reading order tip or note for readers..."
+          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bloom/40 resize-y"
+        />
+      </div>
+
+      {/* Extras */}
+      <div>
+        <textarea
+          rows={6}
+          value={bio.extras}
+          onChange={e => setBio(b => ({ ...b, extras: e.target.value }))}
+          placeholder="Add any extra sections here. Use your own headings. Wrap words in <b>bold</b> for emphasis."
           className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bloom/40 resize-y"
         />
       </div>
