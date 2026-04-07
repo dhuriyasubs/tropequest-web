@@ -1,5 +1,6 @@
 create table if not exists author_bios (
-  author_name text primary key,
+  id          uuid primary key default gen_random_uuid(),
+  author_name text unique not null,
   bio         jsonb,
   created_at  timestamptz default now()
 );
