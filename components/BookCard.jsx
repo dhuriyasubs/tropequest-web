@@ -15,7 +15,7 @@ export default function BookCard({ book, shelfStatus = null }) {
             alt={`${book.title} cover`}
             fill
             sizes="(max-width: 640px) 45vw, (max-width: 768px) 30vw, (max-width: 1024px) 22vw, 15vw"
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            className="object-contain group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-petal/40 text-4xl">

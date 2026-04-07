@@ -16,15 +16,13 @@ export const revalidate = 3600
 
 export default async function AuthorsPage() {
   const authors = await getAllAuthors()
-  const sorted  = [...authors].sort((a, b) => {
-    const lastA = a.split(' ').at(-1)
-    const lastB = b.split(' ').at(-1)
-    return lastA.localeCompare(lastB)
-  })
+  const sorted  = [...authors].sort((a, b) =>
+    a.localeCompare(b)
+  )
 
-  // Group by first letter of last name
+  // Group by first letter of first name
   const grouped = sorted.reduce((acc, a) => {
-    const letter = a.split(' ').at(-1)[0].toUpperCase()
+    const letter = a[0].toUpperCase()
     acc[letter] = acc[letter] || []
     acc[letter].push(a)
     return acc
