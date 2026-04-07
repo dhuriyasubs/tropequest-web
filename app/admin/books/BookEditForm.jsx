@@ -171,7 +171,10 @@ export default function BookEditForm() {
   const [editBook, setEditBook]   = useState(null)
 
   // New book state
-  const [newBook, setNewBook] = useState(EMPTY_BOOK)
+  const [newBook, setNewBook]     = useState(EMPTY_BOOK)
+  const [bookUrl, setBookUrl]     = useState('')
+  const [fetching, setFetching]   = useState(false)
+  const [fetchError, setFetchError] = useState('')
 
   // Shared status
   const [status, setStatus]     = useState(null)
@@ -249,6 +252,40 @@ export default function BookEditForm() {
       if (key === 'slug') updated._slugEdited = true
       return updated
     })
+  }
+
+  async function handleFetchUrl() {
+    if (!bookUrl.trim()) return
+    setFetching(true)
+    setFetchError('')
+    try {
+      const res  = await fetch('/api/admin/fetch-book', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: bookUrl.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      const b = data.book
+      setNewBook(prev => ({
+        ...prev,
+        title:         b.title         ?? prev.title,
+        author:        b.author        ?? prev.author,
+        slug:          b.title && b.author ? toSlug(b.title, b.author) : prev.slug,
+        cover_url:     b.cover_url     ?? prev.cover_url,
+        description:   b.description   ?? prev.description,
+        series_name:   b.series_name   ?? prev.series_name,
+        series_number: b.series_number ?? prev.series_number,
+        rating:        b.rating        ?? prev.rating,
+        rating_count:  b.rating_count  ?? prev.rating_count,
+        genres:        Array.isArray(b.genres) ? b.genres.join(', ') : (b.genres ?? prev.genres),
+      }))
+      setBookUrl('')
+    } catch (err) {
+      setFetchError(err.message)
+    } finally {
+      setFetching(false)
+    }
   }
 
   async function handleCreate(e) {
@@ -334,6 +371,27 @@ export default function BookEditForm() {
       {/* New book mode */}
       {mode === 'new' && (
         <form onSubmit={handleCreate} className="space-y-6">
+
+          {/* Fetch from URL */}
+          <div className="bg-petal/10 rounded-xl p-4 space-y-3">
+            <label className="block text-sm font-semibold">Import from URL</label>
+            <p className="text-xs text-slate">Paste a Goodreads or Amazon book page URL — we&apos;ll prefill the fields below.</p>
+            <div className="flex gap-2">
+              <input
+                type="url"
+                value={bookUrl}
+                onChange={e => setBookUrl(e.target.value)}
+                placeholder="https://www.goodreads.com/book/show/..."
+                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bloom/40 bg-white"
+              />
+              <button type="button" onClick={handleFetchUrl} disabled={fetching || !bookUrl.trim()}
+                className="px-4 py-2 text-sm bg-bloom text-white rounded-lg hover:bg-bloom/90 transition-colors disabled:opacity-50 whitespace-nowrap">
+                {fetching ? 'Fetching...' : 'Import'}
+              </button>
+            </div>
+            {fetchError && <p className="text-xs text-red-500">{fetchError}</p>}
+          </div>
+
           <BookFields book={newBook} set={setNew} />
           <div className="flex items-center gap-4 pt-2">
             <button type="submit" disabled={status === 'saving'}
