@@ -6,6 +6,7 @@ import { getPostsFeaturingBook } from '@/lib/blog'
 import { slugify } from '@/lib/utils'
 import { createSupabaseServer } from '@/lib/supabase'
 import TbrButton from '@/components/TbrButton'
+import DescriptionExpander from '@/components/DescriptionExpander'
 import ShelfControls from '@/components/ShelfControls'
 import StarRating from '@/components/StarRating'
 import Breadcrumb from '@/components/Breadcrumb'
@@ -189,17 +190,16 @@ export default async function BookPage({ params }) {
 
             {/* Description */}
             {book.description && (
-              <div className="mt-6 text-sm text-ink/80 leading-relaxed space-y-3">
-                {book.description
+              <DescriptionExpander paragraphs={
+                book.description
                   .replace(/\*\*\*(.*?)\*\*\*/gs, '$1')
                   .replace(/\*\*(.*?)\*\*/gs, '$1')
                   .replace(/\*(.*?)\*/gs, '$1')
                   .replace(/_(.*?)_/gs, '$1')
                   .split(/\n+/)
                   .filter(p => p.trim())
-                  .map((para, i) => <p key={i}>{para.trim()}</p>)
-                }
-              </div>
+                  .map(p => p.trim())
+              } />
             )}
           </div>
         </div>
