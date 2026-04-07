@@ -294,7 +294,10 @@ export default async function BookPage({ params }) {
         {moreByAuthor.length > 0 && (
           <section className="mt-14">
             <h2 className="font-serif text-xl font-semibold mb-4">
-              More by {book.author}
+              More by{' '}
+              <Link href={`/author/${encodeURIComponent(book.author)}`} className="hover:text-bloom transition-colors">
+                {book.author}
+              </Link>
             </h2>
             <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 gap-4">
               {moreByAuthor.map(b => {
