@@ -249,6 +249,9 @@ export default async function BookPage({ params }) {
                       ) : (
                         <div className="absolute inset-0 flex items-center justify-center text-2xl">📚</div>
                       )}
+                      {b.series_number && (
+                        <div className="absolute top-1 left-1 bg-black/60 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded">#{b.series_number}</div>
+                      )}
                       {status === 'read' && (
                         <div className="absolute bottom-0 left-0 right-0 bg-green-600/90 text-white text-xs font-semibold text-center py-0.5">✓ Read</div>
                       )}
@@ -256,7 +259,7 @@ export default async function BookPage({ params }) {
                         <div className="absolute bottom-0 left-0 right-0 bg-petal/90 text-plum text-xs font-semibold text-center py-0.5">On Shelf</div>
                       )}
                     </div>
-                    <p className="text-xs text-slate">Book {b.series_number}</p>
+                    <p className="text-xs font-medium line-clamp-2">{b.title}</p>
                   </Link>
                 )
               })}
