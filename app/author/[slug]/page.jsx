@@ -4,6 +4,7 @@ import Image from 'next/image'
 import Breadcrumb from '@/components/Breadcrumb'
 import AuthorBio from '@/components/AuthorBio'
 import { getBooksByAuthor, getAuthorBio } from '@/lib/search'
+import { slugify } from '@/lib/utils'
 
 export const revalidate = 3600
 
@@ -89,7 +90,9 @@ export default async function AuthorPage({ params }) {
 
       {Object.entries(seriesMap).map(([series, seriesBooks]) => (
         <section key={series} className="mb-10">
-          <h2 className="font-serif text-xl font-semibold mb-3">{series}</h2>
+          <h2 className="font-serif text-xl font-semibold mb-3">
+            <Link href={`/series/${slugify(series)}`} className="hover:text-bloom transition-colors">{series}</Link>
+          </h2>
           <div className="divide-y divide-gray-100">
             {seriesBooks
               .sort((a, b) => (a.series_number || 0) - (b.series_number || 0))
