@@ -145,7 +145,9 @@ export default async function BookPage({ params }) {
 
             {book.series_name && (
               <p className="text-slate text-sm mt-1">
-                {book.series_name}
+                <Link href={`/series/${slugify(book.series_name)}`} className="hover:text-bloom hover:underline transition-colors">
+                  {book.series_name}
+                </Link>
                 {book.series_number ? ` · Book ${book.series_number}` : ''}
               </p>
             )}
@@ -226,34 +228,14 @@ export default async function BookPage({ params }) {
           </div>
         </div>
 
-        {/* Readers also enjoyed */}
-        {readersAlsoEnjoyed.length > 0 && (
-          <section className="mt-14">
-            <h2 className="font-serif text-xl font-semibold mb-4">Readers also enjoyed</h2>
-            <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-8 gap-4">
-              {readersAlsoEnjoyed.map(b => (
-                <Link key={b.id} href={`/books/${b.slug}`} className="group">
-                  <div className="relative aspect-[2/3] rounded overflow-hidden bg-gray-100 mb-1">
-                    {b.cover_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={b.cover_url} alt={b.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" loading="lazy" />
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center text-2xl">📚</div>
-                    )}
-                  </div>
-                  <p className="text-xs font-medium line-clamp-2">{b.title}</p>
-                  <p className="text-xs text-slate line-clamp-1">{b.author}</p>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
-
         {/* Series nav */}
         {seriesBooks.length > 0 && (
           <section className="mt-14">
             <h2 className="font-serif text-xl font-semibold mb-4">
-              More in {book.series_name}
+              More in{' '}
+              <Link href={`/series/${slugify(book.series_name)}`} className="hover:text-bloom transition-colors">
+                {book.series_name}
+              </Link>
             </h2>
             <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 gap-4">
               {seriesBooks.map(b => {
@@ -278,6 +260,29 @@ export default async function BookPage({ params }) {
                   </Link>
                 )
               })}
+            </div>
+          </section>
+        )}
+
+        {/* Readers also enjoyed */}
+        {readersAlsoEnjoyed.length > 0 && (
+          <section className="mt-14">
+            <h2 className="font-serif text-xl font-semibold mb-4">Readers also enjoyed</h2>
+            <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-8 gap-4">
+              {readersAlsoEnjoyed.map(b => (
+                <Link key={b.id} href={`/books/${b.slug}`} className="group">
+                  <div className="relative aspect-[2/3] rounded overflow-hidden bg-gray-100 mb-1">
+                    {b.cover_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={b.cover_url} alt={b.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" loading="lazy" />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center text-2xl">📚</div>
+                    )}
+                  </div>
+                  <p className="text-xs font-medium line-clamp-2">{b.title}</p>
+                  <p className="text-xs text-slate line-clamp-1">{b.author}</p>
+                </Link>
+              ))}
             </div>
           </section>
         )}
