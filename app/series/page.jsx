@@ -3,18 +3,18 @@ import { slugify } from '@/lib/utils'
 import SeriesList from '@/components/SeriesList'
 
 export const metadata = {
-  title: 'Browse Series',
-  description: 'Explore all book series on TropeQuest: romance, romantasy, thriller, and more.',
+  title: 'Book Series Reading Order — Romance, Fantasy & Thriller',
+  description: 'Find the reading order for your favourite book series. Browse romance, romantasy, and thriller series with books listed in order on TropeQuest.',
   alternates: { canonical: '/series' },
   openGraph: {
-    title: 'Browse Book Series | TropeQuest',
-    description: 'Explore all book series on TropeQuest: romance, romantasy, thriller, and more.',
+    title: 'Book Series Reading Order | TropeQuest',
+    description: 'Find the reading order for your favourite book series on TropeQuest.',
     url: '/series',
   },
   twitter: {
     card: 'summary',
-    title: 'Browse Book Series | TropeQuest',
-    description: 'Explore all book series on TropeQuest: romance, romantasy, thriller, and more.',
+    title: 'Book Series Reading Order | TropeQuest',
+    description: 'Find the reading order for your favourite book series on TropeQuest.',
   },
 }
 
