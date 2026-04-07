@@ -1,5 +1,5 @@
-import Link from 'next/link'
 import { getAllAuthors } from '@/lib/search'
+import AuthorList from './AuthorList'
 
 export const metadata = {
   title: 'Browse Authors',
@@ -16,41 +16,13 @@ export const revalidate = 3600
 
 export default async function AuthorsPage() {
   const authors = await getAllAuthors()
-  const sorted  = [...authors].sort((a, b) =>
-    a.localeCompare(b)
-  )
-
-  // Group by first letter of first name
-  const grouped = sorted.reduce((acc, a) => {
-    const letter = a[0].toUpperCase()
-    acc[letter] = acc[letter] || []
-    acc[letter].push(a)
-    return acc
-  }, {})
-
-  const letters = Object.keys(grouped).sort()
+  const sorted  = [...authors].sort((a, b) => a.localeCompare(b))
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
       <h1 className="font-serif text-3xl font-bold mb-2">Browse Authors</h1>
-      <p className="text-slate mb-10">{authors.length} authors on TropeQuest</p>
-
-      {letters.map(letter => (
-        <section key={letter} className="mb-8">
-          <h2 className="font-serif text-xl font-semibold mb-3 text-bloom">{letter}</h2>
-          <div className="flex flex-wrap gap-2">
-            {grouped[letter].map(a => (
-              <Link
-                key={a}
-                href={`/author/${encodeURIComponent(a)}`}
-                className="chip"
-              >
-                {a}
-              </Link>
-            ))}
-          </div>
-        </section>
-      ))}
+      <p className="text-slate mb-6">{authors.length} authors on TropeQuest</p>
+      <AuthorList authors={sorted} />
     </div>
   )
 }
