@@ -7,6 +7,7 @@ const EMPTY_BOOK = {
   title: '', author: '', slug: '', cover_url: '',
   series_name: '', series_number: '', rating: '', rating_count: '', rating_source: '',
   primary_genre: '', secondary_genre: '', genres: '', tropes: '', description: '',
+  release_date: '', release_year: '',
   buy_url_amazon_us: '', buy_url_amazon_in: '', buy_url_flipkart: '',
   price_amazon_us: '', price_amazon_in: '',
 }
@@ -40,6 +41,8 @@ function buildPayload(book, isNew) {
     rating_source:     book.rating_source || null,
     primary_genre:     book.primary_genre   || null,
     secondary_genre:   book.secondary_genre || null,
+    release_date:      book.release_date    || null,
+    release_year:      book.release_year !== '' ? Number(book.release_year) : null,
     genres:            book.genres  ? book.genres.split(',').map(s => s.trim()).filter(Boolean)  : [],
     tropes:            book.tropes  ? book.tropes.split(',').map(s => s.trim()).filter(Boolean)  : [],
     buy_url_amazon_us: book.buy_url_amazon_us || null,
@@ -64,6 +67,8 @@ function normaliseBook(b) {
     series_name:   b.series_name   ?? '',
     primary_genre:   b.primary_genre   ?? '',
     secondary_genre: b.secondary_genre ?? '',
+    release_date:    b.release_date    ?? '',
+    release_year:    b.release_year    ?? '',
     buy_url_amazon_us: b.buy_url_amazon_us ?? '',
     buy_url_amazon_in: b.buy_url_amazon_in ?? '',
     buy_url_flipkart:  b.buy_url_flipkart  ?? '',
@@ -133,6 +138,17 @@ function BookFields({ book, set }) {
         <div className="sm:col-span-2">
           <label className="block text-xs text-slate mb-1">Genres (comma-separated)</label>
           <input type="text" value={book.genres} onChange={e => set('genres', e.target.value)} className={inputCls} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-xs text-slate mb-1">Release Date</label>
+          <input type="date" value={book.release_date} onChange={e => set('release_date', e.target.value)} className={inputCls} />
+        </div>
+        <div>
+          <label className="block text-xs text-slate mb-1">Release Year</label>
+          <input type="number" value={book.release_year} onChange={e => set('release_year', e.target.value)} placeholder="e.g. 2023" className={inputCls} />
         </div>
       </div>
 
