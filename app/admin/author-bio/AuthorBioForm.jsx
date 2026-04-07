@@ -22,6 +22,36 @@ export default function AuthorBioForm({ authors }) {
   const [status, setStatus] = useState(null) // null | 'saving' | 'saved' | 'error'
   const [errorMsg, setErrorMsg] = useState('')
   const [loading, setLoading] = useState(false)
+  const [pasteText, setPasteText] = useState('')
+  const [parsing, setParsing] = useState(false)
+  const [parseError, setParseError] = useState('')
+
+  async function handleParse() {
+    if (!pasteText.trim()) return
+    setParsing(true)
+    setParseError('')
+    try {
+      const res  = await fetch('/api/admin/parse-bio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'author', content: pasteText }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setBio({
+        intro:         data.bio.intro         ?? '',
+        profile:       { ...EMPTY_BIO.profile, ...(data.bio.profile ?? {}) },
+        writing_style: data.bio.writing_style ?? '',
+        series:        data.bio.series?.length ? data.bio.series : [{ ...EMPTY_SERIES }],
+        reader_tip:    data.bio.reader_tip     ?? '',
+      })
+      setPasteText('')
+    } catch (err) {
+      setParseError(err.message)
+    } finally {
+      setParsing(false)
+    }
+  }
 
   function setProfile(key, value) {
     setBio(b => ({ ...b, profile: { ...b.profile, [key]: value } }))
@@ -90,6 +120,30 @@ export default function AuthorBioForm({ authors }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
+
+      {/* Paste & parse */}
+      <div className="bg-petal/10 rounded-xl p-4 space-y-3">
+        <label className="block text-sm font-semibold">Paste raw content</label>
+        <p className="text-xs text-slate">Paste any text about the author — we&apos;ll extract and pre-fill all the fields below.</p>
+        <textarea
+          rows={5}
+          value={pasteText}
+          onChange={e => setPasteText(e.target.value)}
+          placeholder="Paste author bio, Wikipedia excerpt, blog post, etc..."
+          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bloom/40 resize-y bg-white"
+        />
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleParse}
+            disabled={parsing || !pasteText.trim()}
+            className="bg-bloom text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-bloom/90 transition-colors disabled:opacity-50"
+          >
+            {parsing ? 'Parsing...' : 'Parse & prefill'}
+          </button>
+          {parseError && <span className="text-xs text-red-500">{parseError}</span>}
+        </div>
+      </div>
 
       {/* Author name */}
       <div>

@@ -17,6 +17,36 @@ export default function SeriesBioForm({ seriesList }) {
   const [status, setStatus]         = useState(null)
   const [errorMsg, setErrorMsg]     = useState('')
   const [loading, setLoading]       = useState(false)
+  const [pasteText, setPasteText]   = useState('')
+  const [parsing, setParsing]       = useState(false)
+  const [parseError, setParseError] = useState('')
+
+  async function handleParse() {
+    if (!pasteText.trim()) return
+    setParsing(true)
+    setParseError('')
+    try {
+      const res  = await fetch('/api/admin/parse-bio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'series', content: pasteText }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setBio({
+        intro:               data.bio.intro               ?? '',
+        reading_order_note:  data.bio.reading_order_note  ?? '',
+        reading_order:       data.bio.reading_order?.length  ? data.bio.reading_order  : [{ ...EMPTY_ENTRY }],
+        what_to_expect:      data.bio.what_to_expect?.length ? data.bio.what_to_expect : [{ ...EMPTY_EXPECT }],
+        reading_tip:         data.bio.reading_tip          ?? '',
+      })
+      setPasteText('')
+    } catch (err) {
+      setParseError(err.message)
+    } finally {
+      setParsing(false)
+    }
+  }
 
   // ── Reading order helpers ────────────────────────────────────────────────
   function setEntry(i, key, value) {
@@ -80,6 +110,30 @@ export default function SeriesBioForm({ seriesList }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
+
+      {/* Paste & parse */}
+      <div className="bg-petal/10 rounded-xl p-4 space-y-3">
+        <label className="block text-sm font-semibold">Paste raw content</label>
+        <p className="text-xs text-slate">Paste any text about the series — we&apos;ll extract and pre-fill all the fields below.</p>
+        <textarea
+          rows={5}
+          value={pasteText}
+          onChange={e => setPasteText(e.target.value)}
+          placeholder="Paste series overview, reading order guide, blog post, etc..."
+          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bloom/40 resize-y bg-white"
+        />
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleParse}
+            disabled={parsing || !pasteText.trim()}
+            className="bg-bloom text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-bloom/90 transition-colors disabled:opacity-50"
+          >
+            {parsing ? 'Parsing...' : 'Parse & prefill'}
+          </button>
+          {parseError && <span className="text-xs text-red-500">{parseError}</span>}
+        </div>
+      </div>
 
       {/* Series name */}
       <div>
