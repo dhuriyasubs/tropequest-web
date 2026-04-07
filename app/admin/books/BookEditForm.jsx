@@ -5,7 +5,7 @@ const inputCls = 'w-full border border-gray-200 rounded-lg px-3 py-2 text-sm foc
 
 const EMPTY_BOOK = {
   title: '', author: '', slug: '', cover_url: '',
-  series_name: '', series_number: '', rating: '', rating_count: '',
+  series_name: '', series_number: '', rating: '', rating_count: '', rating_source: '',
   primary_genre: '', secondary_genre: '', genres: '', tropes: '', description: '',
   buy_url_amazon_us: '', buy_url_amazon_in: '', buy_url_flipkart: '',
   price_amazon_us: '', price_amazon_in: '',
@@ -37,6 +37,7 @@ function buildPayload(book, isNew) {
     series_number:     book.series_number !== '' ? Number(book.series_number) : null,
     rating:            book.rating        !== '' ? Number(book.rating)        : null,
     rating_count:      book.rating_count  !== '' ? Number(book.rating_count)  : null,
+    rating_source:     book.rating_source || null,
     primary_genre:     book.primary_genre   || null,
     secondary_genre:   book.secondary_genre || null,
     genres:            book.genres  ? book.genres.split(',').map(s => s.trim()).filter(Boolean)  : [],
@@ -57,6 +58,7 @@ function normaliseBook(b) {
     series_number: b.series_number ?? '',
     rating:        b.rating        ?? '',
     rating_count:  b.rating_count  ?? '',
+    rating_source: b.rating_source ?? '',
     cover_url:     b.cover_url     ?? '',
     description:   b.description   ?? '',
     series_name:   b.series_name   ?? '',
@@ -104,7 +106,7 @@ function BookFields({ book, set }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
           <label className="block text-xs text-slate mb-1">Rating</label>
           <input type="number" step="0.01" min="0" max="5" value={book.rating} onChange={e => set('rating', e.target.value)} className={inputCls} />
@@ -112,6 +114,10 @@ function BookFields({ book, set }) {
         <div>
           <label className="block text-xs text-slate mb-1">Rating Count</label>
           <input type="number" value={book.rating_count} onChange={e => set('rating_count', e.target.value)} className={inputCls} />
+        </div>
+        <div>
+          <label className="block text-xs text-slate mb-1">Rating Source</label>
+          <input type="text" value={book.rating_source} onChange={e => set('rating_source', e.target.value)} placeholder="e.g. Goodreads" className={inputCls} />
         </div>
       </div>
 
