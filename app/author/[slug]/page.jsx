@@ -1,11 +1,39 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import BookCard from '@/components/BookCard'
+import Image from 'next/image'
 import Breadcrumb from '@/components/Breadcrumb'
 import AuthorBio from '@/components/AuthorBio'
 import { getBooksByAuthor, getAuthorBio } from '@/lib/search'
 
 export const revalidate = 3600
+
+function BookListRow({ book }) {
+  return (
+    <Link href={`/books/${book.slug}`}
+      className="flex gap-4 py-3 hover:bg-petal/5 transition-colors rounded-lg px-2 -mx-2">
+      <div className="relative w-12 shrink-0 aspect-[2/3] bg-gray-100 rounded overflow-hidden">
+        {book.cover_url
+          ? <Image src={book.cover_url} alt={book.title} fill sizes="48px" className="object-contain" />
+          : <span className="absolute inset-0 flex items-center justify-center text-xl">📚</span>
+        }
+      </div>
+      <div className="flex flex-col justify-center gap-1 min-w-0">
+        <p className="font-serif font-semibold text-sm leading-tight line-clamp-2">{book.title}</p>
+        {book.series_name && (
+          <p className="text-xs text-slate">
+            {book.series_name}{book.series_number ? ` #${book.series_number}` : ''}
+          </p>
+        )}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
+          {book.rating && <span className="text-xs text-bloom font-medium">★ {book.rating.toFixed(1)}</span>}
+          {book.tropes?.slice(0, 3).map(t => (
+            <span key={t} className="text-xs text-slate/70">{t}</span>
+          ))}
+        </div>
+      </div>
+    </Link>
+  )
+}
 
 export async function generateMetadata({ params }) {
   const author = decodeURIComponent(params.slug)
@@ -60,21 +88,21 @@ export default async function AuthorPage({ params }) {
       <AuthorBio bio={bio} />
 
       {Object.entries(seriesMap).map(([series, seriesBooks]) => (
-        <section key={series} className="mb-12">
-          <h2 className="font-serif text-xl font-semibold mb-4">{series}</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+        <section key={series} className="mb-10">
+          <h2 className="font-serif text-xl font-semibold mb-3">{series}</h2>
+          <div className="divide-y divide-gray-100">
             {seriesBooks
               .sort((a, b) => (a.series_number || 0) - (b.series_number || 0))
-              .map(b => <BookCard key={b.id} book={b} />)}
+              .map(b => <BookListRow key={b.id} book={b} />)}
           </div>
         </section>
       ))}
 
       {standalone.length > 0 && (
-        <section className="mb-12">
-          <h2 className="font-serif text-xl font-semibold mb-4">Standalone</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-            {standalone.map(b => <BookCard key={b.id} book={b} />)}
+        <section className="mb-10">
+          <h2 className="font-serif text-xl font-semibold mb-3">Standalone</h2>
+          <div className="divide-y divide-gray-100">
+            {standalone.map(b => <BookListRow key={b.id} book={b} />)}
           </div>
         </section>
       )}
