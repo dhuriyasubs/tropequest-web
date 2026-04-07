@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 const EMPTY_SERIES = { name: '', years: '', description: '' }
 
@@ -26,6 +26,15 @@ export default function AuthorBioForm({ authors }) {
   const [pasteText, setPasteText] = useState('')
   const [parsing, setParsing] = useState(false)
   const [parseError, setParseError] = useState('')
+  const [suggestions, setSuggestions] = useState([])
+  const [suggestionsLoading, setSuggestionsLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/admin/author-bio?pending=1')
+      .then(r => r.json())
+      .then(d => setSuggestions(d.suggestions ?? []))
+      .finally(() => setSuggestionsLoading(false))
+  }, [])
 
   async function handleParse() {
     if (!pasteText.trim()) return
@@ -95,6 +104,25 @@ export default function AuthorBioForm({ authors }) {
     }
   }
 
+  async function loadByName(name) {
+    setAuthorName(name)
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/admin/author-bio?author=${encodeURIComponent(name.trim())}`)
+      const { bio: existing } = await res.json()
+      setBio(existing ? {
+        intro: existing.intro ?? '',
+        profile: { ...EMPTY_BIO.profile, ...(existing.profile ?? {}) },
+        writing_style: existing.writing_style ?? '',
+        series: existing.series?.length ? existing.series : [{ ...EMPTY_SERIES }],
+        reader_tip: existing.reader_tip ?? '',
+        extras: existing.extras ?? '',
+      } : EMPTY_BIO)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
     setStatus('saving')
@@ -122,6 +150,7 @@ export default function AuthorBioForm({ authors }) {
   }
 
   return (
+    <>
     <form onSubmit={handleSubmit} className="space-y-8">
 
       {/* Author name */}
@@ -320,5 +349,34 @@ export default function AuthorBioForm({ authors }) {
         )}
       </div>
     </form>
+
+    {/* Needs Bio */}
+    <div className="mt-12 space-y-4">
+      <h2 className="font-serif text-lg font-semibold">Needs Bio</h2>
+      <p className="text-xs text-slate">Popular authors without a bio yet — click to load.</p>
+      {suggestionsLoading && <p className="text-sm text-slate">Loading...</p>}
+      {!suggestionsLoading && suggestions.length === 0 && (
+        <p className="text-sm text-green-600">All popular authors have bios.</p>
+      )}
+      {suggestions.length > 0 && (
+        <ul className="border border-gray-200 rounded-xl divide-y divide-gray-100 overflow-hidden">
+          {suggestions.map(s => (
+            <li key={s.name}>
+              <button type="button" onClick={() => loadByName(s.name)}
+                className="w-full text-left px-4 py-3 hover:bg-petal/10 transition-colors">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-medium">{s.name}</p>
+                  <div className="flex gap-3 text-xs text-slate shrink-0">
+                    <span>{s.book_count} {s.book_count === 1 ? 'book' : 'books'}</span>
+                    {s.max_rating_count > 0 && <span>{s.max_rating_count.toLocaleString()} ratings</span>}
+                  </div>
+                </div>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+    </>
   )
 }

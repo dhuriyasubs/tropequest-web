@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 const EMPTY_ENTRY    = { number: '', format: '', focus: '' }
 const EMPTY_EXPECT   = { label: '', text: '' }
@@ -20,6 +20,15 @@ export default function SeriesBioForm({ seriesList }) {
   const [pasteText, setPasteText]   = useState('')
   const [parsing, setParsing]       = useState(false)
   const [parseError, setParseError] = useState('')
+  const [suggestions, setSuggestions] = useState([])
+  const [suggestionsLoading, setSuggestionsLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/admin/series-bio?pending=1')
+      .then(r => r.json())
+      .then(d => setSuggestions(d.suggestions ?? []))
+      .finally(() => setSuggestionsLoading(false))
+  }, [])
 
   async function handleParse() {
     if (!pasteText.trim()) return
@@ -82,6 +91,24 @@ export default function SeriesBioForm({ seriesList }) {
     }
   }
 
+  async function loadByName(name) {
+    setSeriesName(name)
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/admin/series-bio?series=${encodeURIComponent(name.trim())}`)
+      const { bio: existing } = await res.json()
+      setBio(existing ? {
+        intro:               existing.intro ?? '',
+        reading_order_note:  existing.reading_order_note ?? '',
+        reading_order:       existing.reading_order?.length ? existing.reading_order : [{ ...EMPTY_ENTRY }],
+        what_to_expect:      existing.what_to_expect?.length ? existing.what_to_expect : [{ ...EMPTY_EXPECT }],
+        reading_tip:         existing.reading_tip ?? '',
+      } : EMPTY_BIO)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
     setStatus('saving')
@@ -109,6 +136,7 @@ export default function SeriesBioForm({ seriesList }) {
   const inputCls = 'w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bloom/40'
 
   return (
+    <>
     <form onSubmit={handleSubmit} className="space-y-8">
 
       {/* Series name */}
@@ -263,5 +291,34 @@ export default function SeriesBioForm({ seriesList }) {
         {status === 'error'  && <span className="text-sm text-red-500">{errorMsg}</span>}
       </div>
     </form>
+
+    {/* Needs Bio */}
+    <div className="mt-12 space-y-4">
+      <h2 className="font-serif text-lg font-semibold">Needs Bio</h2>
+      <p className="text-xs text-slate">Popular series without a bio yet — click to load.</p>
+      {suggestionsLoading && <p className="text-sm text-slate">Loading...</p>}
+      {!suggestionsLoading && suggestions.length === 0 && (
+        <p className="text-sm text-green-600">All popular series have bios.</p>
+      )}
+      {suggestions.length > 0 && (
+        <ul className="border border-gray-200 rounded-xl divide-y divide-gray-100 overflow-hidden">
+          {suggestions.map(s => (
+            <li key={s.name}>
+              <button type="button" onClick={() => loadByName(s.name)}
+                className="w-full text-left px-4 py-3 hover:bg-petal/10 transition-colors">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-medium">{s.name}</p>
+                  <div className="flex gap-3 text-xs text-slate shrink-0">
+                    <span>{s.book_count} {s.book_count === 1 ? 'book' : 'books'}</span>
+                    {s.max_rating_count > 0 && <span>{s.max_rating_count.toLocaleString()} ratings</span>}
+                  </div>
+                </div>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+    </>
   )
 }

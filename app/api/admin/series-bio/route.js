@@ -23,6 +23,29 @@ export async function GET(request) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { searchParams } = new URL(request.url)
+
+  // Suggestions: popular series without a bio
+  if (searchParams.get('pending') === '1') {
+    const [{ data: bookRows }, { data: bioRows }] = await Promise.all([
+      supabaseAdmin.from('books').select('series_name, rating_count').not('series_name', 'is', null),
+      supabaseAdmin.from('series_bios').select('series_name'),
+    ])
+    const bioSet = new Set((bioRows ?? []).map(b => b.series_name))
+    const map = {}
+    for (const { series_name, rating_count } of (bookRows ?? [])) {
+      if (!series_name) continue
+      if (!map[series_name]) map[series_name] = { book_count: 0, max_rating_count: 0 }
+      map[series_name].book_count++
+      if ((rating_count ?? 0) > map[series_name].max_rating_count) map[series_name].max_rating_count = rating_count ?? 0
+    }
+    const suggestions = Object.entries(map)
+      .filter(([name]) => !bioSet.has(name))
+      .map(([name, s]) => ({ name, book_count: s.book_count, max_rating_count: s.max_rating_count }))
+      .sort((a, b) => (b.max_rating_count - a.max_rating_count) || (b.book_count - a.book_count))
+      .slice(0, 20)
+    return NextResponse.json({ suggestions })
+  }
+
   const series_name = searchParams.get('series')
   if (!series_name) return NextResponse.json({ bio: null })
 
