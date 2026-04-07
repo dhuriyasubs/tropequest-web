@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import BookCard from '@/components/BookCard'
 import Breadcrumb from '@/components/Breadcrumb'
+import AuthorBio from '@/components/AuthorBio'
 import { getBooksByAuthor, getAuthorBio } from '@/lib/search'
 
 export const revalidate = 3600
@@ -54,10 +55,8 @@ export default async function AuthorPage({ params }) {
       ]} />
 
       <h1 className="font-serif text-3xl font-bold mb-1">{author}</h1>
-      <p className="text-slate mb-4">{books.length} books on TropeQuest</p>
-      {bio && (
-        <p className="text-sm text-slate leading-relaxed max-w-2xl mb-10">{bio}</p>
-      )}
+      <p className="text-slate mb-8">{books.length} books on TropeQuest</p>
+      <AuthorBio bio={bio} />
 
       {Object.entries(seriesMap).map(([series, seriesBooks]) => (
         <section key={series} className="mb-12">
