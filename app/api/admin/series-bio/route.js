@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server'
 import { createSupabaseServer, supabaseAdmin } from '@/lib/supabase'
+import { isAdmin } from '@/lib/admin'
 
 export async function POST(request) {
   const supabase = createSupabaseServer()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!isAdmin(user)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { series_name, bio } = await request.json()
   if (!series_name?.trim()) return NextResponse.json({ error: 'series_name required' }, { status: 400 })
@@ -20,7 +21,7 @@ export async function POST(request) {
 export async function GET(request) {
   const supabase = createSupabaseServer()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!isAdmin(user)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { searchParams } = new URL(request.url)
 

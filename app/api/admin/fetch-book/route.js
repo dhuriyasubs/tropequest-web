@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { createSupabaseServer } from '@/lib/supabase'
+import { isAdmin } from '@/lib/admin'
 
 const gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
 
@@ -52,7 +53,7 @@ function extractPageData(html) {
 export async function POST(request) {
   const supabase = createSupabaseServer()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!isAdmin(user)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { url } = await request.json()
   if (!url?.trim()) return NextResponse.json({ error: 'url required' }, { status: 400 })

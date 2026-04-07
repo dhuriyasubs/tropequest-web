@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { createSupabaseServer } from '@/lib/supabase'
+import { isAdmin } from '@/lib/admin'
 
 const gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
 
@@ -42,7 +43,7 @@ For reading_order, use the book numbers from the text. If format is not mentione
 export async function POST(request) {
   const supabase = createSupabaseServer()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!isAdmin(user)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { type, content } = await request.json()
   if (!content?.trim()) return NextResponse.json({ error: 'content required' }, { status: 400 })
