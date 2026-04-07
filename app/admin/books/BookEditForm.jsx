@@ -6,7 +6,7 @@ const inputCls = 'w-full border border-gray-200 rounded-lg px-3 py-2 text-sm foc
 const EMPTY_BOOK = {
   title: '', author: '', slug: '', cover_url: '',
   series_name: '', series_number: '', rating: '', rating_count: '',
-  primary_genre: '', genres: '', tropes: '', description: '',
+  primary_genre: '', secondary_genre: '', genres: '', tropes: '', description: '',
   buy_url_amazon_us: '', buy_url_amazon_in: '', buy_url_flipkart: '',
   price_amazon_us: '', price_amazon_in: '',
 }
@@ -37,7 +37,8 @@ function buildPayload(book, isNew) {
     series_number:     book.series_number !== '' ? Number(book.series_number) : null,
     rating:            book.rating        !== '' ? Number(book.rating)        : null,
     rating_count:      book.rating_count  !== '' ? Number(book.rating_count)  : null,
-    primary_genre:     book.primary_genre  || null,
+    primary_genre:     book.primary_genre   || null,
+    secondary_genre:   book.secondary_genre || null,
     genres:            book.genres  ? book.genres.split(',').map(s => s.trim()).filter(Boolean)  : [],
     tropes:            book.tropes  ? book.tropes.split(',').map(s => s.trim()).filter(Boolean)  : [],
     buy_url_amazon_us: book.buy_url_amazon_us || null,
@@ -59,7 +60,8 @@ function normaliseBook(b) {
     cover_url:     b.cover_url     ?? '',
     description:   b.description   ?? '',
     series_name:   b.series_name   ?? '',
-    primary_genre: b.primary_genre ?? '',
+    primary_genre:   b.primary_genre   ?? '',
+    secondary_genre: b.secondary_genre ?? '',
     buy_url_amazon_us: b.buy_url_amazon_us ?? '',
     buy_url_amazon_in: b.buy_url_amazon_in ?? '',
     buy_url_flipkart:  b.buy_url_flipkart  ?? '',
@@ -119,6 +121,10 @@ function BookFields({ book, set }) {
           <input type="text" value={book.primary_genre} onChange={e => set('primary_genre', e.target.value)} className={inputCls} />
         </div>
         <div>
+          <label className="block text-xs text-slate mb-1">Secondary Genre</label>
+          <input type="text" value={book.secondary_genre} onChange={e => set('secondary_genre', e.target.value)} className={inputCls} />
+        </div>
+        <div className="sm:col-span-2">
           <label className="block text-xs text-slate mb-1">Genres (comma-separated)</label>
           <input type="text" value={book.genres} onChange={e => set('genres', e.target.value)} className={inputCls} />
         </div>
