@@ -121,30 +121,6 @@ export default function AuthorBioForm({ authors }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
 
-      {/* Paste & parse */}
-      <div className="bg-petal/10 rounded-xl p-4 space-y-3">
-        <label className="block text-sm font-semibold">Paste raw content</label>
-        <p className="text-xs text-slate">Paste any text about the author — we&apos;ll extract and pre-fill all the fields below.</p>
-        <textarea
-          rows={5}
-          value={pasteText}
-          onChange={e => setPasteText(e.target.value)}
-          placeholder="Paste author bio, Wikipedia excerpt, blog post, etc..."
-          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bloom/40 resize-y bg-white"
-        />
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={handleParse}
-            disabled={parsing || !pasteText.trim()}
-            className="bg-bloom text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-bloom/90 transition-colors disabled:opacity-50"
-          >
-            {parsing ? 'Parsing...' : 'Parse & prefill'}
-          </button>
-          {parseError && <span className="text-xs text-red-500">{parseError}</span>}
-        </div>
-      </div>
-
       {/* Author name */}
       <div>
         <label className="block text-sm font-semibold mb-1">Author Name</label>
@@ -171,6 +147,30 @@ export default function AuthorBioForm({ authors }) {
           </button>
         </div>
         <p className="text-xs text-slate mt-1">If this author already has a bio, it will load on blur.</p>
+      </div>
+
+      {/* Paste & parse */}
+      <div className="bg-petal/10 rounded-xl p-4 space-y-3">
+        <label className="block text-sm font-semibold">Paste raw content</label>
+        <p className="text-xs text-slate">Paste any text about the author — we&apos;ll extract and pre-fill all the fields below.</p>
+        <textarea
+          rows={5}
+          value={pasteText}
+          onChange={e => setPasteText(e.target.value)}
+          placeholder="Paste author bio, Wikipedia excerpt, blog post, etc..."
+          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bloom/40 resize-y bg-white"
+        />
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleParse}
+            disabled={parsing || !pasteText.trim()}
+            className="bg-bloom text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-bloom/90 transition-colors disabled:opacity-50"
+          >
+            {parsing ? 'Parsing...' : 'Parse & prefill'}
+          </button>
+          {parseError && <span className="text-xs text-red-500">{parseError}</span>}
+        </div>
       </div>
 
       {/* Intro */}

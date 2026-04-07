@@ -111,6 +111,29 @@ export default function SeriesBioForm({ seriesList }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
 
+      {/* Series name */}
+      <div>
+        <label className="block text-sm font-semibold mb-1">Series Name</label>
+        <div className="flex gap-2">
+          <input
+            list="series-list"
+            value={seriesName}
+            onChange={e => setSeriesName(e.target.value)}
+            onBlur={loadExisting}
+            placeholder="e.g. A Court of Thorns and Roses"
+            required
+            className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bloom/40"
+          />
+          <datalist id="series-list">
+            {seriesList.map(s => <option key={s} value={s} />)}
+          </datalist>
+          <button type="button" onClick={loadExisting} disabled={loading}
+            className="px-3 py-2 text-sm border border-gray-200 rounded-lg hover:bg-petal/10 transition-colors">
+            {loading ? '...' : 'Load'}
+          </button>
+        </div>
+      </div>
+
       {/* Paste & parse */}
       <div className="bg-petal/10 rounded-xl p-4 space-y-3">
         <label className="block text-sm font-semibold">Paste raw content</label>
@@ -132,29 +155,6 @@ export default function SeriesBioForm({ seriesList }) {
             {parsing ? 'Parsing...' : 'Parse & prefill'}
           </button>
           {parseError && <span className="text-xs text-red-500">{parseError}</span>}
-        </div>
-      </div>
-
-      {/* Series name */}
-      <div>
-        <label className="block text-sm font-semibold mb-1">Series Name</label>
-        <div className="flex gap-2">
-          <input
-            list="series-list"
-            value={seriesName}
-            onChange={e => setSeriesName(e.target.value)}
-            onBlur={loadExisting}
-            placeholder="e.g. A Court of Thorns and Roses"
-            required
-            className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bloom/40"
-          />
-          <datalist id="series-list">
-            {seriesList.map(s => <option key={s} value={s} />)}
-          </datalist>
-          <button type="button" onClick={loadExisting} disabled={loading}
-            className="px-3 py-2 text-sm border border-gray-200 rounded-lg hover:bg-petal/10 transition-colors">
-            {loading ? '...' : 'Load'}
-          </button>
         </div>
       </div>
 
