@@ -247,14 +247,14 @@ export default function AuthorBioForm({ authors }) {
         />
       </div>
 
-      {/* Series */}
+      {/* Series / Works */}
       <div>
-        <label className="block text-sm font-semibold mb-3">Series Chronology</label>
+        <label className="block text-sm font-semibold mb-3">Major Works</label>
         <div className="space-y-4">
           {bio.series.map((s, i) => (
             <div key={i} className="border border-gray-200 rounded-xl p-4 space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-xs font-semibold text-slate">Series {i + 1}</span>
+                <span className="text-xs font-semibold text-slate">Entry {i + 1}</span>
                 {bio.series.length > 1 && (
                   <button
                     type="button"
@@ -267,12 +267,12 @@ export default function AuthorBioForm({ authors }) {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="sm:col-span-2">
-                  <label className="block text-xs text-slate mb-1">Series Name</label>
+                  <label className="block text-xs text-slate mb-1">Title / Series Name</label>
                   <input
                     type="text"
                     value={s.name}
                     onChange={e => setSeries(i, 'name', e.target.value)}
-                    placeholder="e.g. The Twisted Series"
+                    placeholder="e.g. The Love Hypothesis or The Twisted Series"
                     className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bloom/40"
                   />
                 </div>
@@ -304,7 +304,7 @@ export default function AuthorBioForm({ authors }) {
             onClick={addSeries}
             className="text-sm text-bloom hover:underline"
           >
-            + Add series
+            + Add entry
           </button>
         </div>
       </div>

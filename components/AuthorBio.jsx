@@ -48,7 +48,7 @@ export default function AuthorBio({ bio }) {
       {/* Series chronology */}
       {series?.length > 0 && (
         <div>
-          <h2 className="font-serif text-base font-semibold mb-3">Major Series Chronology</h2>
+          <h2 className="font-serif text-base font-semibold mb-3">Major Works</h2>
           <div className="space-y-3">
             {series.map((s, i) => (
               <div key={i} className="flex gap-3">
