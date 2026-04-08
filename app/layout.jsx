@@ -53,7 +53,7 @@ export default function RootLayout({ children }) {
         <Toaster />
         <AuthRedirectHandler />
         <Script id="cuelinks" strategy="afterInteractive">{`
-          var cId = '241742';
+          var cId = '279686';
           (function(d, t) {
             var s = document.createElement('script');
             s.type = 'text/javascript';
