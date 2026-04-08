@@ -2,6 +2,36 @@ import { NextResponse } from 'next/server'
 import { createSupabaseServer, supabaseAdmin } from '@/lib/supabase'
 import { isAdmin } from '@/lib/admin'
 
+const SUPABASE_URL    = process.env.NEXT_PUBLIC_SUPABASE_URL
+const SUPABASE_KEY    = process.env.SUPABASE_SERVICE_ROLE_KEY
+const COVERS_BUCKET   = 'covers'
+
+function isHosted(url) {
+  return url && SUPABASE_URL && url.startsWith(`${SUPABASE_URL}/storage/v1/object/public/${COVERS_BUCKET}/`)
+}
+
+async function uploadCover(coverUrl, bookId) {
+  if (!coverUrl || isHosted(coverUrl) || !SUPABASE_URL || !SUPABASE_KEY) return coverUrl
+  try {
+    const img = await fetch(coverUrl, { headers: { 'User-Agent': 'TropeQuest/1.0' } })
+    if (!img.ok) return coverUrl
+    const contentType = img.headers.get('content-type') || 'image/jpeg'
+    const buffer = await img.arrayBuffer()
+    const uploadUrl = `${SUPABASE_URL}/storage/v1/object/${COVERS_BUCKET}/${bookId}.jpg`
+    const up = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': contentType,
+        'x-upsert': 'true',
+      },
+      body: buffer,
+    })
+    if (up.ok) return `${SUPABASE_URL}/storage/v1/object/public/${COVERS_BUCKET}/${bookId}.jpg`
+  } catch {}
+  return coverUrl
+}
+
 const FIELDS = 'id,title,author,slug,cover_url,series_name,series_number,rating,rating_count,rating_source,description,tropes,genres,primary_genre,secondary_genre,release_date,release_year,buy_url_amazon_us,buy_url_amazon_in,buy_url_flipkart,price_amazon_in,price_amazon_us'
 
 export async function GET(request) {
@@ -44,6 +74,10 @@ export async function POST(request) {
   const { id, ...fields } = await request.json()
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
 
+  if (fields.cover_url) {
+    fields.cover_url = await uploadCover(fields.cover_url, String(id))
+  }
+
   const { error } = await supabaseAdmin.from('books').update(fields).eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })
@@ -69,7 +103,16 @@ export async function PUT(request) {
     .maybeSingle()
   if (existing) return NextResponse.json({ error: 'A book with this title and author already exists.' }, { status: 409 })
 
+  // Insert first to get id, then upload cover
   const { data, error } = await supabaseAdmin.from('books').insert(fields).select('id').single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  if (fields.cover_url) {
+    const hosted = await uploadCover(fields.cover_url, String(data.id))
+    if (hosted !== fields.cover_url) {
+      await supabaseAdmin.from('books').update({ cover_url: hosted }).eq('id', data.id)
+    }
+  }
+
   return NextResponse.json({ ok: true, id: data.id })
 }
