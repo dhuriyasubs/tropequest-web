@@ -145,7 +145,7 @@ export default async function BookPage({ params }) {
 
             {book.series_name && (
               <p className="text-slate text-sm mt-1">
-                <Link href={`/series/${slugify(book.series_name)}`} className="hover:text-bloom hover:underline transition-colors">
+                <Link href={`/series/${slugify(book.series_name)}`} className="underline sm:no-underline hover:text-bloom hover:underline transition-colors">
                   {book.series_name}
                 </Link>
                 {book.series_number ? ` · Book ${book.series_number}` : ''}
@@ -154,7 +154,7 @@ export default async function BookPage({ params }) {
 
             <Link
               href={`/author/${encodeURIComponent(book.author)}`}
-              className="text-bloom font-medium hover:underline mt-1 inline-block"
+              className="text-bloom font-medium underline sm:no-underline hover:underline mt-1 inline-block"
             >
               {book.author}
             </Link>
