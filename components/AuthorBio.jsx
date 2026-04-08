@@ -13,7 +13,7 @@ function renderExtras(text) {
 export default function AuthorBio({ bio }) {
   if (!bio) return null
 
-  const { intro, profile, writing_style, series, reader_tip, extras } = bio
+  const { intro, profile, writing_style, works_heading, series, reader_tip, extras } = bio
 
   return (
     <div className="max-w-2xl mb-12 space-y-6">
@@ -48,7 +48,7 @@ export default function AuthorBio({ bio }) {
       {/* Series chronology */}
       {series?.length > 0 && (
         <div>
-          <h2 className="font-serif text-base font-semibold mb-3">Major Works</h2>
+          <h2 className="font-serif text-base font-semibold mb-3">{works_heading || 'Major Works'}</h2>
           <div className="space-y-3">
             {series.map((s, i) => (
               <div key={i} className="flex gap-3">

@@ -12,6 +12,7 @@ const EMPTY_BIO = {
     'Key Achievement': '',
   },
   writing_style: '',
+  works_heading: 'Major Works',
   series: [{ ...EMPTY_SERIES }],
   reader_tip: '',
   extras: '',
@@ -49,12 +50,13 @@ export default function AuthorBioForm({ authors }) {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       setBio({
-        intro:         data.bio.intro         ?? '',
-        profile:       { ...EMPTY_BIO.profile, ...(data.bio.profile ?? {}) },
-        writing_style: data.bio.writing_style ?? '',
-        series:        data.bio.series?.length ? data.bio.series : [{ ...EMPTY_SERIES }],
-        reader_tip:    data.bio.reader_tip     ?? '',
-        extras:        data.bio.extras         ?? '',
+        intro:          data.bio.intro          ?? '',
+        profile:        { ...EMPTY_BIO.profile, ...(data.bio.profile ?? {}) },
+        writing_style:  data.bio.writing_style  ?? '',
+        works_heading:  data.bio.works_heading  ?? 'Major Works',
+        series:         data.bio.series?.length ? data.bio.series : [{ ...EMPTY_SERIES }],
+        reader_tip:     data.bio.reader_tip      ?? '',
+        extras:         data.bio.extras          ?? '',
       })
       setPasteText('')
     } catch (err) {
@@ -91,12 +93,13 @@ export default function AuthorBioForm({ authors }) {
       const { bio: existing } = await res.json()
       if (existing) {
         setBio({
-          intro: existing.intro ?? '',
-          profile: { ...EMPTY_BIO.profile, ...(existing.profile ?? {}) },
+          intro:         existing.intro         ?? '',
+          profile:       { ...EMPTY_BIO.profile, ...(existing.profile ?? {}) },
           writing_style: existing.writing_style ?? '',
-          series: existing.series?.length ? existing.series : [{ ...EMPTY_SERIES }],
-          reader_tip: existing.reader_tip ?? '',
-          extras: existing.extras ?? '',
+          works_heading: existing.works_heading ?? 'Major Works',
+          series:        existing.series?.length ? existing.series : [{ ...EMPTY_SERIES }],
+          reader_tip:    existing.reader_tip    ?? '',
+          extras:        existing.extras        ?? '',
         })
       }
     } finally {
@@ -111,12 +114,13 @@ export default function AuthorBioForm({ authors }) {
       const res = await fetch(`/api/admin/author-bio?author=${encodeURIComponent(name.trim())}`)
       const { bio: existing } = await res.json()
       setBio(existing ? {
-        intro: existing.intro ?? '',
-        profile: { ...EMPTY_BIO.profile, ...(existing.profile ?? {}) },
+        intro:         existing.intro         ?? '',
+        profile:       { ...EMPTY_BIO.profile, ...(existing.profile ?? {}) },
         writing_style: existing.writing_style ?? '',
-        series: existing.series?.length ? existing.series : [{ ...EMPTY_SERIES }],
-        reader_tip: existing.reader_tip ?? '',
-        extras: existing.extras ?? '',
+        works_heading: existing.works_heading ?? 'Major Works',
+        series:        existing.series?.length ? existing.series : [{ ...EMPTY_SERIES }],
+        reader_tip:    existing.reader_tip    ?? '',
+        extras:        existing.extras        ?? '',
       } : EMPTY_BIO)
     } finally {
       setLoading(false)
@@ -249,7 +253,16 @@ export default function AuthorBioForm({ authors }) {
 
       {/* Series / Works */}
       <div>
-        <label className="block text-sm font-semibold mb-3">Major Works</label>
+        <div className="flex items-center gap-3 mb-3">
+          <label className="text-sm font-semibold shrink-0">Section Heading</label>
+          <input
+            type="text"
+            value={bio.works_heading}
+            onChange={e => setBio(b => ({ ...b, works_heading: e.target.value }))}
+            placeholder="e.g. Major Works, Bibliography, Series Chronology"
+            className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-bloom/40"
+          />
+        </div>
         <div className="space-y-4">
           {bio.series.map((s, i) => (
             <div key={i} className="border border-gray-200 rounded-xl p-4 space-y-3">
