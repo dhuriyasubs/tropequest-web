@@ -5,7 +5,7 @@ import { getAllAuthors } from '@/lib/search'
 import AuthorBioForm from './AuthorBioForm'
 
 export const dynamic = 'force-dynamic'
-export const metadata = { title: 'Admin — Author Bio' }
+export const metadata = { title: 'Admin: Author Bio' }
 
 export default async function AdminAuthorBioPage() {
   const supabase = createSupabaseServer()

@@ -12,7 +12,7 @@ export async function generateMetadata({ params }) {
   const match  = series.find(s => slugify(s.series_name) === params.slug)
   if (!match) return {}
   const { series_name, author } = match
-  const title       = `${series_name} Series Reading Order — ${author}`
+  const title       = `${series_name} Series Reading Order by ${author}`
   const description = `The complete ${series_name} reading order by ${author}. All books in the series listed in order with ratings, tropes, and summaries.`
   return {
     title,

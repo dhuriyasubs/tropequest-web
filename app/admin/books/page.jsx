@@ -4,7 +4,7 @@ import { isAdmin } from '@/lib/admin'
 import BookEditForm from './BookEditForm'
 
 export const dynamic = 'force-dynamic'
-export const metadata = { title: 'Admin — Edit Book' }
+export const metadata = { title: 'Admin: Edit Book' }
 
 export default async function AdminBooksPage() {
   const supabase = createSupabaseServer()

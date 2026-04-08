@@ -5,7 +5,7 @@ import { getAllSeries } from '@/lib/search'
 import SeriesBioForm from './SeriesBioForm'
 
 export const dynamic = 'force-dynamic'
-export const metadata = { title: 'Admin — Series Bio' }
+export const metadata = { title: 'Admin: Series Bio' }
 
 export default async function AdminSeriesBioPage() {
   const supabase = createSupabaseServer()

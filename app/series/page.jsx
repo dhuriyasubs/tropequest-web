@@ -3,7 +3,7 @@ import { slugify } from '@/lib/utils'
 import SeriesList from '@/components/SeriesList'
 
 export const metadata = {
-  title: 'Book Series Reading Order — Romance, Fantasy & Thriller',
+  title: 'Book Series Reading Order: Romance, Fantasy & Thriller',
   description: 'Find the reading order for your favourite book series. Browse romance, romantasy, and thriller series with books listed in order on TropeQuest.',
   alternates: { canonical: '/series' },
   openGraph: {
