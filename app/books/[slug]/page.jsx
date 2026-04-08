@@ -291,40 +291,91 @@ export default async function BookPage({ params }) {
         )}
 
         {/* More by author */}
-        {moreByAuthor.length > 0 && (
-          <section className="mt-14">
-            <h2 className="font-serif text-xl font-semibold mb-4">
-              More by{' '}
-              <Link href={`/author/${encodeURIComponent(book.author)}`} className="hover:text-bloom transition-colors">
-                {book.author}
+        {moreByAuthor.length > 0 && (() => {
+          // Group: series buckets (ordered by min series_number) + standalone
+          const seriesMap = {}
+          const standalone = []
+          for (const b of moreByAuthor) {
+            if (b.series_name) {
+              if (!seriesMap[b.series_name]) seriesMap[b.series_name] = []
+              seriesMap[b.series_name].push(b)
+            } else {
+              standalone.push(b)
+            }
+          }
+          // Sort each series by series_number
+          for (const key of Object.keys(seriesMap)) {
+            seriesMap[key].sort((a, b) => (a.series_number ?? 999) - (b.series_number ?? 999))
+          }
+          const seriesGroups = Object.entries(seriesMap)
+          const hasSeries = seriesGroups.length > 0
+
+          const BookCard = ({ b }) => {
+            const status = sectionShelfMap[b.id] ?? null
+            return (
+              <Link href={`/books/${b.slug}`} className="group">
+                <div className="relative aspect-[2/3] rounded overflow-hidden bg-gray-100 mb-1">
+                  {b.cover_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={b.cover_url} alt={b.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" loading="lazy" />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center text-2xl">📚</div>
+                  )}
+                  {b.series_number && (
+                    <div className="absolute top-1 left-1 bg-black/60 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded">#{b.series_number}</div>
+                  )}
+                  {status === 'read' && (
+                    <div className="absolute bottom-0 left-0 right-0 bg-green-600/90 text-white text-xs font-semibold text-center py-0.5">✓ Read</div>
+                  )}
+                  {(status === 'reading' || status === 'unread') && (
+                    <div className="absolute bottom-0 left-0 right-0 bg-petal/90 text-plum text-xs font-semibold text-center py-0.5">On Shelf</div>
+                  )}
+                </div>
+                <p className="text-xs font-medium line-clamp-2">{b.title}</p>
               </Link>
-            </h2>
-            <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 gap-4">
-              {moreByAuthor.map(b => {
-                const status = sectionShelfMap[b.id] ?? null
-                return (
-                  <Link key={b.id} href={`/books/${b.slug}`} className="group">
-                    <div className="relative aspect-[2/3] rounded overflow-hidden bg-gray-100 mb-1">
-                      {b.cover_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={b.cover_url} alt={b.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" loading="lazy" />
-                      ) : (
-                        <div className="absolute inset-0 flex items-center justify-center text-2xl">📚</div>
-                      )}
-                      {status === 'read' && (
-                        <div className="absolute bottom-0 left-0 right-0 bg-green-600/90 text-white text-xs font-semibold text-center py-0.5">✓ Read</div>
-                      )}
-                      {(status === 'reading' || status === 'unread') && (
-                        <div className="absolute bottom-0 left-0 right-0 bg-petal/90 text-plum text-xs font-semibold text-center py-0.5">On Shelf</div>
-                      )}
+            )
+          }
+
+          return (
+            <section className="mt-14">
+              <h2 className="font-serif text-xl font-semibold mb-4">
+                More by{' '}
+                <Link href={`/author/${encodeURIComponent(book.author)}`} className="hover:text-bloom transition-colors">
+                  {book.author}
+                </Link>
+              </h2>
+
+              {hasSeries ? (
+                <div className="flex flex-col gap-8">
+                  {seriesGroups.map(([seriesName, books]) => (
+                    <div key={seriesName}>
+                      <p className="text-sm font-semibold text-slate mb-3">
+                        <Link href={`/series/${slugify(seriesName)}`} className="hover:text-bloom transition-colors">
+                          {seriesName}
+                        </Link>
+                      </p>
+                      <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 gap-4">
+                        {books.map(b => <BookCard key={b.id} b={b} />)}
+                      </div>
                     </div>
-                    <p className="text-xs font-medium line-clamp-2">{b.title}</p>
-                  </Link>
-                )
-              })}
-            </div>
-          </section>
-        )}
+                  ))}
+                  {standalone.length > 0 && (
+                    <div>
+                      <p className="text-sm font-semibold text-slate mb-3">Standalone</p>
+                      <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 gap-4">
+                        {standalone.map(b => <BookCard key={b.id} b={b} />)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 gap-4">
+                  {moreByAuthor.map(b => <BookCard key={b.id} b={b} />)}
+                </div>
+              )}
+            </section>
+          )
+        })()}
         {/* Featured in blog posts */}
         {featuredInPosts.length > 0 && (
           <section className="mt-14">
