@@ -257,8 +257,8 @@ export default function AuthorBioForm({ authors }) {
           <label className="text-sm font-semibold shrink-0">Section Heading</label>
           <input
             type="text"
-            value={bio.works_heading}
-            onChange={e => setBio(b => ({ ...b, works_heading: e.target.value }))}
+            value={bio.works_heading ?? 'Major Works'}
+            onChange={e => setBio(b => ({ ...b, works_heading: e.target.value || 'Major Works' }))}
             placeholder="e.g. Major Works, Bibliography, Series Chronology"
             className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-bloom/40"
           />
