@@ -145,7 +145,7 @@ export default async function BookPage({ params }) {
 
             {book.series_name && (
               <p className="text-slate text-sm mt-1">
-                <Link href={`/series/${slugify(book.series_name)}`} className="underline sm:no-underline hover:text-bloom hover:underline transition-colors">
+                <Link href={`/series/${slugify(book.series_name)}`} className="hover:text-bloom hover:underline transition-colors">
                   {book.series_name}
                 </Link>
                 {book.series_number ? ` · Book ${book.series_number}` : ''}
@@ -154,7 +154,7 @@ export default async function BookPage({ params }) {
 
             <Link
               href={`/author/${encodeURIComponent(book.author)}`}
-              className="text-bloom font-medium underline sm:no-underline hover:underline mt-1 inline-block"
+              className="text-bloom font-medium hover:underline mt-1 inline-block"
             >
               {book.author}
             </Link>
@@ -233,7 +233,7 @@ export default async function BookPage({ params }) {
           <section className="mt-14">
             <h2 className="font-serif text-xl font-semibold mb-4">
               More in{' '}
-              <Link href={`/series/${slugify(book.series_name)}`} className="hover:text-bloom transition-colors">
+              <Link href={`/series/${slugify(book.series_name)}`} className="text-bloom transition-colors">
                 {book.series_name}
               </Link>
             </h2>
@@ -340,7 +340,7 @@ export default async function BookPage({ params }) {
             <section className="mt-14">
               <h2 className="font-serif text-xl font-semibold mb-4">
                 More by{' '}
-                <Link href={`/author/${encodeURIComponent(book.author)}`} className="hover:text-bloom transition-colors">
+                <Link href={`/author/${encodeURIComponent(book.author)}`} className="text-bloom transition-colors">
                   {book.author}
                 </Link>
               </h2>
@@ -350,7 +350,7 @@ export default async function BookPage({ params }) {
                   {seriesGroups.map(([seriesName, books]) => (
                     <div key={seriesName}>
                       <p className="text-sm font-semibold text-slate mb-3">
-                        <Link href={`/series/${slugify(seriesName)}`} className="hover:text-bloom transition-colors">
+                        <Link href={`/series/${slugify(seriesName)}`} className="text-bloom transition-colors">
                           {seriesName}
                         </Link>
                       </p>
