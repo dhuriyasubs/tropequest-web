@@ -11,6 +11,7 @@ const nextConfig = {
       { protocol: 'https', hostname: 'covers.openlibrary.org' },
       { protocol: 'https', hostname: 'i.gr-assets.com' },
       { protocol: 'https', hostname: '**.goodreads.com' },
+      { protocol: 'https', hostname: 'wfnneweepjxbzghettwb.supabase.co' },
     ],
     formats: ['image/avif', 'image/webp'],
   },
