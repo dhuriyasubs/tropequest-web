@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { createSupabaseServer, supabaseAdmin } from '@/lib/supabase'
 import { isAdmin } from '@/lib/admin'
 import { slugify } from '@/lib/utils'
@@ -35,6 +35,7 @@ function bustCache(slug, author, seriesName) {
   if (slug)       revalidatePath(`/books/${slug}`)
   if (author)     revalidatePath(`/author/${encodeURIComponent(author)}`)
   if (seriesName) revalidatePath(`/series/${slugify(seriesName)}`)
+  revalidateTag('featured-books')
 }
 
 const FIELDS = 'id,title,author,slug,cover_url,series_name,series_number,rating,rating_count,rating_source,description,tropes,genres,primary_genre,secondary_genre,release_date,release_year,buy_url_amazon_us,buy_url_amazon_in,buy_url_flipkart,price_amazon_in,price_amazon_us,characters'
