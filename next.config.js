@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
+    unoptimized: true,
     remotePatterns: [
       { protocol: 'https', hostname: 'covers.openlibrary.org' },
       { protocol: 'https', hostname: '**.bookbrainz.org' },
