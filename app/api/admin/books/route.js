@@ -6,23 +6,15 @@ const SUPABASE_URL    = process.env.NEXT_PUBLIC_SUPABASE_URL
 const SUPABASE_KEY    = process.env.SUPABASE_SERVICE_ROLE_KEY
 const COVERS_BUCKET   = 'covers'
 
-function isHosted(url) {
-  return url && SUPABASE_URL && url.startsWith(`${SUPABASE_URL}/storage/v1/object/public/${COVERS_BUCKET}/`)
-}
-
-function isThisBookCover(url, bookId) {
-  return url && SUPABASE_URL && url.startsWith(`${SUPABASE_URL}/storage/v1/object/public/${COVERS_BUCKET}/${bookId}.jpg`)
-}
-
 async function uploadCover(coverUrl, bookId) {
-  // Skip only if it's already this book's own hosted cover — not any Supabase URL
-  if (!coverUrl || isThisBookCover(coverUrl, bookId) || !SUPABASE_URL || !SUPABASE_KEY) return coverUrl
+  if (!coverUrl || !SUPABASE_URL || !SUPABASE_KEY) return coverUrl
   try {
     const img = await fetch(coverUrl, { headers: { 'User-Agent': 'TropeQuest/1.0' } })
     if (!img.ok) return coverUrl
     const contentType = img.headers.get('content-type') || 'image/jpeg'
     const buffer = await img.arrayBuffer()
-    const uploadUrl = `${SUPABASE_URL}/storage/v1/object/${COVERS_BUCKET}/${bookId}.jpg`
+    const path = `${bookId}_${Date.now()}.jpg`
+    const uploadUrl = `${SUPABASE_URL}/storage/v1/object/${COVERS_BUCKET}/${path}`
     const up = await fetch(uploadUrl, {
       method: 'PUT',
       headers: {
@@ -32,7 +24,7 @@ async function uploadCover(coverUrl, bookId) {
       },
       body: buffer,
     })
-    if (up.ok) return `${SUPABASE_URL}/storage/v1/object/public/${COVERS_BUCKET}/${bookId}.jpg`
+    if (up.ok) return `${SUPABASE_URL}/storage/v1/object/public/${COVERS_BUCKET}/${path}`
   } catch {}
   return coverUrl
 }
