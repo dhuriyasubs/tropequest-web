@@ -97,6 +97,30 @@ export async function POST(request) {
   return NextResponse.json({ ok: true })
 }
 
+// Delete book
+export async function DELETE(request) {
+  const supabase = createSupabaseServer()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!isAdmin(user)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { id } = await request.json()
+  if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
+
+  // Fetch slug/author/series before deleting for cache bust
+  const { data: book } = await supabaseAdmin
+    .from('books')
+    .select('slug, author, series_name')
+    .eq('id', id)
+    .single()
+
+  const { error } = await supabaseAdmin.from('books').delete().eq('id', id)
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  if (book) bustCache(book.slug, book.author, book.series_name)
+
+  return NextResponse.json({ ok: true })
+}
+
 // Create new book
 export async function PUT(request) {
   const supabase = createSupabaseServer()

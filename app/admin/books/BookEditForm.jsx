@@ -289,7 +289,7 @@ export default function BookEditForm() {
     })
   }
 
-  async function handleFetchUrl() {
+  async function handleFetchUrl(applyTo) {
     if (!bookUrl.trim()) return
     setFetching(true)
     setFetchError('')
@@ -302,7 +302,7 @@ export default function BookEditForm() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       const b = data.book
-      setNewBook(prev => ({
+      applyTo(prev => ({
         ...prev,
         title:         b.title         ?? prev.title,
         author:        b.author        ?? prev.author,
@@ -320,6 +320,29 @@ export default function BookEditForm() {
       setFetchError(err.message)
     } finally {
       setFetching(false)
+    }
+  }
+
+  async function handleDelete() {
+    if (!editBook?.id) return
+    if (!window.confirm(`Delete "${editBook.title}"? This cannot be undone.`)) return
+    setStatus('saving')
+    setErrorMsg('')
+    try {
+      const res  = await fetch('/api/admin/books', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: editBook.id }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setEditBook(null)
+      setStatus(null)
+      // Refresh pending list
+      fetch('/api/admin/books?pending=1').then(r => r.json()).then(d => setPending(d.books ?? []))
+    } catch (err) {
+      setStatus('error')
+      setErrorMsg(err.message)
     }
   }
 
@@ -389,11 +412,36 @@ export default function BookEditForm() {
           {editBook && (
             <form onSubmit={handleUpdate} className="space-y-6">
               <p className="text-xs text-slate font-mono bg-gray-50 rounded px-3 py-1.5">id: {editBook.id}</p>
+
+              {/* Import from URL */}
+              <div className="bg-petal/10 rounded-xl p-4 space-y-3">
+                <label className="block text-sm font-semibold">Import from URL</label>
+                <p className="text-xs text-slate">Paste a Goodreads or Amazon URL to overwrite fields below.</p>
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={bookUrl}
+                    onChange={e => setBookUrl(e.target.value)}
+                    placeholder="https://www.goodreads.com/book/show/..."
+                    className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bloom/40 bg-white"
+                  />
+                  <button type="button" onClick={() => handleFetchUrl(setEditBook)} disabled={fetching || !bookUrl.trim()}
+                    className="px-4 py-2 text-sm bg-bloom text-white rounded-lg hover:bg-bloom/90 transition-colors disabled:opacity-50 whitespace-nowrap">
+                    {fetching ? 'Fetching...' : 'Import'}
+                  </button>
+                </div>
+                {fetchError && <p className="text-xs text-red-500">{fetchError}</p>}
+              </div>
+
               <BookFields book={editBook} set={setEdit} />
               <div className="flex items-center gap-4 pt-2">
                 <button type="submit" disabled={status === 'saving'}
                   className="bg-bloom text-white px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-bloom/90 transition-colors disabled:opacity-60">
                   {status === 'saving' ? 'Saving...' : 'Save Changes'}
+                </button>
+                <button type="button" onClick={handleDelete} disabled={status === 'saving'}
+                  className="px-6 py-2.5 rounded-full text-sm font-semibold border border-red-300 text-red-500 hover:bg-red-50 transition-colors disabled:opacity-60">
+                  Delete
                 </button>
                 {status === 'saved' && <span className="text-sm text-green-600 font-medium">Saved!</span>}
                 {status === 'error'  && <span className="text-sm text-red-500">{errorMsg}</span>}
@@ -419,7 +467,7 @@ export default function BookEditForm() {
                 placeholder="https://www.goodreads.com/book/show/..."
                 className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bloom/40 bg-white"
               />
-              <button type="button" onClick={handleFetchUrl} disabled={fetching || !bookUrl.trim()}
+              <button type="button" onClick={() => handleFetchUrl(setNewBook)} disabled={fetching || !bookUrl.trim()}
                 className="px-4 py-2 text-sm bg-bloom text-white rounded-lg hover:bg-bloom/90 transition-colors disabled:opacity-50 whitespace-nowrap">
                 {fetching ? 'Fetching...' : 'Import'}
               </button>
