@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { createSupabaseServer, supabaseAdmin } from '@/lib/supabase'
 import { isAdmin } from '@/lib/admin'
+import { slugify } from '@/lib/utils'
 
 const SUPABASE_URL    = process.env.NEXT_PUBLIC_SUPABASE_URL
 const SUPABASE_KEY    = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -27,6 +29,12 @@ async function uploadCover(coverUrl, bookId) {
     if (up.ok) return `${SUPABASE_URL}/storage/v1/object/public/${COVERS_BUCKET}/${path}`
   } catch {}
   return coverUrl
+}
+
+function bustCache(slug, author, seriesName) {
+  if (slug)       revalidatePath(`/books/${slug}`)
+  if (author)     revalidatePath(`/author/${encodeURIComponent(author)}`)
+  if (seriesName) revalidatePath(`/series/${slugify(seriesName)}`)
 }
 
 const FIELDS = 'id,title,author,slug,cover_url,series_name,series_number,rating,rating_count,rating_source,description,tropes,genres,primary_genre,secondary_genre,release_date,release_year,buy_url_amazon_us,buy_url_amazon_in,buy_url_flipkart,price_amazon_in,price_amazon_us,characters'
@@ -75,8 +83,16 @@ export async function POST(request) {
     fields.cover_url = await uploadCover(fields.cover_url, String(id))
   }
 
-  const { error } = await supabaseAdmin.from('books').update(fields).eq('id', id)
+  const { error, data: updated } = await supabaseAdmin
+    .from('books')
+    .update(fields)
+    .eq('id', id)
+    .select('slug, author, series_name')
+    .single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  bustCache(updated?.slug, updated?.author, updated?.series_name)
+
   return NextResponse.json({ ok: true })
 }
 
@@ -110,6 +126,8 @@ export async function PUT(request) {
       await supabaseAdmin.from('books').update({ cover_url: hosted }).eq('id', data.id)
     }
   }
+
+  bustCache(fields.slug, fields.author, fields.series_name)
 
   return NextResponse.json({ ok: true, id: data.id })
 }
