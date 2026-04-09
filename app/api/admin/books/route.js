@@ -10,8 +10,13 @@ function isHosted(url) {
   return url && SUPABASE_URL && url.startsWith(`${SUPABASE_URL}/storage/v1/object/public/${COVERS_BUCKET}/`)
 }
 
+function isThisBookCover(url, bookId) {
+  return url && SUPABASE_URL && url.startsWith(`${SUPABASE_URL}/storage/v1/object/public/${COVERS_BUCKET}/${bookId}.jpg`)
+}
+
 async function uploadCover(coverUrl, bookId) {
-  if (!coverUrl || isHosted(coverUrl) || !SUPABASE_URL || !SUPABASE_KEY) return coverUrl
+  // Skip only if it's already this book's own hosted cover — not any Supabase URL
+  if (!coverUrl || isThisBookCover(coverUrl, bookId) || !SUPABASE_URL || !SUPABASE_KEY) return coverUrl
   try {
     const img = await fetch(coverUrl, { headers: { 'User-Agent': 'TropeQuest/1.0' } })
     if (!img.ok) return coverUrl
