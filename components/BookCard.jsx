@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import TbrButton from './TbrButton'
+import dynamic from 'next/dynamic'
+
+const TbrButton = dynamic(() => import('./TbrButton'), { ssr: false })
 
 export default function BookCard({ book, shelfStatus = null }) {
   return (
