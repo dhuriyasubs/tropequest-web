@@ -110,8 +110,8 @@ export default async function SeriesDetailPage({ params }) {
           <p className="text-sm text-slate mb-4">{bio.reading_order_note}</p>
         )}
 
-        {/* Table header — only on desktop when bio has format/focus */}
-        {bio?.reading_order?.length > 0 && (
+        {/* Table header — only when bio has format/focus data */}
+        {hasBioData && bio?.reading_order?.length > 0 && (
           <div className="hidden sm:grid grid-cols-[2rem_1fr_6rem_1fr] gap-x-4 px-3 py-2 mb-1 border-b border-gray-100">
             <span className="text-xs font-semibold text-slate/50">#</span>
             <span className="text-xs font-semibold text-slate/50">Title</span>
@@ -124,6 +124,7 @@ export default async function SeriesDetailPage({ params }) {
           {books.map((b, i) => {
             const entry = b.series_number != null ? bioByNumber[b.series_number] : null
             const num   = b.series_number != null ? `#${b.series_number}` : `${i + 1}`
+            const hasFormatFocus = entry?.format || entry?.focus
 
             return (
               <li key={b.id}>
@@ -142,44 +143,59 @@ export default async function SeriesDetailPage({ params }) {
                       {b.rating && <p className="text-xs text-bloom font-medium mt-0.5">★ {b.rating.toFixed(1)}</p>}
                       {entry?.format && <span className="inline-block mt-1 text-xs bg-petal/20 text-bloom/80 rounded px-1.5 py-0.5">{entry.format}</span>}
                       {entry?.focus && <p className="text-xs text-slate mt-1">{entry.focus}</p>}
-                      {!entry?.focus && b.tropes?.length > 0 && (
+                      {!hasFormatFocus && b.description && (
+                        <p className="text-xs text-slate/70 mt-1 line-clamp-2">{b.description}</p>
+                      )}
+                      {!hasFormatFocus && !b.description && b.tropes?.length > 0 && (
                         <p className="text-xs text-slate/60 mt-1 line-clamp-1">{b.tropes.slice(0, 3).join(' · ')}</p>
                       )}
                     </div>
                   </Link>
                 </div>
 
-                {/* Desktop: table row */}
-                <div className="hidden sm:grid grid-cols-[2rem_1fr_6rem_1fr] gap-x-4 items-center bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow px-3 py-2">
-                  <span className="text-sm font-bold text-bloom/70">{num}</span>
-
-                  <Link href={`/books/${b.slug}`} className="group flex items-center gap-3 min-w-0">
+                {/* Desktop: table row with format/focus OR simple row with description */}
+                {hasBioData ? (
+                  <div className="hidden sm:grid grid-cols-[2rem_1fr_6rem_1fr] gap-x-4 items-center bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow px-3 py-2">
+                    <span className="text-sm font-bold text-bloom/70">{num}</span>
+                    <Link href={`/books/${b.slug}`} className="group flex items-center gap-3 min-w-0">
+                      <div className="relative shrink-0 w-14 h-20 rounded overflow-hidden bg-gray-100">
+                        {b.cover_url
+                          ? <Image src={b.cover_url} alt={b.title} fill sizes="56px" className="object-contain" />
+                          : <div className="w-full h-full flex items-center justify-center text-base">📚</div>
+                        }
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-serif font-semibold text-sm leading-tight group-hover:text-bloom transition-colors line-clamp-2">{b.title}</p>
+                        {b.rating && <p className="text-xs text-bloom font-medium mt-0.5">★ {b.rating.toFixed(1)}</p>}
+                      </div>
+                    </Link>
+                    <div>
+                      {entry?.format
+                        ? <span className="text-xs bg-petal/20 text-bloom/80 rounded px-2 py-0.5">{entry.format}</span>
+                        : <span className="text-xs text-slate/30">—</span>
+                      }
+                    </div>
+                    <p className="text-sm text-slate leading-snug">{entry?.focus ?? '—'}</p>
+                  </div>
+                ) : (
+                  <Link href={`/books/${b.slug}`} className="hidden sm:flex group items-center gap-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow px-4 py-3">
+                    <span className="text-sm font-bold text-bloom/70 w-6 shrink-0">{num}</span>
                     <div className="relative shrink-0 w-14 h-20 rounded overflow-hidden bg-gray-100">
                       {b.cover_url
                         ? <Image src={b.cover_url} alt={b.title} fill sizes="56px" className="object-contain" />
                         : <div className="w-full h-full flex items-center justify-center text-base">📚</div>
                       }
                     </div>
-                    <div className="min-w-0">
-                      <p className="font-serif font-semibold text-sm leading-tight group-hover:text-bloom transition-colors line-clamp-2">{b.title}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-serif font-semibold text-sm leading-tight group-hover:text-bloom transition-colors line-clamp-1">{b.title}</p>
                       {b.rating && <p className="text-xs text-bloom font-medium mt-0.5">★ {b.rating.toFixed(1)}</p>}
-                      {!entry?.focus && b.tropes?.length > 0 && (
-                        <p className="text-xs text-slate/60 mt-0.5 line-clamp-1">{b.tropes.slice(0, 2).join(' · ')}</p>
+                      {b.description && (
+                        <p className="text-xs text-slate/70 mt-1 line-clamp-2">{b.description}</p>
                       )}
                     </div>
+                    <span className="text-xs text-bloom shrink-0 font-medium">See more →</span>
                   </Link>
-
-                  <div>
-                    {entry?.format
-                      ? <span className="text-xs bg-petal/20 text-bloom/80 rounded px-2 py-0.5">{entry.format}</span>
-                      : <span className="text-xs text-slate/30">—</span>
-                    }
-                  </div>
-
-                  <p className="text-sm text-slate leading-snug">
-                    {entry?.focus ?? '—'}
-                  </p>
-                </div>
+                )}
               </li>
             )
           })}
