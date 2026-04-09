@@ -6,7 +6,7 @@ const inputCls = 'w-full border border-gray-200 rounded-lg px-3 py-2 text-sm foc
 const EMPTY_BOOK = {
   title: '', author: '', slug: '', cover_url: '',
   series_name: '', series_number: '', rating: '', rating_count: '', rating_source: '',
-  primary_genre: '', secondary_genre: '', genres: '', tropes: '', description: '',
+  primary_genre: '', secondary_genre: '', genres: '', tropes: '', characters: '', description: '',
   release_date: '', release_year: '',
   buy_url_amazon_us: '', buy_url_amazon_in: '', buy_url_flipkart: '',
   price_amazon_us: '', price_amazon_in: '',
@@ -43,8 +43,9 @@ function buildPayload(book, isNew) {
     secondary_genre:   book.secondary_genre || null,
     release_date:      book.release_date    || null,
     release_year:      book.release_year !== '' ? Number(book.release_year) : null,
-    genres:            book.genres  ? book.genres.split(',').map(s => s.trim()).filter(Boolean)  : [],
-    tropes:            book.tropes  ? book.tropes.split(',').map(s => s.trim()).filter(Boolean)  : [],
+    genres:            book.genres      ? book.genres.split(',').map(s => s.trim()).filter(Boolean)      : [],
+    tropes:            book.tropes      ? book.tropes.split(',').map(s => s.trim()).filter(Boolean)      : [],
+    characters:        book.characters  ? book.characters.split(',').map(s => s.trim()).filter(Boolean)  : [],
     buy_url_amazon_us: book.buy_url_amazon_us || null,
     buy_url_amazon_in: book.buy_url_amazon_in || null,
     buy_url_flipkart:  book.buy_url_flipkart  || null,
@@ -56,8 +57,9 @@ function buildPayload(book, isNew) {
 function normaliseBook(b) {
   return {
     ...b,
-    tropes:        Array.isArray(b.tropes) ? b.tropes.join(', ') : (b.tropes ?? ''),
-    genres:        Array.isArray(b.genres) ? b.genres.join(', ') : (b.genres ?? ''),
+    tropes:        Array.isArray(b.tropes)      ? b.tropes.join(', ')      : (b.tropes      ?? ''),
+    genres:        Array.isArray(b.genres)      ? b.genres.join(', ')      : (b.genres      ?? ''),
+    characters:    Array.isArray(b.characters)  ? b.characters.join(', ')  : (b.characters  ?? ''),
     series_number: b.series_number ?? '',
     rating:        b.rating        ?? '',
     rating_count:  b.rating_count  ?? '',
@@ -155,6 +157,11 @@ function BookFields({ book, set }) {
       <div>
         <label className="block text-xs text-slate mb-1">Tropes (comma-separated)</label>
         <textarea rows={3} value={book.tropes} onChange={e => set('tropes', e.target.value)} className={`${inputCls} resize-y`} />
+      </div>
+
+      <div>
+        <label className="block text-xs text-slate mb-1">Characters (comma-separated)</label>
+        <input type="text" value={book.characters} onChange={e => set('characters', e.target.value)} className={inputCls} />
       </div>
 
       <div>
