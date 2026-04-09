@@ -131,9 +131,9 @@ export default async function SeriesDetailPage({ params }) {
                 <div className="sm:hidden">
                   <Link href={`/books/${b.slug}`} className="group flex gap-3 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow p-3">
                     <span className="text-sm font-bold text-bloom/70 w-6 shrink-0 pt-0.5">{num}</span>
-                    <div className="relative shrink-0 w-12 h-[4.5rem] rounded overflow-hidden bg-gray-100">
+                    <div className="relative shrink-0 w-16 h-24 rounded overflow-hidden bg-gray-100">
                       {b.cover_url
-                        ? <Image src={b.cover_url} alt={b.title} fill sizes="48px" className="object-contain" />
+                        ? <Image src={b.cover_url} alt={b.title} fill sizes="64px" className="object-contain" />
                         : <div className="w-full h-full flex items-center justify-center text-lg">📚</div>
                       }
                     </div>
@@ -154,9 +154,9 @@ export default async function SeriesDetailPage({ params }) {
                   <span className="text-sm font-bold text-bloom/70">{num}</span>
 
                   <Link href={`/books/${b.slug}`} className="group flex items-center gap-3 min-w-0">
-                    <div className="relative shrink-0 w-10 h-14 rounded overflow-hidden bg-gray-100">
+                    <div className="relative shrink-0 w-14 h-20 rounded overflow-hidden bg-gray-100">
                       {b.cover_url
-                        ? <Image src={b.cover_url} alt={b.title} fill sizes="40px" className="object-contain" />
+                        ? <Image src={b.cover_url} alt={b.title} fill sizes="56px" className="object-contain" />
                         : <div className="w-full h-full flex items-center justify-center text-base">📚</div>
                       }
                     </div>
