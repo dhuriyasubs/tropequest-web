@@ -35,11 +35,12 @@ const BOOKS_LIKE = {
   },
   'colleen-hoover': {
     title: 'Colleen Hoover',
+    displayTitle: 'If You Love Colleen Hoover',
     author: null,
     bookId: null,
     bookSlug: null,
     tropes: ['Angst', 'Forbidden Love', 'Second Chance', 'Slow Burn', 'Friends to Lovers', 'Forced Proximity'],
-    description: 'Books like Colleen Hoover: emotional contemporary romance with angst, forbidden love, and the kind of endings that stay with you.',
+    description: 'If you love Colleen Hoover, try these: emotional contemporary romance with angst, forbidden love, and the kind of endings that stay with you.',
     intro: 'Colleen Hoover built one of the most devoted readerships in romance by writing contemporary stories that feel emotionally raw and completely real. Her books are not comfortable reads. They deal with difficult relationships, moral complexity, and endings that leave readers genuinely shaken. If you\'ve burned through her backlist, here are the books most likely to hit the same nerve.',
     what: 'What makes a CoHo-style read: contemporary setting, deeply flawed characters who are hard to judge, relationships that feel complicated rather than idealistic, and emotional gut-punches that you didn\'t see coming. These picks deliver on that brief.',
     searchQuery: 'contemporary romance angst',
@@ -54,9 +55,8 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }) {
   const entry = BOOKS_LIKE[params.slug]
   if (!entry) return {}
-  const title = entry.author
-    ? `Books Like ${entry.title} by ${entry.author}`
-    : `Books Like ${entry.title}`
+  const title = entry.displayTitle
+    ?? (entry.author ? `Books Like ${entry.title} by ${entry.author}` : `Books Like ${entry.title}`)
   return {
     title,
     description: entry.description,
@@ -84,9 +84,8 @@ export default async function BooksLikePage({ params }) {
     limit: 24,
   })
 
-  const pageTitle = entry.author
-    ? `Books Like ${entry.title} by ${entry.author}`
-    : `Books Like ${entry.title}`
+  const pageTitle = entry.displayTitle
+    ?? (entry.author ? `Books Like ${entry.title} by ${entry.author}` : `Books Like ${entry.title}`)
 
   const relatedSlugs = entry.relatedTropes.map(t => ({ name: t, slug: slugify(t) }))
 
