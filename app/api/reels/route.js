@@ -61,6 +61,25 @@ function extractInstagramCaption(html) {
   return ''
 }
 
+function extractCaptionFromEmbedHtml(html) {
+  // Try multiple class-name patterns across Instagram embed layout versions
+  const patterns = [
+    /class="[^"]*Caption[^"]*"[^>]*>([\s\S]{1,6000}?)<\/div>/,
+    /class="[^"]*caption[^"]*"[^>]*>([\s\S]{1,6000}?)<\/div>/,
+    /class="[^"]*CaptionText[^"]*"[^>]*>([\s\S]{1,6000}?)<\/span>/,
+    /<p[^>]*class="[^"]*[Cc]aption[^"]*"[^>]*>([\s\S]{1,6000}?)<\/p>/,
+  ]
+  for (const pattern of patterns) {
+    const m = html.match(pattern)
+    if (m) {
+      const stripped = m[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+      if (stripped.length > 20) return decodeHTMLEntities(stripped)
+    }
+  }
+  // Fallback: og:description inside the embed page
+  return extractInstagramCaption(html)
+}
+
 // ── Download Instagram video bytes ───────────────────────────────────────
 
 async function downloadInstagramVideo(videoUrl) {
@@ -188,42 +207,52 @@ function parseGeminiResponse(raw) {
 // ── Instagram: full pipeline ──────────────────────────────────────────────
 
 async function handleInstagram(url) {
-  const res  = await fetch(url, { headers: IG_HEADERS, redirect: 'follow' })
-  const html = await res.text()
+  const shortcodeMatch = url.match(/instagram\.com\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/)
+  const shortcode = shortcodeMatch?.[1]
 
-  // 1. Try to get the video and send it directly to Gemini (handles all 3 cases)
-  const videoUrl = extractInstagramVideoUrl(html)
-  if (videoUrl) {
+  // 1. Try embed URL first — accessible without auth, most reliable for caption
+  if (shortcode) {
     try {
-      const videoBuffer = await downloadInstagramVideo(videoUrl)
-      const fileUri     = await uploadVideoToGemini(videoBuffer)
-      await waitForFileActive(fileUri)
-      return { books: await extractBooksFromVideoUri(fileUri), source: 'video' }
+      const embedRes  = await fetch(`https://www.instagram.com/p/${shortcode}/embed/`, { headers: IG_HEADERS, redirect: 'follow' })
+      if (embedRes.ok) {
+        const embedHtml = await embedRes.text()
+        const caption   = extractCaptionFromEmbedHtml(embedHtml)
+        if (caption.trim().length > 20) {
+          return { books: await extractBooksFromText(caption), source: 'caption' }
+        }
+      }
     } catch (e) {
-      console.warn('Video pipeline failed, falling back to caption:', e.message)
+      console.warn('Instagram embed fetch failed:', e.message)
     }
   }
 
-  // 2. Fall back to caption/description text (case 1 only)
-  const caption = extractInstagramCaption(html)
-  if (caption.trim()) {
-    return { books: await extractBooksFromText(caption), source: 'caption' }
-  }
+  // 2. Try main page — may have video URL in JSON blobs or og:description
+  try {
+    const res = await fetch(url, { headers: IG_HEADERS, redirect: 'follow' })
+    if (res.ok) {
+      const html = await res.text()
 
-  // 3. Try embed URL for caption
-  const shortcodeMatch = url.match(/instagram\.com\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/)
-  if (shortcodeMatch) {
-    try {
-      const embedRes  = await fetch(`https://www.instagram.com/p/${shortcodeMatch[1]}/embed/`, { headers: IG_HEADERS })
-      const embedHtml = await embedRes.text()
-      const capMatch  = embedHtml.match(/class="[^"]*[Cc]aption[^"]*"[^>]*>([\s\S]{1,4000}?)<\/div>/)
-      if (capMatch) {
-        const stripped = capMatch[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
-        if (stripped.length > 20) {
-          return { books: await extractBooksFromText(decodeHTMLEntities(stripped)), source: 'caption' }
+      // Try video pipeline
+      const videoUrl = extractInstagramVideoUrl(html)
+      if (videoUrl) {
+        try {
+          const videoBuffer = await downloadInstagramVideo(videoUrl)
+          const fileUri     = await uploadVideoToGemini(videoBuffer)
+          await waitForFileActive(fileUri)
+          return { books: await extractBooksFromVideoUri(fileUri), source: 'video' }
+        } catch (e) {
+          console.warn('Video pipeline failed, falling back to caption:', e.message)
         }
       }
-    } catch { /* ignore */ }
+
+      // Try og:description
+      const caption = extractInstagramCaption(html)
+      if (caption.trim().length > 20) {
+        return { books: await extractBooksFromText(caption), source: 'caption' }
+      }
+    }
+  } catch (e) {
+    console.warn('Instagram main page fetch failed:', e.message)
   }
 
   return null // caller will surface the manual paste prompt
