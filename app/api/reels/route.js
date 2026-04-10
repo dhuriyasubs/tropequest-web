@@ -210,23 +210,40 @@ async function handleInstagram(url) {
   const shortcodeMatch = url.match(/instagram\.com\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/)
   const shortcode = shortcodeMatch?.[1]
 
-  // 1. Try embed URL first — accessible without auth, most reliable for caption
-  if (shortcode) {
-    try {
-      const embedRes  = await fetch(`https://www.instagram.com/p/${shortcode}/embed/`, { headers: IG_HEADERS, redirect: 'follow' })
-      if (embedRes.ok) {
-        const embedHtml = await embedRes.text()
-        const caption   = extractCaptionFromEmbedHtml(embedHtml)
-        if (caption.trim().length > 20) {
-          return { books: await extractBooksFromText(caption), source: 'caption' }
-        }
+  // 1. oEmbed API — no auth required, returns caption as JSON title field
+  try {
+    const oembedUrl = `https://www.instagram.com/api/v1/oembed/?url=${encodeURIComponent(url)}&format=json`
+    const oembedRes = await fetch(oembedUrl, { headers: IG_HEADERS, redirect: 'follow' })
+    if (oembedRes.ok) {
+      const data    = await oembedRes.json()
+      const caption = data.title ?? ''
+      if (caption.trim().length > 20) {
+        return { books: await extractBooksFromText(caption), source: 'caption' }
       }
-    } catch (e) {
-      console.warn('Instagram embed fetch failed:', e.message)
+    }
+  } catch (e) {
+    console.warn('Instagram oEmbed failed:', e.message)
+  }
+
+  // 2. Embed page — accessible without auth, scrape caption from HTML
+  if (shortcode) {
+    for (const embedPath of [`/p/${shortcode}/embed/captioned/`, `/p/${shortcode}/embed/`]) {
+      try {
+        const embedRes  = await fetch(`https://www.instagram.com${embedPath}`, { headers: IG_HEADERS, redirect: 'follow' })
+        if (embedRes.ok) {
+          const embedHtml = await embedRes.text()
+          const caption   = extractCaptionFromEmbedHtml(embedHtml)
+          if (caption.trim().length > 20) {
+            return { books: await extractBooksFromText(caption), source: 'caption' }
+          }
+        }
+      } catch (e) {
+        console.warn(`Instagram embed ${embedPath} failed:`, e.message)
+      }
     }
   }
 
-  // 2. Try main page — may have video URL in JSON blobs or og:description
+  // 3. Main page — often blocked/login-walled but try anyway for video or og:description
   try {
     const res = await fetch(url, { headers: IG_HEADERS, redirect: 'follow' })
     if (res.ok) {
@@ -241,11 +258,11 @@ async function handleInstagram(url) {
           await waitForFileActive(fileUri)
           return { books: await extractBooksFromVideoUri(fileUri), source: 'video' }
         } catch (e) {
-          console.warn('Video pipeline failed, falling back to caption:', e.message)
+          console.warn('Video pipeline failed:', e.message)
         }
       }
 
-      // Try og:description
+      // og:description fallback
       const caption = extractInstagramCaption(html)
       if (caption.trim().length > 20) {
         return { books: await extractBooksFromText(caption), source: 'caption' }
