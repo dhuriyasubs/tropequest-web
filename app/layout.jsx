@@ -63,52 +63,83 @@ export default function RootLayout({ children }) {
           }());
         `}</Script>
         <footer className="bg-ink text-white/60 text-sm py-10 px-4 mt-16">
-          <div className="max-w-6xl mx-auto grid grid-cols-2 sm:grid-cols-5 gap-8">
-            <div className="space-y-2 col-span-2 sm:col-span-1">
+          <nav aria-label="Footer navigation">
+          <div className="max-w-6xl mx-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-8">
+
+            {/* Brand */}
+            <div className="space-y-2 col-span-2 sm:col-span-3 lg:col-span-1">
               <p className="text-white font-semibold">TropeQuest</p>
-              <div className="flex flex-col gap-1">
-                <a href="/about"   className="hover:text-white transition-colors">About</a>
-                <a href="/contact" className="hover:text-white transition-colors">Contact</a>
-                <a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a>
-              </div>
+              <p className="text-white/50 text-xs leading-relaxed">Find romance and fantasy books by trope, mood, and character. A better way to discover your next read.</p>
+              <ul className="flex flex-col gap-1 pt-1">
+                <li><a href="/about"   className="hover:text-white transition-colors">About</a></li>
+                <li><a href="/contact" className="hover:text-white transition-colors">Contact</a></li>
+                <li><a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a></li>
+              </ul>
               <p className="pt-2">© {new Date().getFullYear()} TropeQuest</p>
             </div>
+
+            {/* Discover */}
             <div className="space-y-2">
               <p className="text-white font-semibold">Discover</p>
-              <div className="flex flex-col gap-1">
-                <a href="/search"   className="hover:text-white transition-colors">Search books</a>
-                <a href="/tropes"   className="hover:text-white transition-colors">Browse tropes</a>
-                <a href="/series"   className="hover:text-white transition-colors">Browse series</a>
-                <a href="/surprise" className="hover:text-white transition-colors">Surprise me</a>
-                <a href="/because"  className="hover:text-white transition-colors">Because you like</a>
-              </div>
+              <ul className="flex flex-col gap-1">
+                <li><a href="/search"   className="hover:text-white transition-colors">Search books by trope</a></li>
+                <li><a href="/tropes"   className="hover:text-white transition-colors">Browse all tropes</a></li>
+                <li><a href="/series"   className="hover:text-white transition-colors">Browse book series</a></li>
+                <li><a href="/authors"  className="hover:text-white transition-colors">Browse authors</a></li>
+                <li><a href="/because"  className="hover:text-white transition-colors">Books like ones you love</a></li>
+                <li><a href="/surprise" className="hover:text-white transition-colors">Surprise me</a></li>
+              </ul>
             </div>
+
+            {/* Popular Tropes */}
+            <div className="space-y-2">
+              <p className="text-white font-semibold">Popular Tropes</p>
+              <ul className="flex flex-col gap-1">
+                <li><a href="/tropes/enemies-to-lovers"  className="hover:text-white transition-colors">Enemies to Lovers Books</a></li>
+                <li><a href="/tropes/slow-burn"          className="hover:text-white transition-colors">Slow Burn Romance Books</a></li>
+                <li><a href="/tropes/dark-romance"       className="hover:text-white transition-colors">Dark Romance Books</a></li>
+                <li><a href="/tropes/forced-proximity"   className="hover:text-white transition-colors">Forced Proximity Romance</a></li>
+                <li><a href="/tropes/morally-grey-hero"  className="hover:text-white transition-colors">Morally Grey Hero Books</a></li>
+                <li><a href="/tropes/romantasy"          className="hover:text-white transition-colors">Romantasy Books</a></li>
+              </ul>
+            </div>
+
+            {/* If you love */}
             <div className="space-y-2">
               <p className="text-white font-semibold">If you love...</p>
-              <div className="flex flex-col gap-1">
-                <a href="/books-like/fourth-wing"                className="hover:text-white transition-colors">If you love Fourth Wing</a>
-                <a href="/books-like/a-court-of-thorns-and-roses" className="hover:text-white transition-colors">If you love ACOTAR</a>
-                <a href="/books-like/colleen-hoover"             className="hover:text-white transition-colors">If you love Colleen Hoover</a>
-              </div>
+              <ul className="flex flex-col gap-1">
+                <li><a href="/books-like/fourth-wing"                 className="hover:text-white transition-colors">If you love Fourth Wing</a></li>
+                <li><a href="/books-like/a-court-of-thorns-and-roses" className="hover:text-white transition-colors">If you love ACOTAR</a></li>
+                <li><a href="/books-like/colleen-hoover"              className="hover:text-white transition-colors">If you love Colleen Hoover</a></li>
+              </ul>
             </div>
+
+            {/* Tools */}
             <div className="space-y-2">
               <p className="text-white font-semibold">Tools</p>
-              <div className="flex flex-col gap-1">
-                <a href="/shelf/scan" className="hover:text-white transition-colors">Scan your Shelf</a>
-                <a href="/reels"      className="hover:text-white transition-colors">Books from Videos</a>
-              </div>
+              <ul className="flex flex-col gap-1">
+                <li><a href="/shelf"      className="hover:text-white transition-colors">My Shelf</a></li>
+                <li><a href="/shelf/scan" className="hover:text-white transition-colors">Scan your bookshelf</a></li>
+                <li><a href="/reels"      className="hover:text-white transition-colors">Books from videos</a></li>
+                <li><a href="/tbr"        className="hover:text-white transition-colors">My TBR list</a></li>
+              </ul>
             </div>
+
+            {/* Blog */}
             <div className="space-y-2">
               <p className="text-white font-semibold">Blog</p>
-              <div className="flex flex-col gap-1">
-                <a href="/blog"                              className="hover:text-white transition-colors">All posts</a>
-                <a href="/blog?category=trope-pages"        className="hover:text-white transition-colors">Trope pages</a>
-                <a href="/blog?category=books-like"         className="hover:text-white transition-colors">Books like X</a>
-                <a href="/blog?category=tool-platform"      className="hover:text-white transition-colors">Tool/platform</a>
-                <a href="/blog?category=blog-informational" className="hover:text-white transition-colors">Blog/informational</a>
-              </div>
+              <ul className="flex flex-col gap-1">
+                <li><a href="/blog"                                                 className="hover:text-white transition-colors">All posts</a></li>
+                <li><a href="/blog/what-are-book-tropes"                            className="hover:text-white transition-colors">What are book tropes?</a></li>
+                <li><a href="/blog/what-is-romantasy-best-books-to-start-with"      className="hover:text-white transition-colors">Best romantasy books</a></li>
+                <li><a href="/blog/best-enemies-to-lovers-books"                    className="hover:text-white transition-colors">Best enemies to lovers books</a></li>
+                <li><a href="/blog/best-dark-romance-books-for-beginners"           className="hover:text-white transition-colors">Best dark romance books</a></li>
+                <li><a href="/blog/goodreads-cant-do-this"                          className="hover:text-white transition-colors">Why readers are leaving Goodreads</a></li>
+              </ul>
             </div>
+
           </div>
+          </nav>
         </footer>
       </body>
     </html>
