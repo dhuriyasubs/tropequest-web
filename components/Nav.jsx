@@ -6,9 +6,12 @@ import { createSupabaseBrowser } from '@/lib/supabase-browser'
 import NavSearch from '@/components/NavSearch'
 
 const browseItems = [
-  { href: '/tropes',   label: 'Browse Tropes'   },
-  { href: '/series',   label: 'Browse Series'   },
-  { href: '/author',   label: 'Browse Authors'  },
+  { href: '/tropes',   label: 'Browse Tropes'     },
+  { href: '/series',   label: 'Browse Series'     },
+  { href: '/author',   label: 'Browse Authors'    },
+  { href: '/because',  label: 'Because You Like'  },
+  { href: '/surprise', label: 'Surprise Me'       },
+  { href: '/reels',    label: 'Books from Videos' },
 ]
 
 const menuItems = [
