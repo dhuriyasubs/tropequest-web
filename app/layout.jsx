@@ -81,9 +81,14 @@ export default function RootLayout({ children }) {
                 <a href="/series"   className="hover:text-white transition-colors">Browse series</a>
                 <a href="/surprise" className="hover:text-white transition-colors">Surprise me</a>
                 <a href="/because"  className="hover:text-white transition-colors">Because you like</a>
-                <a href="/books-like/fourth-wing"               className="hover:text-white transition-colors">Books like Fourth Wing</a>
-                <a href="/books-like/a-court-of-thorns-and-roses" className="hover:text-white transition-colors">Books like ACOTAR</a>
-                <a href="/books-like/colleen-hoover"            className="hover:text-white transition-colors">Books like Colleen Hoover</a>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <p className="text-white font-semibold">If you love...</p>
+              <div className="flex flex-col gap-1">
+                <a href="/books-like/fourth-wing"                className="hover:text-white transition-colors">If you love Fourth Wing</a>
+                <a href="/books-like/a-court-of-thorns-and-roses" className="hover:text-white transition-colors">If you love ACOTAR</a>
+                <a href="/books-like/colleen-hoover"             className="hover:text-white transition-colors">If you love Colleen Hoover</a>
               </div>
             </div>
             <div className="space-y-2">
