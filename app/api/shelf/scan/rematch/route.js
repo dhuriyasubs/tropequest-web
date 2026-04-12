@@ -42,14 +42,17 @@ export async function POST(request) {
     data = created ?? null
   }
 
-  // Delete the wrong stub if it's different from the matched book and has no enrichment
+  // Delete the wrong stub if it's different from the matched book, has no enrichment,
+  // and the matched book shares the same author (title+author duplicate check)
   if (oldBookId && data && oldBookId !== data.id) {
     const { data: old } = await supabaseAdmin
       .from('books')
       .select('cover_url,rating')
       .eq('id', oldBookId)
       .maybeSingle()
-    if (old && !old.cover_url && !old.rating) {
+    const authorMatches = data.author && author &&
+      data.author.toLowerCase() === author.toLowerCase()
+    if (old && !old.cover_url && !old.rating && authorMatches) {
       await supabaseAdmin.from('books').delete().eq('id', oldBookId)
     }
   }
