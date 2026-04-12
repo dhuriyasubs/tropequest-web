@@ -1,5 +1,5 @@
 'use client'
-import { useRef, useState, useCallback } from 'react'
+import { useRef, useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createSupabaseBrowser } from '@/lib/supabase-browser'
 
@@ -93,15 +93,27 @@ async function resizeImage(file) {
 }
 
 export default function ShelfScan({ showLabel = false }) {
-  const fileRef   = useRef(null)
-  const router    = useRouter()
-  const [phase,    setPhase]    = useState('idle')   // idle | scanning | results
+  const fileRef      = useRef(null)
+  const galleryRef   = useRef(null)
+  const pickerRef    = useRef(null)
+  const router       = useRouter()
+  const [phase,    setPhase]    = useState('idle')   // idle | picking | scanning | results
   const [books,    setBooks]    = useState([])
   const [selected, setSelected] = useState(new Set())
   const [adding,   setAdding]   = useState(false)
   const [preview,  setPreview]  = useState(null)
   const [error,    setError]    = useState(null)
   const [feedback, setFeedback] = useState(new Set())  // indices showing feedback form
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (phase === 'picking' && pickerRef.current && !pickerRef.current.contains(e.target)) {
+        setPhase('idle')
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [phase])
 
   async function handleFile(e) {
     const file = e.target.files?.[0]
@@ -179,24 +191,62 @@ export default function ShelfScan({ showLabel = false }) {
 
   return (
     <>
-      <button
-        onClick={() => fileRef.current?.click()}
-        className="flex items-center gap-2 bg-bloom text-white text-sm font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition-opacity"
-      >
-        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round"/>
-          <circle cx="12" cy="13" r="4"/>
-        </svg>
-        <span className={showLabel ? '' : 'hidden sm:inline'}>
-          {showLabel ? 'Scan your shelf' : 'Scan Shelf'}
-        </span>
-      </button>
+      <div className="relative" ref={pickerRef}>
+        <button
+          onClick={() => setPhase(p => p === 'picking' ? 'idle' : 'picking')}
+          className="flex items-center gap-2 bg-bloom text-white text-sm font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition-opacity"
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+          <span className={showLabel ? '' : 'hidden sm:inline'}>
+            {showLabel ? 'Scan your shelf' : 'Scan Shelf'}
+          </span>
+        </button>
 
+        {/* Source picker */}
+        {phase === 'picking' && (
+          <div className="absolute top-full mt-1 right-0 bg-white border border-petal/30 rounded-xl shadow-lg py-1.5 z-50 min-w-[170px]">
+            <button
+              onClick={() => { setPhase('idle'); fileRef.current?.click() }}
+              className="w-full text-left flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink hover:bg-gray-50"
+            >
+              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round"/>
+                <circle cx="12" cy="13" r="4"/>
+              </svg>
+              Take photo
+            </button>
+            <button
+              onClick={() => { setPhase('idle'); galleryRef.current?.click() }}
+              className="w-full text-left flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink hover:bg-gray-50"
+            >
+              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+                <path d="M21 15l-5-5L5 21" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Choose from gallery
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Camera input */}
       <input
         ref={fileRef}
         type="file"
         accept="image/*"
         capture="environment"
+        className="hidden"
+        onChange={handleFile}
+      />
+
+      {/* Gallery input — no capture attribute so it opens the file picker */}
+      <input
+        ref={galleryRef}
+        type="file"
+        accept="image/*"
         className="hidden"
         onChange={handleFile}
       />
