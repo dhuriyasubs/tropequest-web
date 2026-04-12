@@ -101,13 +101,13 @@ export default async function SeriesDetailPage({ params }) {
 
         {/* Intro */}
         {bio?.intro && (
-          <p className="text-sm text-slate leading-relaxed mb-10">{bio.intro}</p>
+          <p className="text-sm text-slate leading-relaxed mb-10 whitespace-pre-wrap">{bio.intro}</p>
         )}
 
         {/* Reading Order */}
         <h2 className="font-serif text-xl font-semibold mb-2">Recommended Reading Order</h2>
         {bio?.reading_order_note && (
-          <p className="text-sm text-slate mb-4">{bio.reading_order_note}</p>
+          <p className="text-sm text-slate mb-4 whitespace-pre-wrap">{bio.reading_order_note}</p>
         )}
 
         {/* Table header — only when bio has format/focus data */}
