@@ -92,7 +92,7 @@ async function resizeImage(file) {
     const url = URL.createObjectURL(file)
     img.onload = () => {
       URL.revokeObjectURL(url)
-      const MAX = 1200
+      const MAX = 800
       let { width, height } = img
       if (width > MAX || height > MAX) {
         if (width > height) { height = Math.round(height * MAX / width); width = MAX }
@@ -101,7 +101,7 @@ async function resizeImage(file) {
       const canvas = document.createElement('canvas')
       canvas.width = width; canvas.height = height
       canvas.getContext('2d').drawImage(img, 0, 0, width, height)
-      const base64 = canvas.toDataURL('image/jpeg', 0.82).split(',')[1]
+      const base64 = canvas.toDataURL('image/jpeg', 0.75).split(',')[1]
       resolve(base64)
     }
     img.src = url
@@ -157,6 +157,10 @@ export default function ShelfScan({ showLabel = false }) {
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ image, mimeType: 'image/jpeg' }),
       })
+      if (res.status === 504) throw new Error('Scan timed out — try a clearer or closer photo')
+      if (!res.ok && !res.headers.get('content-type')?.includes('application/json')) {
+        throw new Error('Scan failed — please try again')
+      }
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Scan failed')
 
