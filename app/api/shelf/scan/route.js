@@ -15,6 +15,12 @@ Return ONLY a valid JSON array — no markdown, no explanation:
 If author is not visible, use an empty string for author.
 If no books are visible, return: []`
 
+function toTitleCase(str) {
+  return str
+    .toLowerCase()
+    .replace(/\b\w/g, c => c.toUpperCase())
+}
+
 function makeSlug(title, author) {
   const base = `${title}${author ? '-' + author : ''}`
     .toLowerCase()
@@ -25,6 +31,9 @@ function makeSlug(title, author) {
 
 async function matchOrCreateBooks(books) {
   return Promise.all(books.map(async (book) => {
+    const normTitle  = toTitleCase(book.title)
+    const normAuthor = toTitleCase(book.author || 'Unknown')
+
     let { data } = await supabaseAdmin
       .from('books')
       .select('id,title,author,cover_url,slug,rating')
@@ -48,9 +57,9 @@ async function matchOrCreateBooks(books) {
       const { data: created, error: err } = await supabaseAdmin
         .from('books')
         .insert({
-          title:  book.title,
-          author: book.author || 'Unknown',
-          slug:   makeSlug(book.title, book.author),
+          title:  normTitle,
+          author: normAuthor,
+          slug:   makeSlug(normTitle, normAuthor),
         })
         .select('id,title,author,cover_url,slug,rating')
         .single()
