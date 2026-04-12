@@ -28,9 +28,9 @@ const SERIES_PROMPT = `Extract structured information from the following series 
 
 {
   "intro": "overview paragraph about the series",
-  "reading_order_note": "optional note about reading order (e.g. timeline shifts, perspective changes)",
+  "reading_order_note": "optional note about reading order (e.g. timeline shifts, perspective changes, merged series)",
   "reading_order": [
-    { "number": 1, "format": "Novel or Novella or Short Story or Prequel", "focus": "one-line focus description for this book" }
+    { "number": 1, "title": "Book Title", "format": "Novel or Novella or Short Story or Prequel", "focus": "focus characters or one-line description" }
   ],
   "what_to_expect": [
     { "label": "Section Title", "text": "description" }
@@ -38,7 +38,14 @@ const SERIES_PROMPT = `Extract structured information from the following series 
   "reading_tip": "optional reading tip callout"
 }
 
-For reading_order, use the book numbers from the text. If format is not mentioned, leave as empty string. Text:`
+For reading_order:
+- "number" is the sequential recommended reading position (1, 2, 3...), NOT the sub-series number
+- "title" is the book title
+- "focus" is the focus characters or a one-line description of what the book is about
+- If format is not mentioned, leave as empty string
+- If the input contains a table (even if columns are concatenated without delimiters), carefully extract each row
+
+If a field has no matching content, use an empty string or empty array. Text:`
 
 export async function POST(request) {
   const supabase = createSupabaseServer()

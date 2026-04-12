@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 
-const EMPTY_ENTRY    = { number: '', format: '', focus: '' }
+const EMPTY_ENTRY    = { number: '', title: '', format: '', focus: '' }
 const EMPTY_EXPECT   = { label: '', text: '' }
 const EMPTY_BIO = {
   intro: '',
@@ -216,7 +216,7 @@ export default function SeriesBioForm({ seriesList }) {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-slate mb-1">Book # (series_number)</label>
+                  <label className="block text-xs text-slate mb-1">Reading # (position)</label>
                   <input type="number" value={entry.number}
                     onChange={e => setEntry(i, 'number', e.target.value)}
                     placeholder="1"
@@ -234,7 +234,14 @@ export default function SeriesBioForm({ seriesList }) {
                 </div>
               </div>
               <div>
-                <label className="block text-xs text-slate mb-1">Focus</label>
+                <label className="block text-xs text-slate mb-1">Title</label>
+                <input type="text" value={entry.title ?? ''}
+                  onChange={e => setEntry(i, 'title', e.target.value)}
+                  placeholder="Book title"
+                  className={inputCls} />
+              </div>
+              <div>
+                <label className="block text-xs text-slate mb-1">Focus / Characters</label>
                 <input type="text" value={entry.focus}
                   onChange={e => setEntry(i, 'focus', e.target.value)}
                   placeholder="One-line description of what this book focuses on..."
