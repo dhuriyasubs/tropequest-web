@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import Breadcrumb from '@/components/Breadcrumb'
-import { getAllSeries, getBooksBySeries, getBooksByTitles, getSeriesBio } from '@/lib/search'
+import { getAllSeries, getBooksBySeries, getSeriesBio } from '@/lib/search'
 import { slugify } from '@/lib/utils'
 
 export const revalidate = 3600
@@ -34,31 +34,15 @@ export default async function SeriesDetailPage({ params }) {
   ])
   if (!seriesBooks.length) notFound()
 
-  // If bio has a titled reading order (possibly cross-series), fetch those books too
-  const bioTitles = (bio?.reading_order ?? []).map(e => e.title).filter(Boolean)
-  const crossBooks = bioTitles.length ? await getBooksByTitles(bioTitles) : []
+  // Ordered list: always from DB (series_number order), bio entries annotate format/focus by number
+  const orderedBooks = seriesBooks.map((b, i) => {
+    const num = b.series_number ?? (i + 1)
+    const entry = bio?.reading_order?.find(e => e.number == num) ?? null
+    return { _bioEntry: entry, _pos: num, ...b }
+  })
 
-  // Build a title→dbBook lookup (case-insensitive)
-  const bookByTitle = {}
-  for (const b of [...seriesBooks, ...crossBooks]) {
-    bookByTitle[b.title.toLowerCase()] = b
-  }
-
-  // Ordered list: bio reading_order if titled, else fall back to series books
-  const useBioOrder = bioTitles.length > 0
-  const orderedBooks = useBioOrder
-    ? bio.reading_order.map((entry, i) => {
-        const db = entry.title ? (bookByTitle[entry.title.toLowerCase()] ?? null) : null
-        return { _bioEntry: entry, _pos: i + 1, ...(db ?? { title: entry.title, author: null, cover_url: null, slug: null, rating: null, tropes: [], description: null }) }
-      })
-    : seriesBooks.map((b, i) => {
-        const num = b.series_number ?? (i + 1)
-        const entry = bio?.reading_order?.find(e => e.number == num) ?? null
-        return { _bioEntry: entry, _pos: num, ...b }
-      })
-
-  // Common tropes across all books in this reading order (top 6)
-  const books = useBioOrder ? [...seriesBooks, ...crossBooks] : seriesBooks
+  // Common tropes across all books in this series (top 6)
+  const books = seriesBooks
   const tropeCount = {}
   for (const b of books) {
     for (const t of b.tropes ?? []) tropeCount[t] = (tropeCount[t] ?? 0) + 1
@@ -105,7 +89,7 @@ export default async function SeriesDetailPage({ params }) {
             {match.author}
           </Link>
           <span className="text-slate/40 text-sm">·</span>
-          <span className="text-slate text-sm">{books.length} {books.length === 1 ? 'book' : 'books'}</span>
+          <span className="text-slate text-sm">{seriesBooks.length} {seriesBooks.length === 1 ? 'book' : 'books'}</span>
         </div>
 
         {/* Common tropes */}
@@ -130,7 +114,7 @@ export default async function SeriesDetailPage({ params }) {
 
         {/* Table header — only when bio has format/focus data */}
         {hasBioData && bio?.reading_order?.length > 0 && (
-          <div className="hidden sm:grid grid-cols-[2rem_1fr_6rem_1fr] gap-x-4 px-3 py-2 mb-1 border-b border-gray-100">
+          <div className="hidden sm:grid grid-cols-[2rem_1fr_8rem_1fr] gap-x-4 px-3 py-2 mb-1 border-b border-gray-100">
             <span className="text-xs font-semibold text-slate/50">#</span>
             <span className="text-xs font-semibold text-slate/50">Title</span>
             <span className="text-xs font-semibold text-slate/50">{bio.format_header || 'Format'}</span>
@@ -183,7 +167,7 @@ export default async function SeriesDetailPage({ params }) {
 
                 {/* Desktop: table row with format/focus OR simple row with description */}
                 {hasBioData ? (
-                  <div className="hidden sm:grid grid-cols-[2rem_1fr_6rem_1fr] gap-x-4 items-center bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow px-3 py-2">
+                  <div className="hidden sm:grid grid-cols-[2rem_1fr_8rem_1fr] gap-x-4 items-center bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow px-3 py-2">
                     <span className="text-sm font-bold text-bloom/70">{numLabel}</span>
                     {b.slug ? (
                       <Link href={`/books/${b.slug}`} className="group flex items-center gap-3 min-w-0">
@@ -210,10 +194,13 @@ export default async function SeriesDetailPage({ params }) {
                       </div>
                     )}
                     <div>
-                      {entry?.format
-                        ? <span className="text-xs bg-petal/20 text-bloom/80 rounded px-2 py-0.5">{entry.format}</span>
-                        : <span className="text-xs text-slate/30">—</span>
-                      }
+                      {entry?.format ? (() => {
+                        const isSeriesLabel = !['novel','novella','short story','prequel','short','anthology'].includes(entry.format.toLowerCase())
+                        const cls = 'text-xs bg-petal/20 text-bloom/80 rounded px-2 py-0.5 whitespace-nowrap'
+                        return isSeriesLabel
+                          ? <Link href={`/series/${slugify(entry.format)}`} className={cls + ' hover:bg-petal/40'}>{entry.format}</Link>
+                          : <span className={cls}>{entry.format}</span>
+                      })() : <span className="text-xs text-slate/30">—</span>}
                     </div>
                     <p className="text-sm text-slate leading-snug">{entry?.focus ?? '—'}</p>
                   </div>
