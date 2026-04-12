@@ -62,13 +62,19 @@ export async function GET(request) {
   const q = searchParams.get('q')?.trim()
   if (!q) return NextResponse.json({ books: [] })
 
-  const { data } = await supabaseAdmin
-    .from('books')
-    .select(FIELDS)
-    .or(`title.ilike.%${q}%,slug.ilike.%${q}%,author.ilike.%${q}%`)
-    .limit(10)
+  const [byTitle, byAuthor, bySlug] = await Promise.all([
+    supabaseAdmin.from('books').select(FIELDS).ilike('title',  `%${q}%`).limit(10),
+    supabaseAdmin.from('books').select(FIELDS).ilike('author', `%${q}%`).limit(10),
+    supabaseAdmin.from('books').select(FIELDS).ilike('slug',   `%${q}%`).limit(10),
+  ])
 
-  return NextResponse.json({ books: data ?? [] })
+  const seen = new Set()
+  const books = []
+  for (const row of [...(byTitle.data ?? []), ...(byAuthor.data ?? []), ...(bySlug.data ?? [])]) {
+    if (!seen.has(row.id)) { seen.add(row.id); books.push(row) }
+  }
+
+  return NextResponse.json({ books: books.slice(0, 10) })
 }
 
 // Update existing book
