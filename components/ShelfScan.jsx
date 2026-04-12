@@ -130,7 +130,7 @@ function mergeBooks(existing, incoming) {
   ]
 }
 
-export default function ShelfScan({ showLabel = false }) {
+export default function ShelfScan({ showLabel = false, mode = 'shelf' }) {
   const fileRef    = useRef(null)
   const galleryRef = useRef(null)
   const pickerRef  = useRef(null)
@@ -232,19 +232,28 @@ export default function ShelfScan({ showLabel = false }) {
     })
   }
 
-  async function addToShelf() {
+  async function addBooks() {
     setAdding(true)
     const toAdd = [...selected].map(i => books[i]?.dbBook?.id).filter(Boolean)
-    await Promise.all(toAdd.map(bookId =>
-      fetch('/api/shelf', {
+    if (mode === 'tbr') {
+      await fetch('/api/tbr', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ bookId, status: 'unread' }),
+        body:    JSON.stringify({ bookIds: toAdd, source: 'scan' }),
       })
-    ))
+    } else {
+      await Promise.all(toAdd.map(bookId =>
+        fetch('/api/shelf', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ bookId, status: 'unread' }),
+        })
+      ))
+    }
     setAdding(false)
+    const dest = mode === 'tbr' ? 'TBR' : 'shelf'
     window.dispatchEvent(new CustomEvent('toast', {
-      detail: { message: `${toAdd.length} book${toAdd.length !== 1 ? 's' : ''} added to shelf!` },
+      detail: { message: `${toAdd.length} book${toAdd.length !== 1 ? 's' : ''} added to ${dest}!` },
     }))
     closeAll()
     router.refresh()
@@ -273,7 +282,9 @@ export default function ShelfScan({ showLabel = false }) {
             <circle cx="12" cy="13" r="4"/>
           </svg>
           <span className={showLabel ? '' : 'hidden sm:inline'}>
-            {showLabel ? 'Scan your shelf' : 'Scan Shelf'}
+            {showLabel
+              ? (mode === 'tbr' ? 'Scan for TBR' : 'Scan your shelf')
+              : (mode === 'tbr' ? 'Scan TBR'     : 'Scan Shelf')}
           </span>
         </button>
 
@@ -471,11 +482,11 @@ export default function ShelfScan({ showLabel = false }) {
             {selected.size > 0 && (
               <div className="p-4 border-t border-petal/20">
                 <button
-                  onClick={addToShelf}
+                  onClick={addBooks}
                   disabled={adding}
                   className="w-full bg-bloom text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50"
                 >
-                  {adding ? 'Adding…' : `Add ${selected.size} book${selected.size !== 1 ? 's' : ''} to Shelf`}
+                  {adding ? 'Adding…' : `Add ${selected.size} book${selected.size !== 1 ? 's' : ''} to ${mode === 'tbr' ? 'TBR' : 'Shelf'}`}
                 </button>
               </div>
             )}

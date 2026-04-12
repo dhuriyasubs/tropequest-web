@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createSupabaseServer } from '@/lib/supabase'
 import TbrButton from '@/components/TbrButton'
+import ShelfScan from '@/components/ShelfScan'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,12 +32,15 @@ export default async function TbrPage() {
     <div className="max-w-3xl mx-auto px-4 py-10">
       <div className="flex items-center justify-between gap-3 mb-2">
         <h1 className="font-serif text-3xl font-bold">My TBR</h1>
-        <Link
-          href="/shelf/import"
-          className="text-xs text-slate hover:text-bloom transition-colors border border-petal/40 rounded-lg px-3 py-1.5 font-medium shrink-0"
-        >
-          Import from Goodreads
-        </Link>
+        <div className="flex items-center gap-2">
+          <ShelfScan mode="tbr" />
+          <Link
+            href="/shelf/import"
+            className="text-xs text-slate hover:text-bloom transition-colors border border-petal/40 rounded-lg px-3 py-1.5 font-medium shrink-0"
+          >
+            Import from Goodreads
+          </Link>
+        </div>
       </div>
       {books.length > 0 && (
         <p className="text-slate text-sm mb-8">{books.length} book{books.length !== 1 ? 's' : ''} saved</p>
