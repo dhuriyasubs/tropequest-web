@@ -219,12 +219,34 @@ export default function BookEditForm() {
   const [pending, setPending]         = useState([])
   const [pendingLoading, setPendingLoading] = useState(true)
 
+  // DB stats
+  const [stats,        setStats]        = useState(null)
+  const [statsLoading, setStatsLoading] = useState(true)
+  const [activeFilter,    setActiveFilter]    = useState(null)
+  const [filteredBooks,   setFilteredBooks]   = useState([])
+  const [filteredLoading, setFilteredLoading] = useState(false)
+
   useEffect(() => {
     fetch('/api/admin/books?pending=1')
       .then(r => r.json())
       .then(d => setPending(d.books ?? []))
       .finally(() => setPendingLoading(false))
+    fetch('/api/admin/books?stats=1')
+      .then(r => r.json())
+      .then(d => setStats(d))
+      .finally(() => setStatsLoading(false))
   }, [])
+
+  async function loadMissing(field) {
+    if (activeFilter === field) { setActiveFilter(null); setFilteredBooks([]); return }
+    setActiveFilter(field)
+    setFilteredLoading(true)
+    setFilteredBooks([])
+    const res  = await fetch(`/api/admin/books?missing=${field}`)
+    const data = await res.json()
+    setFilteredBooks(data.books ?? [])
+    setFilteredLoading(false)
+  }
 
   // ── Edit mode helpers ──────────────────────────────────────────────────
   async function handleSearch(e) {
@@ -486,6 +508,76 @@ export default function BookEditForm() {
           </div>
         </form>
       )}
+
+      {/* DB Stats */}
+      {(() => {
+        const STAT_FIELDS = [
+          { key: 'missing_description',     field: 'description',     label: 'Description' },
+          { key: 'missing_author',          field: 'author',          label: 'Author' },
+          { key: 'missing_cover',           field: 'cover',           label: 'Cover' },
+          { key: 'missing_rating',          field: 'rating',          label: 'Rating' },
+          { key: 'missing_rating_count',    field: 'rating_count',    label: 'Rating Count' },
+          { key: 'missing_rating_source',   field: 'rating_source',   label: 'Rating Source' },
+          { key: 'zero_tropes',             field: 'tropes',          label: 'Tropes' },
+          { key: 'missing_primary_genre',   field: 'primary_genre',   label: 'Primary Genre' },
+          { key: 'missing_secondary_genre', field: 'secondary_genre', label: 'Secondary Genre' },
+          { key: 'zero_genres',             field: 'genres',          label: 'Genres' },
+          { key: 'missing_isbn',            field: 'isbn',            label: 'ISBN' },
+          { key: 'missing_isbn13',          field: 'isbn13',          label: 'ISBN13' },
+        ]
+        return (
+          <div>
+            <div className="flex items-baseline gap-3 mb-3">
+              <h2 className="font-serif text-lg font-semibold">Database Coverage</h2>
+              {stats && <span className="text-xs text-slate">{stats.total.toLocaleString()} books total</span>}
+            </div>
+            {statsLoading && <p className="text-sm text-slate">Loading stats...</p>}
+            {stats && (
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-4">
+                {STAT_FIELDS.map(({ key, field, label }) => {
+                  const count = stats[key] ?? 0
+                  const isActive = activeFilter === field
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => loadMissing(field)}
+                      className={`text-left px-3 py-2 rounded-xl border text-xs transition-colors ${
+                        count === 0
+                          ? 'border-green-200 bg-green-50 text-green-700 cursor-default'
+                          : isActive
+                            ? 'border-bloom bg-bloom/10 text-bloom font-semibold'
+                            : 'border-amber-200 bg-amber-50 text-amber-800 hover:border-amber-400'
+                      }`}
+                      disabled={count === 0}
+                    >
+                      <p className="font-medium truncate">{label}</p>
+                      <p className="text-base font-bold mt-0.5">{count === 0 ? '✓' : count.toLocaleString()}</p>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+            {filteredLoading && <p className="text-sm text-slate">Loading books...</p>}
+            {!filteredLoading && filteredBooks.length > 0 && (
+              <div>
+                <p className="text-xs text-slate mb-2">{filteredBooks.length} books missing {activeFilter} — click to edit</p>
+                <ul className="border border-gray-200 rounded-xl divide-y divide-gray-100 overflow-hidden max-h-64 overflow-y-auto">
+                  {filteredBooks.map(b => (
+                    <li key={b.id}>
+                      <button type="button" onClick={() => { selectBook(b); setActiveFilter(null); setFilteredBooks([]) }}
+                        className="w-full text-left px-4 py-2.5 hover:bg-petal/10 transition-colors">
+                        <p className="text-sm font-medium">{b.title}</p>
+                        <p className="text-xs text-slate">{b.author}</p>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )
+      })()}
 
       {/* Needs Enrichment */}
       <div>

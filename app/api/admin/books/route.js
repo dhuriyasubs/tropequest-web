@@ -47,6 +47,68 @@ export async function GET(request) {
 
   const { searchParams } = new URL(request.url)
 
+  // DB completeness stats
+  if (searchParams.get('stats') === '1') {
+    const c = (filter) => {
+      const q = supabaseAdmin.from('books').select('*', { count: 'exact', head: true })
+      return filter(q)
+    }
+    const [total, desc, author, cover, rating, ratingCount, ratingSource, tropes, primaryGenre, secondaryGenre, genres, isbn, isbn13] = await Promise.all([
+      supabaseAdmin.from('books').select('*', { count: 'exact', head: true }),
+      c(q => q.or('description.is.null,description.eq.')),
+      c(q => q.or('author.is.null,author.eq.,author.eq.Unknown')),
+      c(q => q.or('cover_url.is.null,cover_url.eq.')),
+      c(q => q.is('rating', null)),
+      c(q => q.is('rating_count', null)),
+      c(q => q.is('rating_source', null)),
+      c(q => q.or('tropes.is.null,tropes.eq.{}')),
+      c(q => q.or('primary_genre.is.null,primary_genre.eq.')),
+      c(q => q.or('secondary_genre.is.null,secondary_genre.eq.')),
+      c(q => q.or('genres.is.null,genres.eq.{}')),
+      c(q => q.or('isbn.is.null,isbn.eq.')),
+      c(q => q.or('isbn13.is.null,isbn13.eq.')),
+    ])
+    return NextResponse.json({
+      total:                    total.count          ?? 0,
+      missing_description:      desc.count           ?? 0,
+      missing_author:           author.count         ?? 0,
+      missing_cover:            cover.count          ?? 0,
+      missing_rating:           rating.count         ?? 0,
+      missing_rating_count:     ratingCount.count    ?? 0,
+      missing_rating_source:    ratingSource.count   ?? 0,
+      zero_tropes:              tropes.count         ?? 0,
+      missing_primary_genre:    primaryGenre.count   ?? 0,
+      missing_secondary_genre:  secondaryGenre.count ?? 0,
+      zero_genres:              genres.count         ?? 0,
+      missing_isbn:             isbn.count           ?? 0,
+      missing_isbn13:           isbn13.count         ?? 0,
+    })
+  }
+
+  // Books missing a specific field
+  const missing = searchParams.get('missing')
+  if (missing) {
+    const FILTERS = {
+      description:     q => q.or('description.is.null,description.eq.'),
+      author:          q => q.or('author.is.null,author.eq.,author.eq.Unknown'),
+      cover:           q => q.or('cover_url.is.null,cover_url.eq.'),
+      rating:          q => q.is('rating', null),
+      rating_count:    q => q.is('rating_count', null),
+      rating_source:   q => q.is('rating_source', null),
+      tropes:          q => q.or('tropes.is.null,tropes.eq.{}'),
+      primary_genre:   q => q.or('primary_genre.is.null,primary_genre.eq.'),
+      secondary_genre: q => q.or('secondary_genre.is.null,secondary_genre.eq.'),
+      genres:          q => q.or('genres.is.null,genres.eq.{}'),
+      isbn:            q => q.or('isbn.is.null,isbn.eq.'),
+      isbn13:          q => q.or('isbn13.is.null,isbn13.eq.'),
+    }
+    const applyFilter = FILTERS[missing]
+    if (!applyFilter) return NextResponse.json({ error: 'Unknown field' }, { status: 400 })
+    const base = supabaseAdmin.from('books').select(FIELDS).order('title').limit(100)
+    const { data } = await applyFilter(base)
+    return NextResponse.json({ books: data ?? [] })
+  }
+
   // Pending enrichment list
   if (searchParams.get('pending') === '1') {
     const { data } = await supabaseAdmin
