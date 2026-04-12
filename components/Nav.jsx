@@ -18,6 +18,7 @@ const menuItems = [
   { href: '/shelf',     label: 'My Shelf'         },
   { href: '/tbr',       label: 'My TBR'           },
   { href: '/interests', label: 'Manage Interests'  },
+  { href: '/profile',   label: 'My Profile'        },
 ]
 
 export default function Nav() {
