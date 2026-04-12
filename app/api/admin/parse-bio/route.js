@@ -73,7 +73,11 @@ export async function POST(request) {
     const text   = result.response.text().trim()
 
     // Strip markdown code fences if present
-    const clean = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
+    let clean = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
+    // Replace literal newlines inside JSON string values with \n (Gemini sometimes emits them)
+    clean = clean.replace(/"((?:[^"\\]|\\.)*)"/gs, (_, inner) =>
+      '"' + inner.replace(/\r?\n/g, '\\n') + '"'
+    )
     const bio   = JSON.parse(clean)
     return NextResponse.json({ bio })
   } catch (err) {
