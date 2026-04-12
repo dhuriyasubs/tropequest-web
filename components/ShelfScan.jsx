@@ -1,5 +1,5 @@
 'use client'
-import { useRef, useState, useCallback, useEffect } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createSupabaseBrowser } from '@/lib/supabase-browser'
 
@@ -29,13 +29,15 @@ function FeedbackForm({ book, onDone, onCorrect }) {
     })
 
     if (trimTitle || trimAuthor) {
-      const res = await fetch('/api/shelf/scan/rematch', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: trimTitle || book.title, author: trimAuthor, oldBookId: b.dbBook?.id }),
-      })
-      const data = await res.json()
-      if (data.dbBook) onCorrect?.(data.dbBook)
+      try {
+        const res = await fetch('/api/shelf/scan/rematch', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: trimTitle || book.title, author: trimAuthor, oldBookId: b.dbBook?.id }),
+        })
+        const data = await res.json()
+        if (data.dbBook) onCorrect?.(data.dbBook)
+      } catch { /* rematch failure is non-fatal */ }
     }
 
     setSaving(false)
