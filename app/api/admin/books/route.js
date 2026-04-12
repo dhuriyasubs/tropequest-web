@@ -114,7 +114,7 @@ export async function GET(request) {
     const { data } = await supabaseAdmin
       .from('books')
       .select(FIELDS)
-      .or('description.is.null,cover_url.is.null,tropes.eq.{},buy_url_amazon_us.is.null')
+      .or('description.is.null,cover_url.is.null,tropes.is.null,tropes.eq.{}')
       .order('rating_count', { ascending: false, nullsFirst: false })
       .limit(30)
     return NextResponse.json({ books: data ?? [] })
