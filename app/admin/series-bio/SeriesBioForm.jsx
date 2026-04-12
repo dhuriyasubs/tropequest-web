@@ -233,13 +233,16 @@ export default function SeriesBioForm({ seriesList }) {
                 </div>
                 <div>
                   <label className="block text-xs text-slate mb-1">Format</label>
-                  <select value={entry.format} onChange={e => setEntry(i, 'format', e.target.value)} className={inputCls}>
-                    <option value="">—</option>
+                  <input type="text" list="format-options" value={entry.format}
+                    onChange={e => setEntry(i, 'format', e.target.value)}
+                    placeholder="Novel, Novella..."
+                    className={inputCls} />
+                  <datalist id="format-options">
                     <option>Novel</option>
                     <option>Novella</option>
                     <option>Short Story</option>
                     <option>Prequel</option>
-                  </select>
+                  </datalist>
                 </div>
               </div>
               <div>
