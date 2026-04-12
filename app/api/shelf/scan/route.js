@@ -42,6 +42,7 @@ async function matchOrCreateBooks(books) {
     }
 
     // Not in catalog — auto-create a stub so enrich_missing.py can pick it up
+    let isNew = false
     if (!data) {
       const { data: created } = await supabaseAdmin
         .from('books')
@@ -53,12 +54,14 @@ async function matchOrCreateBooks(books) {
         .select('id,title,author,cover_url,slug,rating')
         .single()
       data = created ?? null
+      isNew = true
     }
 
     return {
       title:  book.title,
       author: book.author,
       dbBook: data ?? null,
+      isNew,
     }
   }))
 }

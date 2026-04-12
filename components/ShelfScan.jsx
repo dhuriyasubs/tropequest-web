@@ -111,13 +111,14 @@ export default function ShelfScan({ showLabel = false }) {
   const galleryRef   = useRef(null)
   const pickerRef    = useRef(null)
   const router       = useRouter()
-  const [phase,    setPhase]    = useState('idle')   // idle | picking | scanning | results
-  const [books,    setBooks]    = useState([])
-  const [selected, setSelected] = useState(new Set())
-  const [adding,   setAdding]   = useState(false)
-  const [preview,  setPreview]  = useState(null)
-  const [error,    setError]    = useState(null)
-  const [feedback, setFeedback] = useState(new Set())  // indices showing feedback form
+  const [phase,     setPhase]     = useState('idle')   // idle | picking | scanning | results
+  const [books,     setBooks]     = useState([])
+  const [selected,  setSelected]  = useState(new Set())
+  const [adding,    setAdding]    = useState(false)
+  const [preview,   setPreview]   = useState(null)
+  const [error,     setError]     = useState(null)
+  const [feedback,  setFeedback]  = useState(new Set())  // indices showing feedback form
+  const [userEmail, setUserEmail] = useState(null)
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -141,6 +142,7 @@ export default function ShelfScan({ showLabel = false }) {
       return
     }
 
+    setUserEmail(user.email)
     setPreview(URL.createObjectURL(file))
     setPhase('scanning')
     setError(null)
@@ -297,7 +299,12 @@ export default function ShelfScan({ showLabel = false }) {
             <div className="flex items-center justify-between p-4 border-b border-petal/20">
               <div>
                 <h2 className="font-semibold text-ink">Books Found</h2>
-                <p className="text-xs text-slate mt-0.5">{books.length} identified · {selected.size} selected</p>
+                <p className="text-xs text-slate mt-0.5">
+                  {books.length} identified · {selected.size} selected
+                  {userEmail === 'dhuriya.subs@gmail.com' && books.filter(b => b.isNew).length > 0 && (
+                    <span className="ml-1 text-bloom font-medium">· {books.filter(b => b.isNew).length} new</span>
+                  )}
+                </p>
               </div>
               <button onClick={closeResults} className="text-slate hover:text-ink p-1">
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -334,7 +341,12 @@ export default function ShelfScan({ showLabel = false }) {
                         <span className="w-8 shrink-0 text-center text-base">📚</span>
                       )}
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium line-clamp-1">{b.dbBook?.title ?? b.title}</p>
+                        <p className="text-sm font-medium line-clamp-1 flex items-center gap-1.5">
+                          {b.dbBook?.title ?? b.title}
+                          {userEmail === 'dhuriya.subs@gmail.com' && b.isNew && (
+                            <span className="text-[10px] font-semibold bg-bloom/10 text-bloom px-1.5 py-0.5 rounded-full shrink-0">New</span>
+                          )}
+                        </p>
                         <p className="text-xs text-slate">{b.dbBook?.author ?? b.author}</p>
                       </div>
                       <button
