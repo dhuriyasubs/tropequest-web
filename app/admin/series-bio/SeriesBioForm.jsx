@@ -70,6 +70,15 @@ export default function SeriesBioForm({ seriesList }) {
   }
   function addExpect()      { setBio(b => ({ ...b, what_to_expect: [...b.what_to_expect, { ...EMPTY_EXPECT }] })) }
   function removeExpect(i)  { setBio(b => ({ ...b, what_to_expect: b.what_to_expect.filter((_, idx) => idx !== i) })) }
+  function moveExpect(i, dir) {
+    setBio(b => {
+      const arr = [...b.what_to_expect]
+      const j = i + dir
+      if (j < 0 || j >= arr.length) return b
+      ;[arr[i], arr[j]] = [arr[j], arr[i]]
+      return { ...b, what_to_expect: arr }
+    })
+  }
 
   async function loadExisting() {
     if (!seriesName.trim()) return
@@ -260,9 +269,15 @@ export default function SeriesBioForm({ seriesList }) {
             <div key={i} className="border border-gray-200 rounded-xl p-4 space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-xs font-semibold text-slate">Section {i + 1}</span>
-                {bio.what_to_expect.length > 1 && (
-                  <button type="button" onClick={() => removeExpect(i)} className="text-xs text-red-400 hover:text-red-600">Remove</button>
-                )}
+                <div className="flex items-center gap-2">
+                  <button type="button" onClick={() => moveExpect(i, -1)} disabled={i === 0}
+                    className="text-xs text-slate hover:text-ink disabled:opacity-30">↑</button>
+                  <button type="button" onClick={() => moveExpect(i, 1)} disabled={i === bio.what_to_expect.length - 1}
+                    className="text-xs text-slate hover:text-ink disabled:opacity-30">↓</button>
+                  {bio.what_to_expect.length > 1 && (
+                    <button type="button" onClick={() => removeExpect(i)} className="text-xs text-red-400 hover:text-red-600">Remove</button>
+                  )}
+                </div>
               </div>
               <input type="text" value={item.label}
                 onChange={e => setExpect(i, 'label', e.target.value)}
