@@ -33,7 +33,7 @@ const SERIES_PROMPT = `Extract structured information from the following series 
     { "number": 1, "title": "Book Title", "format": "Novel or Novella or Short Story or Prequel", "focus": "focus characters or one-line description" }
   ],
   "what_to_expect": [
-    { "label": "Section Title", "text": "description" }
+    { "label": "Section Title", "text": "description — use \\n to separate bullet-style entries within one section" }
   ],
   "reading_tip": "optional reading tip callout"
 }

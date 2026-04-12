@@ -208,10 +208,10 @@ export default async function SeriesDetailPage({ params }) {
             <div className="space-y-3">
               {bio.what_to_expect.map((item, i) => (
                 <div key={i}>
-                  <p className="text-sm text-slate leading-relaxed">
-                    <span className="font-semibold text-ink">{item.label}: </span>
-                    {item.text}
-                  </p>
+                  {item.label && (
+                    <p className="text-sm font-semibold text-ink mb-1">{item.label}</p>
+                  )}
+                  <p className="text-sm text-slate leading-relaxed whitespace-pre-wrap">{item.text}</p>
                 </div>
               ))}
             </div>

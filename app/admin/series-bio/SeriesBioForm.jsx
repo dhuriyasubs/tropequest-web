@@ -283,10 +283,10 @@ export default function SeriesBioForm({ seriesList }) {
                 onChange={e => setExpect(i, 'label', e.target.value)}
                 placeholder="e.g. The World Building"
                 className={inputCls} />
-              <textarea rows={2} value={item.text}
+              <textarea rows={4} value={item.text}
                 onChange={e => setExpect(i, 'text', e.target.value)}
-                placeholder="Description..."
-                className={`${inputCls} resize-none`} />
+                placeholder="Description... (newlines preserved — use them for bullet-style entries)"
+                className={`${inputCls} resize-y`} />
             </div>
           ))}
           <button type="button" onClick={addExpect} className="text-sm text-bloom hover:underline">+ Add section</button>
