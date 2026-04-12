@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import Breadcrumb from '@/components/Breadcrumb'
-import { getAllSeries, getBooksBySeries, getSeriesBio } from '@/lib/search'
+import { getAllSeries, getBooksBySeries, getBooksByTitles, getSeriesBio } from '@/lib/search'
 import { slugify } from '@/lib/utils'
 
 export const revalidate = 3600
@@ -34,15 +34,31 @@ export default async function SeriesDetailPage({ params }) {
   ])
   if (!seriesBooks.length) notFound()
 
-  // Ordered list: always from DB (series_number order), bio entries annotate format/focus by number
-  const orderedBooks = seriesBooks.map((b, i) => {
-    const num = b.series_number ?? (i + 1)
-    const entry = bio?.reading_order?.find(e => e.number == num) ?? null
-    return { _bioEntry: entry, _pos: num, ...b }
-  })
+  // If bio has a titled reading order (cross-series), fetch those books filtered by same author
+  const bioTitles = (bio?.reading_order ?? []).map(e => e.title).filter(Boolean)
+  const crossBooks = bioTitles.length ? await getBooksByTitles(bioTitles, match.author) : []
 
-  // Common tropes across all books in this series (top 6)
-  const books = seriesBooks
+  // Build title→dbBook lookup (case-insensitive), series books take priority over cross-series
+  const bookByTitle = {}
+  for (const b of [...crossBooks, ...seriesBooks]) {
+    bookByTitle[b.title.toLowerCase()] = b
+  }
+
+  // If bio has titled entries, use bio order (cross-series); else fall back to DB series_number order
+  const useBioOrder = bioTitles.length > 0
+  const orderedBooks = useBioOrder
+    ? bio.reading_order.map((entry, i) => {
+        const db = entry.title ? (bookByTitle[entry.title.toLowerCase()] ?? null) : null
+        return { _bioEntry: entry, _pos: i + 1, ...(db ?? { title: entry.title, author: null, cover_url: null, slug: null, rating: null, tropes: [], description: null }) }
+      })
+    : seriesBooks.map((b, i) => {
+        const num = b.series_number ?? (i + 1)
+        const entry = bio?.reading_order?.find(e => e.number == num) ?? null
+        return { _bioEntry: entry, _pos: num, ...b }
+      })
+
+  // Common tropes across all books (top 6)
+  const books = useBioOrder ? [...seriesBooks, ...crossBooks] : seriesBooks
   const tropeCount = {}
   for (const b of books) {
     for (const t of b.tropes ?? []) tropeCount[t] = (tropeCount[t] ?? 0) + 1
