@@ -1,6 +1,8 @@
 'use client'
 import { useRef, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import ReactCrop from 'react-image-crop'
+import 'react-image-crop/dist/ReactCrop.css'
 import { createSupabaseBrowser } from '@/lib/supabase-browser'
 
 function FeedbackForm({ book, onDone, onCorrect }) {
@@ -33,7 +35,7 @@ function FeedbackForm({ book, onDone, onCorrect }) {
         const res = await fetch('/api/shelf/scan/rematch', {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title: trimTitle || book.title, author: trimAuthor, oldBookId: b.dbBook?.id }),
+          body: JSON.stringify({ title: trimTitle || book.title, author: trimAuthor, oldBookId: book.dbBook?.id }),
         })
         const data = await res.json()
         if (data.dbBook) onCorrect?.(data.dbBook)
@@ -86,40 +88,64 @@ function FeedbackForm({ book, onDone, onCorrect }) {
   )
 }
 
-async function resizeImage(file) {
-  return new Promise((resolve) => {
-    const img = new Image()
-    const url = URL.createObjectURL(file)
-    img.onload = () => {
-      URL.revokeObjectURL(url)
-      const MAX = 800
-      let { width, height } = img
-      if (width > MAX || height > MAX) {
-        if (width > height) { height = Math.round(height * MAX / width); width = MAX }
-        else { width = Math.round(width * MAX / height); height = MAX }
-      }
-      const canvas = document.createElement('canvas')
-      canvas.width = width; canvas.height = height
-      canvas.getContext('2d').drawImage(img, 0, 0, width, height)
-      const base64 = canvas.toDataURL('image/jpeg', 0.75).split(',')[1]
-      resolve(base64)
-    }
-    img.src = url
-  })
+function getCroppedBase64(imgEl, crop) {
+  const scaleX = imgEl.naturalWidth  / imgEl.width
+  const scaleY = imgEl.naturalHeight / imgEl.height
+  const canvas = document.createElement('canvas')
+  canvas.width  = crop.width  * scaleX
+  canvas.height = crop.height * scaleY
+  canvas.getContext('2d').drawImage(
+    imgEl,
+    crop.x * scaleX, crop.y * scaleY,
+    crop.width * scaleX, crop.height * scaleY,
+    0, 0, canvas.width, canvas.height,
+  )
+  return canvas.toDataURL('image/jpeg', 0.75).split(',')[1]
+}
+
+function getFullBase64(imgEl) {
+  const MAX = 800
+  let { naturalWidth: w, naturalHeight: h } = imgEl
+  if (w > MAX || h > MAX) {
+    if (w > h) { h = Math.round(h * MAX / w); w = MAX }
+    else { w = Math.round(w * MAX / h); h = MAX }
+  }
+  const canvas = document.createElement('canvas')
+  canvas.width = w; canvas.height = h
+  canvas.getContext('2d').drawImage(imgEl, 0, 0, w, h)
+  return canvas.toDataURL('image/jpeg', 0.75).split(',')[1]
+}
+
+function mergeBooks(existing, incoming) {
+  const seenIds    = new Set(existing.map(b => b.dbBook?.id).filter(Boolean))
+  const seenTitles = new Set(existing.map(b => (b.dbBook?.title ?? b.title).toLowerCase()))
+  return [
+    ...existing,
+    ...incoming.filter(b => {
+      if (b.dbBook?.id && seenIds.has(b.dbBook.id)) return false
+      const t = (b.dbBook?.title ?? b.title).toLowerCase()
+      if (seenTitles.has(t)) return false
+      return true
+    }),
+  ]
 }
 
 export default function ShelfScan({ showLabel = false }) {
-  const fileRef      = useRef(null)
-  const galleryRef   = useRef(null)
-  const pickerRef    = useRef(null)
-  const router       = useRouter()
-  const [phase,     setPhase]     = useState('idle')   // idle | picking | scanning | results
+  const fileRef    = useRef(null)
+  const galleryRef = useRef(null)
+  const pickerRef  = useRef(null)
+  const imgRef     = useRef(null)
+  const router     = useRouter()
+
+  // phases: idle | picking | crop | scanning | results
+  const [phase,     setPhase]     = useState('idle')
+  const [srcImage,  setSrcImage]  = useState(null)   // object URL for crop UI
+  const [crop,      setCrop]      = useState(null)   // current crop selection
   const [books,     setBooks]     = useState([])
   const [selected,  setSelected]  = useState(new Set())
   const [adding,    setAdding]    = useState(false)
-  const [preview,   setPreview]   = useState(null)
   const [error,     setError]     = useState(null)
-  const [feedback,  setFeedback]  = useState(new Set())  // indices showing feedback form
+  const [feedback,  setFeedback]  = useState(new Set())
   const [userEmail, setUserEmail] = useState(null)
 
   useEffect(() => {
@@ -145,36 +171,55 @@ export default function ShelfScan({ showLabel = false }) {
     }
 
     setUserEmail(user.email)
-    setPreview(URL.createObjectURL(file))
+    setSrcImage(URL.createObjectURL(file))
+    setCrop(null)
+    setBooks([])
+    setSelected(new Set())
+    setError(null)
+    setPhase('crop')
+    e.target.value = ''
+  }
+
+  async function scanImage(base64) {
     setPhase('scanning')
     setError(null)
-    setBooks([])
-
     try {
-      const image = await resizeImage(file)
       const res = await fetch('/api/shelf/scan', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ image, mimeType: 'image/jpeg' }),
+        body:    JSON.stringify({ image: base64, mimeType: 'image/jpeg' }),
       })
-      if (res.status === 504) throw new Error('Scan timed out — try a clearer or closer photo')
+      if (res.status === 504) throw new Error('Scan timed out. Try a smaller section.')
       if (!res.ok && !res.headers.get('content-type')?.includes('application/json')) {
         throw new Error('Scan failed — please try again')
       }
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Scan failed')
 
-      const allBooks = data.books ?? []
-      setBooks(allBooks)
-      setSelected(new Set(allBooks.map((_, i) => i)))
+      const incoming = data.books ?? []
+      setBooks(prev => {
+        const merged = mergeBooks(prev, incoming)
+        setSelected(new Set(merged.map((_, i) => i)))
+        return merged
+      })
       setPhase('results')
     } catch (err) {
       setError(err.message)
-      setPhase('idle')
+      setPhase('crop')
     }
+  }
 
-    // Reset file input so same file can be re-selected
-    e.target.value = ''
+  function handleScanCrop() {
+    if (!imgRef.current) return
+    const base64 = crop?.width && crop?.height
+      ? getCroppedBase64(imgRef.current, crop)
+      : getFullBase64(imgRef.current)
+    scanImage(base64)
+  }
+
+  function handleScanFull() {
+    if (!imgRef.current) return
+    scanImage(getFullBase64(imgRef.current))
   }
 
   function toggleSelect(i) {
@@ -199,17 +244,20 @@ export default function ShelfScan({ showLabel = false }) {
     window.dispatchEvent(new CustomEvent('toast', {
       detail: { message: `${toAdd.length} book${toAdd.length !== 1 ? 's' : ''} added to shelf!` },
     }))
-    closeResults()
+    closeAll()
     router.refresh()
   }
 
-  function closeResults() {
+  function closeAll() {
     setPhase('idle')
     setBooks([])
     setSelected(new Set())
-    setPreview(null)
+    setSrcImage(null)
+    setCrop(null)
     setError(null)
   }
+
+  const newCount = books.filter(b => b.isNew).length
 
   return (
     <>
@@ -227,7 +275,6 @@ export default function ShelfScan({ showLabel = false }) {
           </span>
         </button>
 
-        {/* Source picker */}
         {phase === 'picking' && (
           <div className="absolute top-full mt-1 right-0 bg-white border border-petal/30 rounded-xl shadow-lg py-1.5 z-50 min-w-[170px]">
             <button
@@ -254,29 +301,66 @@ export default function ShelfScan({ showLabel = false }) {
         )}
       </div>
 
-      {/* Camera input */}
-      <input
-        ref={fileRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        className="hidden"
-        onChange={handleFile}
-      />
+      <input ref={fileRef}    type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFile} />
+      <input ref={galleryRef} type="file" accept="image/*"                        className="hidden" onChange={handleFile} />
 
-      {/* Gallery input — no capture attribute so it opens the file picker */}
-      <input
-        ref={galleryRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={handleFile}
-      />
-
-      {/* Error toast */}
       {error && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-red-100 text-red-700 text-sm px-4 py-2 rounded-xl shadow z-50">
           {error}
+        </div>
+      )}
+
+      {/* Crop modal */}
+      {(phase === 'crop') && srcImage && (
+        <div className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between p-4 border-b border-petal/20 shrink-0">
+              <div>
+                <h2 className="font-semibold text-ink">Crop &amp; Scan</h2>
+                <p className="text-xs text-slate mt-0.5">Select a section or scan the full image</p>
+              </div>
+              <button onClick={closeAll} className="text-slate hover:text-ink p-1">
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round"/>
+                </svg>
+              </button>
+            </div>
+
+            <div className="overflow-auto flex-1 p-4 flex items-center justify-center bg-gray-50">
+              <ReactCrop
+                crop={crop}
+                onChange={c => setCrop(c)}
+                className="max-w-full"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  ref={imgRef}
+                  src={srcImage}
+                  alt="shelf"
+                  className="max-w-full max-h-[50vh] object-contain"
+                />
+              </ReactCrop>
+            </div>
+
+            {error && <p className="text-xs text-red-500 px-4 pb-2">{error}</p>}
+
+            <div className="p-4 border-t border-petal/20 flex gap-2 shrink-0">
+              <button
+                onClick={handleScanCrop}
+                className="flex-1 bg-bloom text-white font-semibold py-2.5 rounded-xl hover:opacity-90 transition-opacity text-sm"
+              >
+                {crop?.width && crop?.height ? 'Scan selection' : 'Scan full image'}
+              </button>
+              {crop?.width && crop?.height && (
+                <button
+                  onClick={handleScanFull}
+                  className="px-4 py-2.5 rounded-xl border border-petal/40 text-sm text-slate hover:bg-gray-50 transition-colors"
+                >
+                  Scan full
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
@@ -284,9 +368,6 @@ export default function ShelfScan({ showLabel = false }) {
       {phase === 'scanning' && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 text-center">
-            {preview && (
-              <img src={preview} alt="shelf" className="w-full max-h-48 object-cover rounded-xl mb-4" />
-            )}
             <div className="flex items-center justify-center gap-2 text-bloom">
               <svg className="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
@@ -307,16 +388,25 @@ export default function ShelfScan({ showLabel = false }) {
                 <h2 className="font-semibold text-ink">Books Found</h2>
                 <p className="text-xs text-slate mt-0.5">
                   {books.length} identified · {selected.size} selected
-                  {userEmail === 'dhuriya.subs@gmail.com' && books.filter(b => b.isNew).length > 0 && (
-                    <span className="ml-1 text-bloom font-medium">· {books.filter(b => b.isNew).length} new</span>
+                  {userEmail === 'dhuriya.subs@gmail.com' && newCount > 0 && (
+                    <span className="ml-1 text-bloom font-medium">· {newCount} new</span>
                   )}
                 </p>
               </div>
-              <button onClick={closeResults} className="text-slate hover:text-ink p-1">
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round"/>
-                </svg>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => { setPhase('crop'); setError(null) }}
+                  className="text-xs text-bloom font-medium px-3 py-1.5 rounded-lg border border-bloom/30 hover:bg-bloom/5 transition-colors"
+                  title="Scan another section of the same image"
+                >
+                  + Scan section
+                </button>
+                <button onClick={closeAll} className="text-slate hover:text-ink p-1">
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round"/>
+                  </svg>
+                </button>
+              </div>
             </div>
 
             <div className="overflow-y-auto flex-1 p-4 space-y-2">
