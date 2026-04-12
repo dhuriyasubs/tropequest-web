@@ -132,7 +132,7 @@ export default function ShelfScan({ showLabel = false }) {
 
       const allBooks = data.books ?? []
       setBooks(allBooks)
-      setSelected(new Set(allBooks.filter(b => b.dbBook).map(b => b.dbBook.id)))
+      setSelected(new Set(allBooks.map((_, i) => i)))
       setPhase('results')
     } catch (err) {
       setError(err.message)
@@ -143,17 +143,18 @@ export default function ShelfScan({ showLabel = false }) {
     e.target.value = ''
   }
 
-  function toggleSelect(id) {
+  function toggleSelect(i) {
     setSelected(s => {
       const next = new Set(s)
-      next.has(id) ? next.delete(id) : next.add(id)
+      next.has(i) ? next.delete(i) : next.add(i)
       return next
     })
   }
 
   async function addToShelf() {
     setAdding(true)
-    await Promise.all([...selected].map(bookId =>
+    const toAdd = [...selected].map(i => books[i]?.dbBook?.id).filter(Boolean)
+    await Promise.all(toAdd.map(bookId =>
       fetch('/api/shelf', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -162,7 +163,7 @@ export default function ShelfScan({ showLabel = false }) {
     ))
     setAdding(false)
     window.dispatchEvent(new CustomEvent('toast', {
-      detail: { message: `${selected.size} book${selected.size !== 1 ? 's' : ''} added to shelf!` },
+      detail: { message: `${toAdd.length} book${toAdd.length !== 1 ? 's' : ''} added to shelf!` },
     }))
     closeResults()
     router.refresh()
@@ -246,22 +247,20 @@ export default function ShelfScan({ showLabel = false }) {
                 <p className="text-slate text-sm text-center py-6">No books could be identified.</p>
               )}
               {books.map((b, i) => {
-                const id = b.dbBook?.id
                 const showFeedback = feedback.has(i)
+                const isSelected = selected.has(i)
                 return (
                   <div
                     key={i}
                     className={`p-3 rounded-xl border transition-colors ${
-                      id && selected.has(id)
-                        ? 'border-bloom bg-bloom/5'
-                        : 'border-petal/30'
+                      isSelected ? 'border-bloom bg-bloom/5' : 'border-petal/30'
                     }`}
                   >
                     <label className="flex items-center gap-3 cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={!!(id && selected.has(id))}
-                        onChange={() => id && toggleSelect(id)}
+                        checked={isSelected}
+                        onChange={() => toggleSelect(i)}
                         className="accent-bloom w-4 h-4 shrink-0"
                       />
                       {b.dbBook?.cover_url ? (
