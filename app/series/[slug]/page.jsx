@@ -133,8 +133,8 @@ export default async function SeriesDetailPage({ params }) {
           <div className="hidden sm:grid grid-cols-[2rem_1fr_6rem_1fr] gap-x-4 px-3 py-2 mb-1 border-b border-gray-100">
             <span className="text-xs font-semibold text-slate/50">#</span>
             <span className="text-xs font-semibold text-slate/50">Title</span>
-            <span className="text-xs font-semibold text-slate/50">Format</span>
-            <span className="text-xs font-semibold text-slate/50">Focus</span>
+            <span className="text-xs font-semibold text-slate/50">{bio.format_header || 'Format'}</span>
+            <span className="text-xs font-semibold text-slate/50">{bio.focus_header || 'Focus'}</span>
           </div>
         )}
 
@@ -265,6 +265,33 @@ export default async function SeriesDetailPage({ params }) {
             </div>
           </section>
         )}
+
+        {/* Comparison Tables */}
+        {bio?.comparison_tables?.map((table, ti) => (
+          <section key={ti} className="mb-8">
+            {table.title && <h2 className="font-serif text-xl font-semibold mb-3">{table.title}</h2>}
+            <div className="overflow-x-auto rounded-xl border border-gray-100">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100 bg-petal/10">
+                    {table.columns.map((col, ci) => (
+                      <th key={ci} className="text-left px-4 py-2 text-xs font-semibold text-slate/70">{col}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {table.rows.map((row, ri) => (
+                    <tr key={ri} className={ri % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}>
+                      {row.map((cell, ci) => (
+                        <td key={ci} className="px-4 py-2.5 text-slate leading-snug">{cell}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        ))}
 
         {/* Reading Tip */}
         {bio?.reading_tip && (

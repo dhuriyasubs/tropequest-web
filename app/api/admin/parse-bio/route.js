@@ -29,11 +29,20 @@ const SERIES_PROMPT = `Extract structured information from the following series 
 {
   "intro": "overview paragraph about the series",
   "reading_order_note": "optional note about reading order (e.g. timeline shifts, perspective changes, merged series)",
+  "format_header": "label for the Format column in the reading order table, e.g. 'Sub-Series' or 'Format' — use empty string if generic",
+  "focus_header": "label for the Focus column in the reading order table, e.g. 'Focus Characters' or 'Focus' — use empty string if generic",
   "reading_order": [
     { "number": 1, "title": "Book Title", "format": "Novel or Novella or Short Story or Prequel", "focus": "focus characters or one-line description" }
   ],
   "what_to_expect": [
     { "label": "Section Title", "text": "description — use \\n to separate bullet-style entries within one section" }
+  ],
+  "comparison_tables": [
+    {
+      "title": "Table heading, e.g. The Two Series Explained",
+      "columns": ["Col 1 header", "Col 2 header", "Col 3 header"],
+      "rows": [["cell", "cell", "cell"]]
+    }
   ],
   "reading_tip": "optional reading tip callout"
 }
