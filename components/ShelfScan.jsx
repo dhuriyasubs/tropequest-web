@@ -3,7 +3,7 @@ import { useRef, useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createSupabaseBrowser } from '@/lib/supabase-browser'
 
-function FeedbackForm({ book, onDone }) {
+function FeedbackForm({ book, onDone, onCorrect }) {
   const [correctTitle,  setCorrectTitle]  = useState(book.dbBook?.title  ?? book.title)
   const [correctAuthor, setCorrectAuthor] = useState(book.dbBook?.author ?? book.author)
   const [notes,         setNotes]         = useState('')
@@ -13,17 +13,31 @@ function FeedbackForm({ book, onDone }) {
   async function submit(e) {
     e.preventDefault()
     setSaving(true)
+    const trimTitle  = correctTitle.trim()
+    const trimAuthor = correctAuthor.trim()
+
     await fetch('/api/shelf/scan-feedback', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         identifiedTitle:  book.title,
         identifiedAuthor: book.author,
-        correctTitle:     correctTitle.trim()  || null,
-        correctAuthor:    correctAuthor.trim() || null,
-        notes:            notes.trim()         || null,
+        correctTitle:     trimTitle  || null,
+        correctAuthor:    trimAuthor || null,
+        notes:            notes.trim() || null,
       }),
     })
+
+    if (trimTitle) {
+      const res = await fetch('/api/shelf/scan/rematch', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: trimTitle, author: trimAuthor }),
+      })
+      const data = await res.json()
+      if (data.dbBook) onCorrect?.(data.dbBook)
+    }
+
     setSaving(false)
     setDone(true)
     setTimeout(onDone, 1200)
@@ -336,6 +350,7 @@ export default function ShelfScan({ showLabel = false }) {
                       <FeedbackForm
                         book={b}
                         onDone={() => setFeedback(s => { const n = new Set(s); n.delete(i); return n })}
+                        onCorrect={dbBook => setBooks(bs => bs.map((x, j) => j === i ? { ...x, dbBook } : x))}
                       />
                     )}
                   </div>
