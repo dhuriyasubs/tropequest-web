@@ -255,7 +255,6 @@ export default function SeriesBioForm({ seriesList }) {
 
       {/* What to expect */}
       <div>
-        <label className="block text-sm font-semibold mb-3">What to Expect</label>
         <div className="space-y-3">
           {bio.what_to_expect.map((item, i) => (
             <div key={i} className="border border-gray-200 rounded-xl p-4 space-y-3">
