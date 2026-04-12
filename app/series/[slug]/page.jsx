@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import Breadcrumb from '@/components/Breadcrumb'
-import { getAllSeries, getBooksBySeries, getSeriesBio } from '@/lib/search'
+import { getAllSeries, getBooksBySeries, getBooksByTitles, getSeriesBio } from '@/lib/search'
 import { slugify } from '@/lib/utils'
 
 export const revalidate = 3600
@@ -28,19 +28,37 @@ export default async function SeriesDetailPage({ params }) {
   const match     = allSeries.find(s => slugify(s.series_name) === params.slug)
   if (!match) notFound()
 
-  const [books, bio] = await Promise.all([
+  const [seriesBooks, bio] = await Promise.all([
     getBooksBySeries(match.series_name),
     getSeriesBio(match.series_name),
   ])
-  if (!books.length) notFound()
+  if (!seriesBooks.length) notFound()
 
-  // Merge bio reading_order entries with DB books by series_number
-  const bioByNumber = {}
-  for (const entry of bio?.reading_order ?? []) {
-    bioByNumber[entry.number] = entry
+  // If bio has a titled reading order (possibly cross-series), fetch those books too
+  const bioTitles = (bio?.reading_order ?? []).map(e => e.title).filter(Boolean)
+  const crossBooks = bioTitles.length ? await getBooksByTitles(bioTitles) : []
+
+  // Build a title→dbBook lookup (case-insensitive)
+  const bookByTitle = {}
+  for (const b of [...seriesBooks, ...crossBooks]) {
+    bookByTitle[b.title.toLowerCase()] = b
   }
 
-  // Common tropes across series (top 6)
+  // Ordered list: bio reading_order if titled, else fall back to series books
+  const useBioOrder = bioTitles.length > 0
+  const orderedBooks = useBioOrder
+    ? bio.reading_order.map((entry, i) => {
+        const db = entry.title ? (bookByTitle[entry.title.toLowerCase()] ?? null) : null
+        return { _bioEntry: entry, _pos: i + 1, ...(db ?? { title: entry.title, author: null, cover_url: null, slug: null, rating: null, tropes: [], description: null }) }
+      })
+    : seriesBooks.map((b, i) => {
+        const num = b.series_number ?? (i + 1)
+        const entry = bio?.reading_order?.find(e => e.number == num) ?? null
+        return { _bioEntry: entry, _pos: num, ...b }
+      })
+
+  // Common tropes across all books in this reading order (top 6)
+  const books = useBioOrder ? [...seriesBooks, ...crossBooks] : seriesBooks
   const tropeCount = {}
   for (const b of books) {
     for (const t of b.tropes ?? []) tropeCount[t] = (tropeCount[t] ?? 0) + 1
@@ -56,13 +74,13 @@ export default async function SeriesDetailPage({ params }) {
     '@type': 'BookSeries',
     name: match.series_name,
     author: { '@type': 'Person', name: match.author },
-    numberOfItems: books.length,
-    hasPart: books.map(b => ({
+    numberOfItems: orderedBooks.length,
+    hasPart: orderedBooks.map((b, i) => ({
       '@type': 'Book',
       name: b.title,
-      author: { '@type': 'Person', name: b.author },
-      position: b.series_number,
-      url: `https://tropequest.com/books/${b.slug}`,
+      author: { '@type': 'Person', name: b.author ?? match.author },
+      position: b._pos ?? (i + 1),
+      ...(b.slug ? { url: `https://tropequest.com/books/${b.slug}` } : {}),
       ...(b.rating ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: b.rating, ratingCount: b.rating_count ?? 1, bestRating: 5 } } : {}),
     })),
   }
@@ -121,54 +139,76 @@ export default async function SeriesDetailPage({ params }) {
         )}
 
         <ol className="space-y-3 mb-10">
-          {books.map((b, i) => {
-            const entry = b.series_number != null ? bioByNumber[b.series_number] : null
-            const num   = b.series_number != null ? `#${b.series_number}` : `${i + 1}`
+          {orderedBooks.map((b, i) => {
+            const entry          = b._bioEntry ?? null
+            const num            = b._pos ?? (i + 1)
+            const numLabel       = `${num}`
             const hasFormatFocus = entry?.format || entry?.focus
+            const bookInner = (
+              <>
+                <span className="text-sm font-bold text-bloom/70 w-6 shrink-0 pt-0.5">{numLabel}</span>
+                <div className="relative shrink-0 w-16 h-24 rounded overflow-hidden bg-gray-100">
+                  {b.cover_url
+                    ? <Image src={b.cover_url} alt={b.title} fill sizes="64px" className="object-contain" />
+                    : <div className="w-full h-full flex items-center justify-center text-lg">📚</div>
+                  }
+                </div>
+                <div className="min-w-0">
+                  <p className="font-serif font-semibold text-sm leading-tight group-hover:text-bloom transition-colors line-clamp-2">{b.title}</p>
+                  {b.series_name && b.series_name !== match.series_name && (
+                    <p className="text-xs text-slate/50 mt-0.5">{b.series_name}</p>
+                  )}
+                  {b.rating && <p className="text-xs text-bloom font-medium mt-0.5">★ {b.rating.toFixed(1)}</p>}
+                  {entry?.format && <span className="inline-block mt-1 text-xs bg-petal/20 text-bloom/80 rounded px-1.5 py-0.5">{entry.format}</span>}
+                  {entry?.focus && <p className="text-xs text-slate mt-1">{entry.focus}</p>}
+                  {!hasFormatFocus && b.description && (
+                    <p className="text-xs text-slate/70 mt-1 line-clamp-2">{b.description}</p>
+                  )}
+                  {!hasFormatFocus && !b.description && b.tropes?.length > 0 && (
+                    <p className="text-xs text-slate/60 mt-1 line-clamp-1">{b.tropes.slice(0, 3).join(' · ')}</p>
+                  )}
+                </div>
+              </>
+            )
 
             return (
-              <li key={b.id}>
+              <li key={`${b.id ?? b.title}-${i}`}>
                 {/* Mobile: stacked */}
                 <div className="sm:hidden">
-                  <Link href={`/books/${b.slug}`} className="group flex gap-3 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow p-3">
-                    <span className="text-sm font-bold text-bloom/70 w-6 shrink-0 pt-0.5">{num}</span>
-                    <div className="relative shrink-0 w-16 h-24 rounded overflow-hidden bg-gray-100">
-                      {b.cover_url
-                        ? <Image src={b.cover_url} alt={b.title} fill sizes="64px" className="object-contain" />
-                        : <div className="w-full h-full flex items-center justify-center text-lg">📚</div>
-                      }
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-serif font-semibold text-sm leading-tight group-hover:text-bloom transition-colors line-clamp-2">{b.title}</p>
-                      {b.rating && <p className="text-xs text-bloom font-medium mt-0.5">★ {b.rating.toFixed(1)}</p>}
-                      {entry?.format && <span className="inline-block mt-1 text-xs bg-petal/20 text-bloom/80 rounded px-1.5 py-0.5">{entry.format}</span>}
-                      {entry?.focus && <p className="text-xs text-slate mt-1">{entry.focus}</p>}
-                      {!hasFormatFocus && b.description && (
-                        <p className="text-xs text-slate/70 mt-1 line-clamp-2">{b.description}</p>
-                      )}
-                      {!hasFormatFocus && !b.description && b.tropes?.length > 0 && (
-                        <p className="text-xs text-slate/60 mt-1 line-clamp-1">{b.tropes.slice(0, 3).join(' · ')}</p>
-                      )}
-                    </div>
-                  </Link>
+                  {b.slug
+                    ? <Link href={`/books/${b.slug}`} className="group flex gap-3 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow p-3">{bookInner}</Link>
+                    : <div className="flex gap-3 bg-white rounded-xl shadow-sm p-3">{bookInner}</div>
+                  }
                 </div>
 
                 {/* Desktop: table row with format/focus OR simple row with description */}
                 {hasBioData ? (
                   <div className="hidden sm:grid grid-cols-[2rem_1fr_6rem_1fr] gap-x-4 items-center bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow px-3 py-2">
-                    <span className="text-sm font-bold text-bloom/70">{num}</span>
-                    <Link href={`/books/${b.slug}`} className="group flex items-center gap-3 min-w-0">
-                      <div className="relative shrink-0 w-14 h-20 rounded overflow-hidden bg-gray-100">
-                        {b.cover_url
-                          ? <Image src={b.cover_url} alt={b.title} fill sizes="56px" className="object-contain" />
-                          : <div className="w-full h-full flex items-center justify-center text-base">📚</div>
-                        }
+                    <span className="text-sm font-bold text-bloom/70">{numLabel}</span>
+                    {b.slug ? (
+                      <Link href={`/books/${b.slug}`} className="group flex items-center gap-3 min-w-0">
+                        <div className="relative shrink-0 w-14 h-20 rounded overflow-hidden bg-gray-100">
+                          {b.cover_url
+                            ? <Image src={b.cover_url} alt={b.title} fill sizes="56px" className="object-contain" />
+                            : <div className="w-full h-full flex items-center justify-center text-base">📚</div>
+                          }
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-serif font-semibold text-sm leading-tight group-hover:text-bloom transition-colors line-clamp-2">{b.title}</p>
+                          {b.series_name && b.series_name !== match.series_name && (
+                            <p className="text-xs text-slate/50 mt-0.5">{b.series_name}</p>
+                          )}
+                          {b.rating && <p className="text-xs text-bloom font-medium mt-0.5">★ {b.rating.toFixed(1)}</p>}
+                        </div>
+                      </Link>
+                    ) : (
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="relative shrink-0 w-14 h-20 rounded overflow-hidden bg-gray-100">
+                          <div className="w-full h-full flex items-center justify-center text-base">📚</div>
+                        </div>
+                        <p className="font-serif font-semibold text-sm leading-tight line-clamp-2">{b.title}</p>
                       </div>
-                      <div className="min-w-0">
-                        <p className="font-serif font-semibold text-sm leading-tight group-hover:text-bloom transition-colors line-clamp-2">{b.title}</p>
-                        {b.rating && <p className="text-xs text-bloom font-medium mt-0.5">★ {b.rating.toFixed(1)}</p>}
-                      </div>
-                    </Link>
+                    )}
                     <div>
                       {entry?.format
                         ? <span className="text-xs bg-petal/20 text-bloom/80 rounded px-2 py-0.5">{entry.format}</span>
@@ -178,23 +218,31 @@ export default async function SeriesDetailPage({ params }) {
                     <p className="text-sm text-slate leading-snug">{entry?.focus ?? '—'}</p>
                   </div>
                 ) : (
-                  <Link href={`/books/${b.slug}`} className="hidden sm:flex group items-center gap-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow px-4 py-3">
-                    <span className="text-sm font-bold text-bloom/70 w-6 shrink-0">{num}</span>
-                    <div className="relative shrink-0 w-14 h-20 rounded overflow-hidden bg-gray-100">
-                      {b.cover_url
-                        ? <Image src={b.cover_url} alt={b.title} fill sizes="56px" className="object-contain" />
-                        : <div className="w-full h-full flex items-center justify-center text-base">📚</div>
-                      }
+                  b.slug ? (
+                    <Link href={`/books/${b.slug}`} className="hidden sm:flex group items-center gap-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow px-4 py-3">
+                      <span className="text-sm font-bold text-bloom/70 w-6 shrink-0">{numLabel}</span>
+                      <div className="relative shrink-0 w-14 h-20 rounded overflow-hidden bg-gray-100">
+                        {b.cover_url
+                          ? <Image src={b.cover_url} alt={b.title} fill sizes="56px" className="object-contain" />
+                          : <div className="w-full h-full flex items-center justify-center text-base">📚</div>
+                        }
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-serif font-semibold text-sm leading-tight group-hover:text-bloom transition-colors line-clamp-1">{b.title}</p>
+                        {b.rating && <p className="text-xs text-bloom font-medium mt-0.5">★ {b.rating.toFixed(1)}</p>}
+                        {b.description && (
+                          <p className="text-xs text-slate/70 mt-1 line-clamp-2">{b.description}</p>
+                        )}
+                      </div>
+                      <span className="text-xs text-bloom shrink-0 font-medium">See more →</span>
+                    </Link>
+                  ) : (
+                    <div className="hidden sm:flex items-center gap-4 bg-white rounded-xl shadow-sm px-4 py-3">
+                      <span className="text-sm font-bold text-bloom/70 w-6 shrink-0">{numLabel}</span>
+                      <div className="w-14 h-20 rounded overflow-hidden bg-gray-100 flex items-center justify-center text-base shrink-0">📚</div>
+                      <p className="font-serif font-semibold text-sm">{b.title}</p>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-serif font-semibold text-sm leading-tight group-hover:text-bloom transition-colors line-clamp-1">{b.title}</p>
-                      {b.rating && <p className="text-xs text-bloom font-medium mt-0.5">★ {b.rating.toFixed(1)}</p>}
-                      {b.description && (
-                        <p className="text-xs text-slate/70 mt-1 line-clamp-2">{b.description}</p>
-                      )}
-                    </div>
-                    <span className="text-xs text-bloom shrink-0 font-medium">See more →</span>
-                  </Link>
+                  )
                 )}
               </li>
             )
