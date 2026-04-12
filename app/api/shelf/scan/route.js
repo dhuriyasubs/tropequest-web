@@ -43,8 +43,9 @@ async function matchOrCreateBooks(books) {
 
     // Not in catalog — auto-create a stub so enrich_missing.py can pick it up
     let isNew = false
+    let insertError = null
     if (!data) {
-      const { data: created } = await supabaseAdmin
+      const { data: created, error: err } = await supabaseAdmin
         .from('books')
         .insert({
           title:  book.title,
@@ -54,7 +55,12 @@ async function matchOrCreateBooks(books) {
         .select('id,title,author,cover_url,slug,rating')
         .single()
       data = created ?? null
-      isNew = true
+      if (err) {
+        insertError = err.message
+        console.error('[scan] insert failed for', book.title, ':', err.message)
+      } else {
+        isNew = true
+      }
     }
 
     return {
@@ -62,6 +68,7 @@ async function matchOrCreateBooks(books) {
       author: book.author,
       dbBook: data ?? null,
       isNew,
+      ...(insertError ? { insertError } : {}),
     }
   }))
 }

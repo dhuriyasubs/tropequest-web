@@ -197,6 +197,8 @@ export default function ShelfScan({ showLabel = false }) {
       if (!res.ok) throw new Error(data.error ?? 'Scan failed')
 
       const incoming = data.books ?? []
+      const failed = incoming.filter(b => b.insertError)
+      if (failed.length) console.error('[ShelfScan] insert failures:', failed.map(b => `${b.title}: ${b.insertError}`))
       setBooks(prev => {
         const merged = mergeBooks(prev, incoming)
         setSelected(new Set(merged.map((_, i) => i)))
