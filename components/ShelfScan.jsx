@@ -322,9 +322,6 @@ export default function ShelfScan({ showLabel = false }) {
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium line-clamp-1">{b.dbBook?.title ?? b.title}</p>
                         <p className="text-xs text-slate">{b.dbBook?.author ?? b.author}</p>
-                        {!b.dbBook?.cover_url && (
-                          <p className="text-xs text-slate/50 mt-0.5">Will be enriched soon</p>
-                        )}
                       </div>
                       <button
                         type="button"
