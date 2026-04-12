@@ -32,7 +32,7 @@ function FeedbackForm({ book, onDone, onCorrect }) {
       const res = await fetch('/api/shelf/scan/rematch', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: trimTitle || book.title, author: trimAuthor }),
+        body: JSON.stringify({ title: trimTitle || book.title, author: trimAuthor, oldBookId: b.dbBook?.id }),
       })
       const data = await res.json()
       if (data.dbBook) onCorrect?.(data.dbBook)
