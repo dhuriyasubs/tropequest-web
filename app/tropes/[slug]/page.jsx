@@ -48,10 +48,12 @@ export async function generateMetadata({ params }) {
   const editorial = TROPE_EDITORIAL[params.slug]
   const description = editorial?.description
     ?? `Find the best ${trope} books on TropeQuest, sorted by rating, with covers, series info, and buy links.`
+  const books = await getBooksByTrope(trope)
   return {
     title: `Best ${trope} Books`,
     description,
     alternates: { canonical: `/tropes/${params.slug}` },
+    robots: books.length < 8 ? { index: false, follow: true } : undefined,
     openGraph: {
       title: `Best ${trope} Books | TropeQuest`,
       description,

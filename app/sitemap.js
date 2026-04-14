@@ -1,15 +1,15 @@
-import { getAllSlugs, getAllAuthors, getAllSeries, getFilterOptions } from '@/lib/search'
+import { getAllSlugs, getAllAuthors, getAllSeries, getTropesForSitemap } from '@/lib/search'
 import { getAllPosts } from '@/lib/blog'
 import { slugify } from '@/lib/utils'
 
 const BASE = 'https://tropequest.com'
 
 export default async function sitemap() {
-  const [slugs, authors, seriesAll, { tropes }] = await Promise.all([
+  const [slugs, authors, seriesAll, tropes] = await Promise.all([
     getAllSlugs(),
     getAllAuthors(),
     getAllSeries(),
-    getFilterOptions(),
+    getTropesForSitemap(8),
   ])
 
   const bookUrls = slugs.map(slug => ({
