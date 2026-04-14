@@ -65,8 +65,8 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Only Goodreads or Amazon URLs are supported' }, { status: 400 })
   }
 
-  // Fetch the page
-  let html
+  // Fetch the page; fall back to Google Books if Goodreads blocks us
+  let context
   try {
     const res = await fetch(url, {
       headers: {
@@ -77,15 +77,38 @@ export async function POST(request) {
       signal: AbortSignal.timeout(10000),
     })
     if (!res.ok) throw new Error(`Page returned ${res.status}`)
-    html = await res.text()
-  } catch (err) {
-    return NextResponse.json({ error: `Could not fetch page: ${err.message}` }, { status: 502 })
+    const html = await res.text()
+    context = JSON.stringify(extractPageData(html), null, 2)
+  } catch {
+    if (!isGoodreads) {
+      return NextResponse.json({ error: 'Could not fetch page' }, { status: 502 })
+    }
+    // Goodreads blocked — fall back to Google Books API
+    const slug  = url.split('/book/show/')[1] ?? ''
+    const query = slug.replace(/^\d+-/, '').replace(/-/g, ' ').trim()
+    const gbRes = await fetch(
+      `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=1`,
+      { signal: AbortSignal.timeout(8000) }
+    )
+    if (!gbRes.ok) return NextResponse.json({ error: 'Could not fetch book data (Goodreads blocked, Google Books also failed)' }, { status: 502 })
+    const gbData = await gbRes.json()
+    const item   = gbData.items?.[0]
+    if (!item)   return NextResponse.json({ error: `No results found for "${query}"` }, { status: 404 })
+    const info   = item.volumeInfo
+    context = JSON.stringify({
+      title:        info.title,
+      authors:      info.authors,
+      description:  info.description,
+      cover_url:    info.imageLinks?.thumbnail?.replace('http://', 'https://'),
+      series:       info.seriesInfo ?? null,
+      categories:   info.categories,
+      rating:       info.averageRating ?? null,
+      rating_count: info.ratingsCount  ?? null,
+      source:       'google_books',
+    }, null, 2)
   }
 
-  const pageData = extractPageData(html)
-
   // Pass structured extraction to Gemini
-  const context = JSON.stringify(pageData, null, 2)
   const prompt  = PROMPT + '\n\n' + context
 
   try {
