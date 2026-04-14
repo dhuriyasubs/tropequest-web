@@ -39,6 +39,42 @@ const TROPE_EDITORIAL = {
     whyLove: 'Readers are drawn to morally grey heroes because they are interesting in a way that straightforwardly good characters rarely are. The tension between their actions and their feelings for the protagonist creates a push-pull that is hard to put down.',
     related: ['Dark Romance', 'Enemies to Lovers', 'Villain Romance', 'Anti-Hero'],
   },
+  'found-family': {
+    description: 'The best found family books: stories about the people you choose, not the ones you are born to. Fantasy, romance, and YA ranked by reader rating.',
+    intro: 'Found family is the trope that turns side characters into the beating heart of a story. A ragtag crew. A group of misfits who would die for each other. People who had no one and slowly, without meaning to, became everything to a handful of strangers. It appears across fantasy, romance, and YA, and it never stops working.',
+    whyLove: 'What makes found family so powerful is the element of choice. These bonds are not given, they are built, tested, and chosen again. Readers respond to the warmth of it, the safety of belonging somewhere after not belonging anywhere. When a found family is done right, losing any one of them feels like a genuine loss.',
+    related: ['Fantasy', 'Chosen One', 'Forbidden Love', 'Slow Burn'],
+  },
+  'second-chance': {
+    description: 'The best second chance romance books: first love, lost time, and the question of whether some things are worth trying again. Ranked by reader rating.',
+    intro: 'They were everything to each other once. Then life happened. Second chance romance asks whether the version of love that broke you can also be the one that puts you back together. It is one of the most emotionally loaded tropes in romance, because both characters already know what is at stake.',
+    whyLove: 'The power of second chance is history. These characters carry the weight of what they had, what went wrong, and what they are risking by trying again. Readers are invested from page one because the emotional backstory does half the work. When it finally comes together, it feels earned in a way that first-time love rarely does.',
+    related: ['Slow Burn', 'Forbidden Love', 'Enemies To Lovers', 'Friends To Lovers'],
+  },
+  'second-chance-romance': {
+    description: 'The best second chance romance books: first love, lost time, and the question of whether some things are worth trying again. Ranked by reader rating.',
+    intro: 'They were everything to each other once. Then life happened. Second chance romance asks whether the version of love that broke you can also be the one that puts you back together. It is one of the most emotionally loaded tropes in romance, because both characters already know what is at stake.',
+    whyLove: 'The power of second chance is history. These characters carry the weight of what they had, what went wrong, and what they are risking by trying again. Readers are invested from page one because the emotional backstory does half the work. When it finally comes together, it feels earned in a way that first-time love rarely does.',
+    related: ['Slow Burn', 'Forbidden Love', 'Enemies To Lovers', 'Friends To Lovers'],
+  },
+  'marriage-of-convenience': {
+    description: 'The best marriage of convenience romance books: contractual unions, unexpected feelings, and the slow unravelling of every sensible rule. Ranked by reader rating.',
+    intro: 'It starts as a transaction. Two people agree to marry for reasons that have nothing to do with love: money, protection, reputation, political alliance. They set rules. They keep their distance. And then, gradually, the rules stop holding.',
+    whyLove: 'Marriage of convenience works because forced proximity is built in. Two people sharing a life while pretending not to feel anything creates an unbearable slow burn. Every accidental touch, every moment of unexpected kindness, every rule broken just a little, compounds until the emotional dam gives way. Readers love the inevitability of it.',
+    related: ['Fake Dating', 'Slow Burn', 'Forced Proximity', 'Arranged Marriage'],
+  },
+  'cozy-fantasy': {
+    description: 'The best cozy fantasy books: low-stakes magic, warm world-building, and stories that feel like a cup of tea in a soft chair. Ranked by reader rating.',
+    intro: 'Not all fantasy needs a world-ending threat. Cozy fantasy trades apocalyptic stakes for intimate ones: a bakery with a secret ingredient, a small town with unusual residents, a librarian who tends to books that tend back. The magic is gentle. The danger is manageable. The warmth is the point.',
+    whyLove: 'Cozy fantasy has grown enormously because readers want a fantasy experience that does not demand emotional armour. The world-building is inventive, the characters are charming, and finishing the book feels like leaving somewhere you genuinely liked being. It is comfort reading with imagination.',
+    related: ['Found Family', 'Fantasy', 'Small Town', 'Friends To Lovers'],
+  },
+  'romantasy': {
+    description: 'The best romantasy books: fantasy worlds, epic magic systems, and romance at the centre. From fae courts to dragon riders, ranked by reader rating.',
+    intro: 'Romantasy puts the love story at the heart of the fantasy. Not as a subplot that the plot tolerates. Not as a reward at the end of the quest. The romance is the engine. The magic, the world, the stakes — they all exist in service of the central relationship, and the result is addictive in a way that neither pure fantasy nor pure romance quite matches.',
+    whyLove: 'Readers come to romantasy for the combination of escapism. The immersive world-building of high fantasy with the emotional intensity of romance. The best romantasy books deliver both without shortchanging either: worlds that feel fully realised and relationships that feel genuinely earned. When the two elements work together, the result is nearly impossible to put down.',
+    related: ['Fantasy', 'Enemies To Lovers', 'Fae', 'Forbidden Love'],
+  },
 }
 
 export async function generateMetadata({ params }) {
