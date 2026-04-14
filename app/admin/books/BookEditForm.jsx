@@ -333,9 +333,13 @@ export default function BookEditForm() {
         description:   b.description   ?? prev.description,
         series_name:   b.series_name   ?? prev.series_name,
         series_number: b.series_number ?? prev.series_number,
+        primary_genre: b.primary_genre ?? prev.primary_genre,
+        genres:        Array.isArray(b.genres) ? b.genres.join(', ') : (b.genres ?? prev.genres),
+        release_date:  b.release_date  ?? prev.release_date,
+        release_year:  b.release_year  ?? prev.release_year,
         rating:        b.rating        ?? prev.rating,
         rating_count:  b.rating_count  ?? prev.rating_count,
-        genres:        Array.isArray(b.genres) ? b.genres.join(', ') : (b.genres ?? prev.genres),
+        rating_source: b.rating_source ?? prev.rating_source,
       }))
       setBookUrl('')
     } catch (err) {

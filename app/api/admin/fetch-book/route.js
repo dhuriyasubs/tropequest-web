@@ -14,9 +14,13 @@ const PROMPT = `Extract book metadata from the following web page data and retur
   "cover_url": "full image URL of the book cover",
   "series_name": "series name or null",
   "series_number": number or null,
+  "primary_genre": "single most relevant genre (e.g. Romance, Fantasy, YA, Thriller) or null",
   "genres": ["genre1", "genre2"],
+  "release_date": "ISO date string YYYY-MM-DD or null",
+  "release_year": integer year or null,
   "rating": number or null (out of 5),
-  "rating_count": integer or null
+  "rating_count": integer or null,
+  "rating_source": "source of rating e.g. Goodreads, Amazon, or null"
 }
 
 If a field has no matching content, use null. Data:`
@@ -96,15 +100,16 @@ export async function POST(request) {
     if (!item)   return NextResponse.json({ error: `No results found for "${query}"` }, { status: 404 })
     const info   = item.volumeInfo
     context = JSON.stringify({
-      title:        info.title,
-      authors:      info.authors,
-      description:  info.description,
-      cover_url:    info.imageLinks?.thumbnail?.replace('http://', 'https://'),
-      series:       info.seriesInfo ?? null,
-      categories:   info.categories,
-      rating:       info.averageRating ?? null,
-      rating_count: info.ratingsCount  ?? null,
-      source:       'google_books',
+      title:         info.title,
+      authors:       info.authors,
+      description:   info.description,
+      cover_url:     info.imageLinks?.thumbnail?.replace('http://', 'https://'),
+      series:        info.seriesInfo ?? null,
+      categories:    info.categories,
+      published_date: info.publishedDate ?? null,
+      rating:        info.averageRating ?? null,
+      rating_count:  info.ratingsCount  ?? null,
+      source:        'google_books',
     }, null, 2)
   }
 
