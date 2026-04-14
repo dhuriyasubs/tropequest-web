@@ -58,6 +58,19 @@ export async function generateMetadata({ params }) {
   }
 }
 
+// Author-specific series display order (series names must match DB exactly)
+const AUTHOR_SERIES_ORDER = {
+  'Catharina Maura': ['Stolen Moments', 'Serendipity', 'Off-Limits', 'The Windsors'],
+}
+
+function sortedSeries(author, seriesMap) {
+  const order = AUTHOR_SERIES_ORDER[author]
+  if (!order) return Object.keys(seriesMap)
+  const known = order.filter(s => seriesMap[s])
+  const rest  = Object.keys(seriesMap).filter(s => !order.includes(s))
+  return [...known, ...rest]
+}
+
 export default async function AuthorPage({ params }) {
   const author = decodeURIComponent(params.slug)
   const [books, bio] = await Promise.all([
@@ -78,6 +91,8 @@ export default async function AuthorPage({ params }) {
     }
   }
 
+  const orderedSeries = sortedSeries(author, seriesMap)
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
       <Breadcrumb crumbs={[
@@ -90,13 +105,13 @@ export default async function AuthorPage({ params }) {
       <p className="text-slate mb-8">{books.length} books on TropeQuest</p>
       <AuthorBio bio={bio} />
 
-      {Object.entries(seriesMap).map(([series, seriesBooks]) => (
+      {orderedSeries.map(series => (
         <section key={series} className="mb-10">
           <h2 className="font-serif text-xl font-semibold mb-3">
             <Link href={`/series/${slugify(series)}`} className="hover:text-bloom transition-colors">{series}</Link>
           </h2>
           <div className="divide-y divide-gray-100">
-            {seriesBooks
+            {seriesMap[series]
               .sort((a, b) => (a.series_number || 0) - (b.series_number || 0))
               .map(b => <BookListRow key={b.id} book={b} />)}
           </div>
