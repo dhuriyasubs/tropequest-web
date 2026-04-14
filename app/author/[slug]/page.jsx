@@ -38,15 +38,17 @@ function BookListRow({ book }) {
 
 export async function generateMetadata({ params }) {
   const author = decodeURIComponent(params.slug)
+  const books = await getBooksByAuthor(author)
   const description = `Browse all books by ${author} on TropeQuest: series, standalones, ratings, and tropes.`
   return {
     title: `Books by ${author}`,
     description,
-    alternates: { canonical: `/author/${params.slug}` },
+    alternates: { canonical: `/author/${encodeURIComponent(author)}` },
+    robots: books.length < 2 ? { index: false, follow: true } : undefined,
     openGraph: {
       title: `Books by ${author} | TropeQuest`,
       description,
-      url: `/author/${params.slug}`,
+      url: `/author/${encodeURIComponent(author)}`,
     },
     twitter: {
       card: 'summary',
