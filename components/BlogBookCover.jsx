@@ -1,11 +1,12 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { supabaseAdmin } from '@/lib/supabase'
+import BlogTbrButton from '@/components/BlogTbrButton'
 
-export default async function BookCover({ slug }) {
+export default async function BookCover({ slug, blogTitle }) {
   const { data: book } = await supabaseAdmin
     .from('books')
-    .select('title, cover_url')
+    .select('id, title, cover_url')
     .eq('slug', slug)
     .single()
 
@@ -24,6 +25,11 @@ export default async function BookCover({ slug }) {
           />
         </div>
       </Link>
+      {blogTitle && book.id && (
+        <div className="mt-2">
+          <BlogTbrButton bookId={book.id} blogTitle={blogTitle} />
+        </div>
+      )}
     </div>
   )
 }

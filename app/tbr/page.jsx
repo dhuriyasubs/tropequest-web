@@ -105,6 +105,11 @@ export default async function TbrPage() {
                       🎬 From video
                     </span>
                   )}
+                  {book.source?.startsWith('blog:') && (
+                    <span className="text-xs bg-petal/30 text-bloom border border-bloom/20 rounded-full px-2 py-0.5 font-medium">
+                      📖 From: {book.source.slice(5)}
+                    </span>
+                  )}
                   {shelfIds.has(book.id) && (
                     <span className="text-xs bg-green-50 text-green-700 border border-green-200 rounded-full px-2 py-0.5 font-medium">
                       On shelf

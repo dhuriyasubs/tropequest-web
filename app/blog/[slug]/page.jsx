@@ -37,6 +37,8 @@ export default function BlogPostPage({ params }) {
   const { frontmatter, content } = post
   const related = getRelatedPosts(params.slug, frontmatter.tags || [])
 
+  const BoundBookCover = (props) => <BookCover {...props} blogTitle={frontmatter.title} />
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-16">
       <Breadcrumb crumbs={[
@@ -73,7 +75,7 @@ export default function BlogPostPage({ params }) {
         prose-a:text-bloom prose-a:no-underline hover:prose-a:underline
         prose-strong:text-ink
         prose-li:text-slate prose-p:text-slate prose-p:leading-relaxed">
-        <MDXRemote source={content} components={{ BookCover }} />
+        <MDXRemote source={content} components={{ BookCover: BoundBookCover }} />
       </article>
 
       <RelatedPosts posts={related} />
