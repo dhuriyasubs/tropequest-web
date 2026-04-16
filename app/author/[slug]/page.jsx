@@ -4,7 +4,7 @@ import Image from 'next/image'
 import Breadcrumb from '@/components/Breadcrumb'
 import AuthorBio from '@/components/AuthorBio'
 import { getBooksByAuthor, getAuthorBio } from '@/lib/search'
-import { slugify } from '@/lib/utils'
+import { slugify, formatAuthorName } from '@/lib/utils'
 
 export const revalidate = 3600
 
@@ -38,21 +38,22 @@ function BookListRow({ book }) {
 
 export async function generateMetadata({ params }) {
   const author = decodeURIComponent(params.slug)
+  const displayAuthor = formatAuthorName(author)
   const books = await getBooksByAuthor(author)
-  const description = `Browse all books by ${author} on TropeQuest: series, standalones, ratings, and tropes.`
+  const description = `Browse all books by ${displayAuthor} on TropeQuest: series, standalones, ratings, and tropes.`
   return {
-    title: `Books by ${author}`,
+    title: `Books by ${displayAuthor}`,
     description,
     alternates: { canonical: `/author/${encodeURIComponent(author)}` },
     robots: books.length < 2 ? { index: false, follow: true } : undefined,
     openGraph: {
-      title: `Books by ${author} | TropeQuest`,
+      title: `Books by ${displayAuthor} | TropeQuest`,
       description,
       url: `/author/${encodeURIComponent(author)}`,
     },
     twitter: {
       card: 'summary',
-      title: `Books by ${author} | TropeQuest`,
+      title: `Books by ${displayAuthor} | TropeQuest`,
       description,
     },
   }
@@ -98,10 +99,10 @@ export default async function AuthorPage({ params }) {
       <Breadcrumb crumbs={[
         { label: 'Home', href: '/' },
         { label: 'Authors', href: '/author' },
-        { label: author },
+        { label: formatAuthorName(author) },
       ]} />
 
-      <h1 className="font-serif text-3xl font-bold mb-1">{author}</h1>
+      <h1 className="font-serif text-3xl font-bold mb-1">{formatAuthorName(author)}</h1>
       <p className="text-slate mb-8">{books.length} books on TropeQuest</p>
       <AuthorBio bio={bio} />
 

@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
+import { formatAuthorName } from '@/lib/utils'
 
 export default function AuthorList({ authors }) {
   const [query, setQuery] = useState('')
@@ -38,7 +39,7 @@ export default function AuthorList({ authors }) {
           <div className="flex flex-wrap gap-2">
             {grouped[letter].map(a => (
               <Link key={a} href={`/author/${encodeURIComponent(a)}`} className="chip">
-                {a}
+                {formatAuthorName(a)}
               </Link>
             ))}
           </div>
