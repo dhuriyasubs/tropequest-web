@@ -10,7 +10,7 @@ function upgradeCover(url) {
 function parseTitle(raw) {
   const decoded = raw.replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'").trim()
   // "Court of Nightmares (Courts & Kings #1)"
-  const m1 = decoded.match(/^(.+?)\s*\((.+?)\s*#(\d+(?:\.\d+)?)\)\s*$/)
+  const m1 = decoded.match(/^(.+?)\s*\(([^,)]+?)\s*#(\d+(?:\.\d+)?)\)\s*$/)
   if (m1) return { title: m1[1].trim(), series_name: m1[2].trim(), series_number: parseFloat(m1[3]) }
   // "Den of Vipers (Den of Vipers, #1)"
   const m2 = decoded.match(/^(.+?)\s*\((.+?),\s*#(\d+(?:\.\d+)?)\)\s*$/)
