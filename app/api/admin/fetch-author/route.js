@@ -90,8 +90,10 @@ export async function POST(request) {
     const html = await res.text()
 
     // Prefer author name from page title: "Books by K.A. Knight (Author of ...)"
-    const pageTitleMatch = html.match(/<title[^>]*>Books by ([^(]+)/i)
-    const authorName = pageTitleMatch ? pageTitleMatch[1].trim() : authorFromUrl
+    const pageTitleMatch = html.match(/<title[^>]*>Books by ([^(<]+)/i)
+    const rawAuthor = pageTitleMatch ? pageTitleMatch[1] : authorFromUrl
+    // Normalize: strip NBSP/zero-width chars, collapse multiple spaces, trim
+    const authorName = rawAuthor.replace(/[\u00a0\u200b\u200c\u200d\ufeff]/g, ' ').replace(/\s+/g, ' ').trim()
 
     const hasMore = /rel="next"/.test(html) || /class="next_page"/.test(html)
     const books   = extractBooks(html, authorName)

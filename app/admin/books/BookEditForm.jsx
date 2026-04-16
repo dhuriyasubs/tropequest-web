@@ -395,9 +395,9 @@ export default function BookEditForm() {
       setBulkBooks(bs => bs.map(b => b.slug === book.slug ? { ...b, status: 'adding' } : b))
       try {
         const payload = {
-          title:         book.title,
-          author:        book.author,
-          slug:          book.slug,
+          title:         book.title.trim(),
+          author:        book.author.trim(),
+          slug:          book.slug.trim(),
           cover_url:     book.cover_url     || null,
           series_name:   book.series_name   || null,
           series_number: book.series_number ?? null,
