@@ -92,8 +92,15 @@ export async function POST(request) {
     // Prefer author name from page title: "Books by K.A. Knight (Author of ...)"
     const pageTitleMatch = html.match(/<title[^>]*>Books by ([^(<]+)/i)
     const rawAuthor = pageTitleMatch ? pageTitleMatch[1] : authorFromUrl
-    // Normalize: strip NBSP/zero-width chars, collapse multiple spaces, trim
-    const authorName = rawAuthor.replace(/[\u00a0\u200b\u200c\u200d\ufeff]/g, ' ').replace(/\s+/g, ' ').trim()
+    // Normalize to match DB constraint: strip special spaces, collapse whitespace,
+    // then for each space-separated token capitalize first char only (e.g. "K.A." → "K.a.")
+    const authorName = rawAuthor
+      .replace(/[\u00a0\u200b\u200c\u200d\ufeff]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .split(' ')
+      .map(t => t ? t[0].toUpperCase() + t.slice(1).toLowerCase() : t)
+      .join(' ')
 
     const hasMore = /rel="next"/.test(html) || /class="next_page"/.test(html)
     const books   = extractBooks(html, authorName)
