@@ -11,103 +11,78 @@ function toSlug(title, author) {
   return `${title}-${author}`.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 }
 
+function decodeEntities(str) {
+  return str
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'")
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+}
+
+// Goodreads series pages embed book data as HTML-escaped JSON in the page source.
+// Each book block contains fields like: imageUrl, bookUrl, title (full w/ series #),
+// bookTitleBare, avgRating, ratingsCount, authorName.
 function extractSeriesBooks(html, seriesName) {
   const books = []
+  const seen  = new Set()
 
-  // Series pages list books inside <div class="listWithDividers__item"> or <tr> rows
-  // Try the table row format first (most common on series pages)
-  const rowRe = /<tr[^>]*>([\s\S]*?)<\/tr>/gi
+  // Find each book by its bookUrl field
+  const markerRe = /&quot;bookUrl&quot;:&quot;(\/book\/show\/[^&"]+)&quot;/g
   let m
 
-  while ((m = rowRe.exec(html)) !== null) {
-    const row = m[1]
-    if (!row.includes('/book/show/')) continue
+  while ((m = markerRe.exec(html)) !== null) {
+    const bookUrl = m[1]
+    if (seen.has(bookUrl)) continue
+    seen.add(bookUrl)
 
-    // Series number — try multiple patterns Goodreads uses
-    const posEl =
-      row.match(/<td[^>]*class="[^"]*number[^"]*"[^>]*>[\s\S]*?(\d+(?:\.\d+)?)\s*<\/td>/) ||
-      row.match(/<div[^>]*class="[^"]*number[^"]*"[^>]*>[\s\S]*?(\d+(?:\.\d+)?)\s*<\/div>/) ||
-      row.match(/[Bb]ook\s+(\d+(?:\.\d+)?)/) ||
-      row.match(/#\s*(\d+(?:\.\d+)?)/) ||
-      row.match(/^[\s\S]*?<td[^>]*>\s*(\d+(?:\.\d+)?)\s*<\/td>/)
-    const seriesNumber = posEl ? parseFloat(posEl[1]) : null
+    // Window of text around this marker (look back more than forward since imageUrl precedes bookUrl)
+    const start = Math.max(0, m.index - 2000)
+    const end   = Math.min(html.length, m.index + 3000)
+    const chunk = html.slice(start, end)
 
-    // Title
-    const titleEl = row.match(/itemprop=['"]name['"][^>]*>([^<]+)<\/span>/)
-      || row.match(/class=['"]bookTitle['"][^>]*>([^<]+)<\/a>/)
-    if (!titleEl) continue
+    const getStr = (key) => {
+      const re = new RegExp(`&quot;${key}&quot;:&quot;((?:[^&"]|&amp;|&#x27;|&#39;|&lt;|&gt;)+)&quot;`)
+      const hit = chunk.match(re)
+      return hit ? decodeEntities(hit[1]) : null
+    }
+    const getNum = (key) => {
+      const re = new RegExp(`&quot;${key}&quot;:(\\d+(?:\\.\\d+)?)`)
+      const hit = chunk.match(re)
+      return hit ? parseFloat(hit[1]) : null
+    }
 
-    const title = titleEl[1].replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'").trim()
+    const fullTitle = getStr('title') || ''
+    const bareTitle = getStr('bookTitleBare') || fullTitle
+    if (!bareTitle) continue
 
-    // Author
-    const authorEl = row.match(/itemprop=['"]author['"][^>]*>\s*<[^>]+>\s*([^<]+)<\//)
-      || row.match(/class=['"]authorName[^'"]*['"][^>]*>([^<]+)<\//)
-      || row.match(/\/author\/show\/[^"]+">([^<]+)<\/a>/)
-    const author = authorEl
-      ? authorEl[1].replace(/&amp;/g, '&').replace(/&#39;/g, "'").trim()
-      : 'Unknown'
+    // Series number from title like "The Chase (Briar U, #1)" or "(Briar U #3.5)"
+    const numMatch = fullTitle.match(/#(\d+(?:\.\d+)?)/)
+    const seriesNumber = numMatch ? parseFloat(numMatch[1]) : null
 
-    // Cover
-    const coverEl = row.match(/src="(https:\/\/[^"]+\/photo\/[^"]+)"/)
-      || row.match(/class=['"]bookCover['"][^>]*src="([^"]+)"/)
-    const cover = upgradeCover(coverEl?.[1] ?? null)
+    // Cover: imageUrl field
+    const imageUrl  = getStr('imageUrl')
 
-    // GR URL
-    const urlEl = row.match(/href="(\/book\/show\/[^"?#]+)"/)
-    const goodreads_url = urlEl ? `https://www.goodreads.com${urlEl[1]}` : null
+    // Author: try authorName, then contributor name field
+    const author = getStr('authorName') || getStr('name') || 'Unknown'
 
-    // Rating
-    const ratingEl = row.match(/([\d]+\.[\d]+)\s*avg/)
-    const countEl  = row.match(/([\d,]+)\s*ratings/)
+    // Ratings
+    const avgRating   = getNum('avgRating')
+    const ratingCount = getNum('ratingsCount')
 
     books.push({
-      title,
+      title:         bareTitle,
       author,
-      slug:          toSlug(title, author),
-      cover_url:     cover,
+      slug:          toSlug(bareTitle, author),
+      cover_url:     upgradeCover(imageUrl),
       series_name:   seriesName,
       series_number: seriesNumber,
-      rating:        ratingEl ? parseFloat(ratingEl[1]) : null,
-      rating_count:  countEl  ? parseInt(countEl[1].replace(/,/g, ''), 10) : null,
+      rating:        avgRating,
+      rating_count:  ratingCount ? Math.round(ratingCount) : null,
       rating_source: 'Goodreads',
-      goodreads_url,
+      goodreads_url: `https://www.goodreads.com${bookUrl}`,
     })
-  }
-
-  // Fallback: newer Goodreads format uses div-based layout
-  if (books.length === 0) {
-    const itemRe = /<div[^>]*class="[^"]*listWithDividers__item[^"]*"[^>]*>([\s\S]*?)(?=<div[^>]*class="[^"]*listWithDividers__item|$)/gi
-    while ((m = itemRe.exec(html)) !== null) {
-      const item = m[1]
-      if (!item.includes('/book/show/')) continue
-
-      const titleEl = item.match(/class=['"]bookTitle['"][^>]*>\s*<span[^>]*>([^<]+)<\/span>/)
-        || item.match(/itemprop=['"]name['"][^>]*>([^<]+)<\//)
-      if (!titleEl) continue
-
-      const title = titleEl[1].replace(/&amp;/g, '&').replace(/&#39;/g, "'").trim()
-      const authorEl = item.match(/class=['"]authorName[^'"]*['"][^>]*>([^<]+)<\//)
-        || item.match(/\/author\/show\/[^"]+">([^<]+)<\/a>/)
-      const author = authorEl ? authorEl[1].trim() : 'Unknown'
-      const coverEl = item.match(/src="(https:\/\/[^"]+\/photo\/[^"]+)"/)
-      const urlEl = item.match(/href="(\/book\/show\/[^"?#]+)"/)
-      const posEl = item.match(/[Bb]ook\s+(\d+(?:\.\d+)?)/)
-        || item.match(/<div[^>]*class="[^"]*number[^"]*"[^>]*>[\s\S]*?(\d+(?:\.\d+)?)\s*<\/div>/)
-        || item.match(/#\s*(\d+(?:\.\d+)?)/)
-
-      books.push({
-        title,
-        author,
-        slug:          toSlug(title, author),
-        cover_url:     upgradeCover(coverEl?.[1] ?? null),
-        series_name:   seriesName,
-        series_number: posEl ? parseFloat(posEl[1]) : null,
-        rating:        null,
-        rating_count:  null,
-        rating_source: 'Goodreads',
-        goodreads_url: urlEl ? `https://www.goodreads.com${urlEl[1]}` : null,
-      })
-    }
   }
 
   return books
@@ -163,9 +138,9 @@ export async function POST(request) {
       )
     }
 
-    // Debug: grab a snippet around the first /book/show/ occurrence so we can inspect HTML structure
-    const snippetIdx = html.indexOf('/book/show/')
-    const htmlSnippet = snippetIdx >= 0 ? html.slice(Math.max(0, snippetIdx - 300), snippetIdx + 300) : ''
+    // Debug: show 1500 chars after the first bookUrl to reveal author/rating fields
+    const bookUrlIdx = html.indexOf('&quot;bookUrl&quot;')
+    const htmlSnippet = bookUrlIdx >= 0 ? html.slice(bookUrlIdx, bookUrlIdx + 1500) : ''
 
     return NextResponse.json({ books, series: seriesName, html_snippet: htmlSnippet })
   } catch (err) {
