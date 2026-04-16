@@ -23,8 +23,13 @@ function extractSeriesBooks(html, seriesName) {
     const row = m[1]
     if (!row.includes('/book/show/')) continue
 
-    // Series number (position in series)
-    const posEl = row.match(/<td[^>]*class="[^"]*number[^"]*"[^>]*>\s*(\d+(?:\.\d+)?)\s*<\/td>/)
+    // Series number — try multiple patterns Goodreads uses
+    const posEl =
+      row.match(/<td[^>]*class="[^"]*number[^"]*"[^>]*>[\s\S]*?(\d+(?:\.\d+)?)\s*<\/td>/) ||
+      row.match(/<div[^>]*class="[^"]*number[^"]*"[^>]*>[\s\S]*?(\d+(?:\.\d+)?)\s*<\/div>/) ||
+      row.match(/[Bb]ook\s+(\d+(?:\.\d+)?)/) ||
+      row.match(/#\s*(\d+(?:\.\d+)?)/) ||
+      row.match(/^[\s\S]*?<td[^>]*>\s*(\d+(?:\.\d+)?)\s*<\/td>/)
     const seriesNumber = posEl ? parseFloat(posEl[1]) : null
 
     // Title
@@ -86,7 +91,9 @@ function extractSeriesBooks(html, seriesName) {
       const author = authorEl ? authorEl[1].trim() : 'Unknown'
       const coverEl = item.match(/src="(https:\/\/[^"]+\/photo\/[^"]+)"/)
       const urlEl = item.match(/href="(\/book\/show\/[^"?#]+)"/)
-      const posEl = item.match(/book\s+(\d+(?:\.\d+)?)\s*(?:of|in)/i)
+      const posEl = item.match(/[Bb]ook\s+(\d+(?:\.\d+)?)/)
+        || item.match(/<div[^>]*class="[^"]*number[^"]*"[^>]*>[\s\S]*?(\d+(?:\.\d+)?)\s*<\/div>/)
+        || item.match(/#\s*(\d+(?:\.\d+)?)/)
 
       books.push({
         title,
@@ -156,7 +163,11 @@ export async function POST(request) {
       )
     }
 
-    return NextResponse.json({ books, series: seriesName })
+    // Debug: grab a snippet around the first /book/show/ occurrence so we can inspect HTML structure
+    const snippetIdx = html.indexOf('/book/show/')
+    const htmlSnippet = snippetIdx >= 0 ? html.slice(Math.max(0, snippetIdx - 300), snippetIdx + 300) : ''
+
+    return NextResponse.json({ books, series: seriesName, html_snippet: htmlSnippet })
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 502 })
   }
