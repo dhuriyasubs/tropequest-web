@@ -363,7 +363,9 @@ export default function BookEditForm() {
     setBulkError('')
     setBulkBooks([])
     try {
-      const res  = await fetch('/api/admin/fetch-author', {
+      const isSeries = /goodreads\.com\/series\//.test(bulkUrl)
+      const endpoint = isSeries ? '/api/admin/fetch-series' : '/api/admin/fetch-author'
+      const res  = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: bulkUrl.trim() }),
@@ -592,14 +594,14 @@ export default function BookEditForm() {
       {mode === 'bulk' && (
         <div className="space-y-6">
           <div className="bg-petal/10 rounded-xl p-4 space-y-3">
-            <label className="block text-sm font-semibold">Goodreads Author List URL</label>
-            <p className="text-xs text-slate">Paste a Goodreads author page URL to extract all their books at once.</p>
+            <label className="block text-sm font-semibold">Goodreads Author or Series URL</label>
+            <p className="text-xs text-slate">Paste a Goodreads author list URL or series page URL to extract all books at once.</p>
             <div className="flex gap-2">
               <input
                 type="url"
                 value={bulkUrl}
                 onChange={e => setBulkUrl(e.target.value)}
-                placeholder="https://www.goodreads.com/author/list/..."
+                placeholder="https://www.goodreads.com/author/list/... or /series/..."
                 className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bloom/40 bg-white"
               />
               <button type="button" onClick={handleFetchAuthor} disabled={bulkFetching || !bulkUrl.trim()}
