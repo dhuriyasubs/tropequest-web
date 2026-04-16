@@ -215,6 +215,13 @@ export default function BookEditForm() {
   const [status, setStatus]     = useState(null)
   const [errorMsg, setErrorMsg] = useState('')
 
+  // Bulk import state
+  const [bulkUrl,      setBulkUrl]      = useState('')
+  const [bulkBooks,    setBulkBooks]    = useState([])   // [{ ...bookFields, selected, status, error }]
+  const [bulkFetching, setBulkFetching] = useState(false)
+  const [bulkError,    setBulkError]    = useState('')
+  const [bulkAdding,   setBulkAdding]   = useState(false)
+
   // Enrichment queue
   const [pending, setPending]         = useState([])
   const [pendingLoading, setPendingLoading] = useState(true)
@@ -349,6 +356,74 @@ export default function BookEditForm() {
     }
   }
 
+  // ── Bulk import helpers ────────────────────────────────────────────────
+  async function handleFetchAuthor() {
+    if (!bulkUrl.trim()) return
+    setBulkFetching(true)
+    setBulkError('')
+    setBulkBooks([])
+    try {
+      const res  = await fetch('/api/admin/fetch-author', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: bulkUrl.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setBulkBooks(data.books.map(b => ({ ...b, selected: true, status: 'pending', error: null })))
+      if (data.has_more) setBulkError(`Showing first page only (${data.books.length} books). Goodreads paginates results.`)
+    } catch (err) {
+      setBulkError(err.message)
+    } finally {
+      setBulkFetching(false)
+    }
+  }
+
+  function toggleBulkBook(idx) {
+    setBulkBooks(bs => bs.map((b, i) => i === idx ? { ...b, selected: !b.selected } : b))
+  }
+
+  function toggleAllBulk(val) {
+    setBulkBooks(bs => bs.map(b => b.status === 'pending' ? { ...b, selected: val } : b))
+  }
+
+  async function handleBulkAdd() {
+    const toAdd = bulkBooks.filter(b => b.selected && b.status === 'pending')
+    if (!toAdd.length) return
+    setBulkAdding(true)
+    for (const book of toAdd) {
+      setBulkBooks(bs => bs.map(b => b.slug === book.slug ? { ...b, status: 'adding' } : b))
+      try {
+        const payload = {
+          title:         book.title,
+          author:        book.author,
+          slug:          book.slug,
+          cover_url:     book.cover_url     || null,
+          series_name:   book.series_name   || null,
+          series_number: book.series_number ?? null,
+          rating:        book.rating        ?? null,
+          rating_count:  book.rating_count  ?? null,
+          rating_source: book.rating_source || null,
+          genres:        [],
+          tropes:        [],
+          characters:    [],
+        }
+        const res  = await fetch('/api/admin/books', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error)
+        setBulkBooks(bs => bs.map(b => b.slug === book.slug ? { ...b, status: 'added' } : b))
+      } catch (err) {
+        setBulkBooks(bs => bs.map(b => b.slug === book.slug ? { ...b, status: 'error', error: err.message } : b))
+      }
+    }
+    setBulkAdding(false)
+    fetch('/api/admin/books?pending=1').then(r => r.json()).then(d => setPending(d.books ?? []))
+  }
+
   async function handleDelete() {
     if (!editBook?.id) return
     if (!window.confirm(`Delete "${editBook.title}"? This cannot be undone.`)) return
@@ -398,10 +473,10 @@ export default function BookEditForm() {
 
       {/* Mode tabs */}
       <div className="flex gap-1 border border-gray-200 rounded-xl p-1 w-fit">
-        {['edit', 'new'].map(m => (
+        {[['edit', 'Edit Book'], ['new', 'Add New'], ['bulk', 'Bulk Import']].map(([m, label]) => (
           <button key={m} type="button" onClick={() => { setMode(m); setStatus(null); setErrorMsg('') }}
             className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${mode === m ? 'bg-bloom text-white' : 'text-slate hover:bg-petal/10'}`}>
-            {m === 'edit' ? 'Edit Book' : 'Add New'}
+            {label}
           </button>
         ))}
       </div>
@@ -511,6 +586,92 @@ export default function BookEditForm() {
             {status === 'error'  && <span className="text-sm text-red-500">{errorMsg}</span>}
           </div>
         </form>
+      )}
+
+      {/* Bulk Import mode */}
+      {mode === 'bulk' && (
+        <div className="space-y-6">
+          <div className="bg-petal/10 rounded-xl p-4 space-y-3">
+            <label className="block text-sm font-semibold">Goodreads Author List URL</label>
+            <p className="text-xs text-slate">Paste a Goodreads author page URL to extract all their books at once.</p>
+            <div className="flex gap-2">
+              <input
+                type="url"
+                value={bulkUrl}
+                onChange={e => setBulkUrl(e.target.value)}
+                placeholder="https://www.goodreads.com/author/list/..."
+                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bloom/40 bg-white"
+              />
+              <button type="button" onClick={handleFetchAuthor} disabled={bulkFetching || !bulkUrl.trim()}
+                className="px-4 py-2 text-sm bg-bloom text-white rounded-lg hover:bg-bloom/90 transition-colors disabled:opacity-50 whitespace-nowrap">
+                {bulkFetching ? 'Fetching...' : 'Extract Books'}
+              </button>
+            </div>
+            {bulkError && <p className="text-xs text-amber-600">{bulkError}</p>}
+          </div>
+
+          {bulkBooks.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold">{bulkBooks.length} books found</p>
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => toggleAllBulk(true)}
+                    className="text-xs text-bloom underline">Select all</button>
+                  <button type="button" onClick={() => toggleAllBulk(false)}
+                    className="text-xs text-slate underline">None</button>
+                </div>
+              </div>
+
+              <div className="border border-gray-200 rounded-xl overflow-hidden divide-y divide-gray-100">
+                {bulkBooks.map((book, idx) => (
+                  <div key={idx} className={`flex items-center gap-3 px-3 py-2.5 ${book.status === 'added' ? 'bg-green-50' : book.status === 'error' ? 'bg-red-50' : ''}`}>
+                    <input
+                      type="checkbox"
+                      checked={book.selected && book.status === 'pending'}
+                      disabled={book.status !== 'pending'}
+                      onChange={() => toggleBulkBook(idx)}
+                      className="shrink-0"
+                    />
+                    {book.cover_url
+                      ? <img src={book.cover_url} alt={book.title} className="w-8 h-12 object-contain rounded shrink-0" />
+                      : <div className="w-8 h-12 bg-gray-100 rounded shrink-0" />
+                    }
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{book.title}</p>
+                      <p className="text-xs text-slate">
+                        {book.series_name ? `${book.series_name} #${book.series_number} · ` : ''}
+                        {book.rating ? `★ ${book.rating}` : ''}
+                      </p>
+                      {book.status === 'error' && <p className="text-xs text-red-500">{book.error}</p>}
+                    </div>
+                    <span className={`text-xs shrink-0 font-medium ${
+                      book.status === 'added'  ? 'text-green-600' :
+                      book.status === 'adding' ? 'text-bloom' :
+                      book.status === 'error'  ? 'text-red-500' : 'text-slate/40'
+                    }`}>
+                      {book.status === 'added'  ? '✓ Added' :
+                       book.status === 'adding' ? 'Adding...' :
+                       book.status === 'error'  ? '✗ Error' : ''}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-4">
+                <button type="button" onClick={handleBulkAdd}
+                  disabled={bulkAdding || !bulkBooks.some(b => b.selected && b.status === 'pending')}
+                  className="bg-bloom text-white px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-bloom/90 transition-colors disabled:opacity-60">
+                  {bulkAdding ? 'Adding...' : `Add Selected (${bulkBooks.filter(b => b.selected && b.status === 'pending').length})`}
+                </button>
+                {bulkBooks.some(b => b.status === 'added') && (
+                  <span className="text-sm text-green-600 font-medium">
+                    {bulkBooks.filter(b => b.status === 'added').length} books added
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       {/* DB Stats */}
