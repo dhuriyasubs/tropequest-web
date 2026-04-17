@@ -704,7 +704,7 @@ export default function BookEditForm() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{book.title}</p>
                       <p className="text-xs text-slate">
-                        {book.series_name ? `${book.series_name} #${book.series_number} · ` : ''}
+                        {book.series_name ? `${book.series_name}${book.series_number != null ? ` #${book.series_number}` : ''} · ` : ''}
                         {book.rating ? `★ ${book.rating}` : ''}
                       </p>
                       {book._dbStatus === 'enrich' && book.status === 'pending' && (
