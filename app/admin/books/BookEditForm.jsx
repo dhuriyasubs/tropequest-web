@@ -26,11 +26,21 @@ function toSlug(title, author) {
   return `${title}-${author}`.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 }
 
+function normalizeAuthor(raw) {
+  return raw
+    .replace(/[\u00a0\u200b\u200c\u200d\ufeff]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .split(' ')
+    .map(t => t ? t[0].toUpperCase() + t.slice(1) : t)
+    .join(' ')
+}
+
 function buildPayload(book, isNew) {
   return {
     ...(!isNew && { id: book.id }),
     title:             book.title.trim(),
-    author:            book.author.trim(),
+    author:            normalizeAuthor(book.author),
     slug:              book.slug.trim(),
     cover_url:         book.cover_url         || null,
     description:       book.description       || null,
