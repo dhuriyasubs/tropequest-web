@@ -25,7 +25,7 @@ export default async function ShelfPage({ searchParams }) {
   // Fetch all shelf entries (unfiltered) for counts, then filter for display
   const { data: allData } = await supabase
     .from('shelf')
-    .select('status, created_at, books(id, title, author, cover_url, slug, rating, tropes, series_name, primary_genre)')
+    .select('status, created_at, books(id, title, author, cover_url, slug, rating, tropes, series_name, genres)')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 
@@ -44,10 +44,10 @@ export default async function ShelfPage({ searchParams }) {
     )
   }
 
-  // Group by primary_genre
+  // Group by first genre tag
   const genreMap = new Map()
   for (const entry of entries) {
-    const genre = entry.books.primary_genre || UNCATEGORISED_LABEL
+    const genre = entry.books.genres?.[0] || UNCATEGORISED_LABEL
     if (!genreMap.has(genre)) genreMap.set(genre, [])
     genreMap.get(genre).push(entry)
   }

@@ -6,14 +6,14 @@ const inputCls = 'w-full border border-gray-200 rounded-lg px-3 py-2 text-sm foc
 const EMPTY_BOOK = {
   title: '', author: '', slug: '', cover_url: '',
   series_name: '', series_number: '', rating: '', rating_count: '', rating_source: '',
-  primary_genre: '', secondary_genre: '', genres: '', tropes: '', characters: '', description: '',
+  genres: '', tropes: '', characters: '', description: '',
   release_date: '', release_year: '',
   buy_url_amazon_us: '', buy_url_amazon_in: '', buy_url_flipkart: '',
   price_amazon_us: '', price_amazon_in: '',
   spice_rating: '',
 }
 
-const SPICE_LABELS = { 1: 'Tame', 2: 'Mild', 3: 'Steamy', 4: 'Very Steamy', 5: 'Explicit' }
+const SPICE_LABELS = { 1: 'Closed Door', 2: 'Fade to Black', 3: 'Some Steam', 4: 'Steamy', 5: 'Explicit' }
 
 function missingFields(b) {
   const missing = []
@@ -21,7 +21,7 @@ function missingFields(b) {
   if (!b.cover_url)                                missing.push('cover')
   if (!b.tropes || b.tropes.length === 0)          missing.push('tropes')
   if (!b.buy_url_amazon_us && !b.buy_url_amazon_in) missing.push('buy links')
-  if (!b.primary_genre)                            missing.push('genre')
+  if (!b.genres || b.genres.length === 0)           missing.push('genres')
   return missing
 }
 
@@ -52,8 +52,6 @@ function buildPayload(book, isNew) {
     rating:            book.rating        !== '' ? Number(book.rating)        : null,
     rating_count:      book.rating_count  !== '' ? Number(book.rating_count)  : null,
     rating_source:     book.rating_source || null,
-    primary_genre:     book.primary_genre   || null,
-    secondary_genre:   book.secondary_genre || null,
     release_date:      book.release_date    || null,
     release_year:      book.release_year !== '' ? Number(book.release_year) : null,
     genres:            book.genres      ? book.genres.split(',').map(s => s.trim()).filter(Boolean)      : [],
@@ -81,8 +79,6 @@ function normaliseBook(b) {
     cover_url:     b.cover_url     ?? '',
     description:   b.description   ?? '',
     series_name:   b.series_name   ?? '',
-    primary_genre:   b.primary_genre   ?? '',
-    secondary_genre: b.secondary_genre ?? '',
     release_date:    b.release_date    ?? '',
     release_year:    b.release_year    ?? '',
     buy_url_amazon_us: b.buy_url_amazon_us ?? '',
@@ -166,19 +162,9 @@ function BookFields({ book, set }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-xs text-slate mb-1">Primary Genre</label>
-          <input type="text" value={book.primary_genre} onChange={e => set('primary_genre', e.target.value)} className={inputCls} />
-        </div>
-        <div>
-          <label className="block text-xs text-slate mb-1">Secondary Genre</label>
-          <input type="text" value={book.secondary_genre} onChange={e => set('secondary_genre', e.target.value)} className={inputCls} />
-        </div>
-        <div className="sm:col-span-2">
-          <label className="block text-xs text-slate mb-1">Genres (comma-separated)</label>
-          <input type="text" value={book.genres} onChange={e => set('genres', e.target.value)} className={inputCls} />
-        </div>
+      <div>
+        <label className="block text-xs text-slate mb-1">Genres (comma-separated)</label>
+        <input type="text" value={book.genres} onChange={e => set('genres', e.target.value)} className={inputCls} />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -378,7 +364,6 @@ export default function BookEditForm() {
         description:   b.description   ?? prev.description,
         series_name:   b.series_name   ?? prev.series_name,
         series_number: b.series_number ?? prev.series_number,
-        primary_genre: b.primary_genre ?? prev.primary_genre,
         genres:        Array.isArray(b.genres) ? b.genres.join(', ') : (b.genres ?? prev.genres),
         release_date:  b.release_date  ?? prev.release_date,
         release_year:  b.release_year  ?? prev.release_year,
@@ -796,8 +781,6 @@ export default function BookEditForm() {
           { key: 'missing_rating_count',    field: 'rating_count',    label: 'Rating Count' },
           { key: 'missing_rating_source',   field: 'rating_source',   label: 'Rating Source' },
           { key: 'zero_tropes',             field: 'tropes',          label: 'Tropes' },
-          { key: 'missing_primary_genre',   field: 'primary_genre',   label: 'Primary Genre' },
-          { key: 'missing_secondary_genre', field: 'secondary_genre', label: 'Secondary Genre' },
           { key: 'zero_genres',             field: 'genres',          label: 'Genres' },
           { key: 'missing_isbn',            field: 'isbn',            label: 'ISBN' },
           { key: 'missing_isbn13',          field: 'isbn13',          label: 'ISBN13' },

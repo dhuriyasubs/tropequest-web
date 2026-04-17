@@ -14,7 +14,6 @@ const PROMPT = `Extract book metadata from the following web page data and retur
   "cover_url": "full image URL of the book cover",
   "series_name": "series name or null",
   "series_number": number or null,
-  "primary_genre": "single most relevant genre (e.g. Romance, Fantasy, YA, Thriller) or null",
   "genres": ["genre1", "genre2"],
   "release_date": "ISO date string YYYY-MM-DD or null",
   "release_year": integer year or null,
