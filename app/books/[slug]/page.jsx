@@ -13,6 +13,26 @@ import Breadcrumb from '@/components/Breadcrumb'
 
 export const revalidate = 3600
 
+function splitAuthors(author) {
+  return author.split(/\s+and\s+/i).map(a => a.trim()).filter(Boolean)
+}
+
+function AuthorLinks({ author, className }) {
+  const authors = splitAuthors(author)
+  return (
+    <>
+      {authors.map((a, i) => (
+        <span key={a}>
+          {i > 0 && <span className="text-slate"> & </span>}
+          <Link href={`/author/${encodeURIComponent(a)}`} className={className}>
+            {a}
+          </Link>
+        </span>
+      ))}
+    </>
+  )
+}
+
 export async function generateMetadata({ params }) {
   const book = await getBookBySlug(params.slug)
   if (!book) return {}
@@ -152,12 +172,9 @@ export default async function BookPage({ params }) {
               </p>
             )}
 
-            <Link
-              href={`/author/${encodeURIComponent(book.author)}`}
-              className="text-bloom font-medium hover:underline mt-1 inline-block"
-            >
-              {book.author}
-            </Link>
+            <p className="text-bloom font-medium mt-1">
+              <AuthorLinks author={book.author} className="hover:underline" />
+            </p>
 
             {blendedRating && (
               <p className="text-sm text-slate mt-2">
@@ -217,12 +234,9 @@ export default async function BookPage({ params }) {
               <div className="mt-6 border-t border-gray-100 pt-5">
                 <p className="text-xs font-semibold text-slate uppercase tracking-wide mb-2">About the Author</p>
                 <p className="text-sm text-ink/80 leading-relaxed">{authorIntro}</p>
-                <Link
-                  href={`/author/${encodeURIComponent(book.author)}`}
-                  className="inline-block mt-2 text-xs font-medium text-bloom hover:underline"
-                >
-                  More about {book.author} →
-                </Link>
+                <p className="mt-2 text-xs font-medium text-bloom">
+                  More about <AuthorLinks author={book.author} className="hover:underline" /> →
+                </p>
               </div>
             )}
           </div>
@@ -340,9 +354,7 @@ export default async function BookPage({ params }) {
             <section className="mt-14">
               <h2 className="font-serif text-xl font-semibold mb-4">
                 More by{' '}
-                <Link href={`/author/${encodeURIComponent(book.author)}`} className="text-bloom transition-colors">
-                  {book.author}
-                </Link>
+                <AuthorLinks author={book.author} className="text-bloom transition-colors hover:underline" />
               </h2>
 
               {hasSeries ? (
