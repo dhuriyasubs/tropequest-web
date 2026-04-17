@@ -109,6 +109,28 @@ export async function GET(request) {
     return NextResponse.json({ books: data ?? [] })
   }
 
+  // Batch slug existence check for bulk import enrichment
+  const slugsParam = searchParams.get('slugs')
+  if (slugsParam) {
+    const slugList = slugsParam.split(',').map(s => s.trim()).filter(Boolean)
+    const { data } = await supabaseAdmin
+      .from('books')
+      .select('id,slug,cover_url,rating,rating_count,rating_source,series_name,series_number')
+      .in('slug', slugList)
+    const map = {}
+    for (const row of (data ?? [])) {
+      const missing = []
+      if (!row.cover_url)          missing.push('cover_url')
+      if (row.rating == null)      missing.push('rating')
+      if (row.rating_count == null) missing.push('rating_count')
+      if (!row.rating_source)      missing.push('rating_source')
+      if (!row.series_name)        missing.push('series_name')
+      if (row.series_number == null) missing.push('series_number')
+      map[row.slug] = { id: row.id, missingFields: missing }
+    }
+    return NextResponse.json({ books: map })
+  }
+
   // Pending enrichment list
   if (searchParams.get('pending') === '1') {
     const { data } = await supabaseAdmin

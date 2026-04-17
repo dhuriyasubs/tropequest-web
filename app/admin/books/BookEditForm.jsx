@@ -372,7 +372,21 @@ export default function BookEditForm() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
-      setBulkBooks(data.books.map(b => ({ ...b, selected: true, status: 'pending', error: null })))
+
+      // Check which slugs already exist in DB
+      const slugs = data.books.map(b => b.slug).join(',')
+      const checkRes  = await fetch(`/api/admin/books?slugs=${encodeURIComponent(slugs)}`)
+      const checkData = await checkRes.json()
+      const dbMap = checkData.books ?? {}
+
+      setBulkBooks(data.books.map(b => {
+        const db = dbMap[b.slug]
+        if (!db) return { ...b, selected: true, status: 'pending', error: null, _dbStatus: 'new' }
+        // Determine which missing DB fields this extraction can fill
+        const enrichFields = db.missingFields.filter(f => b[f] != null && b[f] !== '')
+        if (enrichFields.length === 0) return { ...b, selected: false, status: 'exists', error: null, _dbStatus: 'exists', _dbId: db.id }
+        return { ...b, selected: true, status: 'pending', error: null, _dbStatus: 'enrich', _dbId: db.id, _enrichFields: enrichFields }
+      }))
       if (data.has_more) setBulkError(`Showing first page only (${data.books.length} books). Goodreads paginates results.`)
     } catch (err) {
       setBulkError(err.message)
@@ -396,28 +410,40 @@ export default function BookEditForm() {
     for (const book of toAdd) {
       setBulkBooks(bs => bs.map(b => b.slug === book.slug ? { ...b, status: 'adding' } : b))
       try {
-        const payload = {
-          title:         book.title.trim(),
-          author:        book.author.trim(),
-          slug:          book.slug.trim(),
-          cover_url:     book.cover_url     || null,
-          series_name:   book.series_name   || null,
-          series_number: book.series_number ?? null,
-          rating:        book.rating        ?? null,
-          rating_count:  book.rating_count  ?? null,
-          rating_source: book.rating_source || null,
-          genres:        [],
-          tropes:        [],
-          characters:    [],
+        let res
+        if (book._dbStatus === 'enrich') {
+          // Only send the fields that were missing in DB and present in extraction
+          const patch = { id: book._dbId }
+          for (const f of book._enrichFields) patch[f] = book[f] ?? null
+          res = await fetch('/api/admin/books', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(patch),
+          })
+        } else {
+          const payload = {
+            title:         book.title.trim(),
+            author:        book.author.trim(),
+            slug:          book.slug.trim(),
+            cover_url:     book.cover_url     || null,
+            series_name:   book.series_name   || null,
+            series_number: book.series_number ?? null,
+            rating:        book.rating        ?? null,
+            rating_count:  book.rating_count  ?? null,
+            rating_source: book.rating_source || null,
+            genres:        [],
+            tropes:        [],
+            characters:    [],
+          }
+          res = await fetch('/api/admin/books', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          })
         }
-        const res  = await fetch('/api/admin/books', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        })
         const data = await res.json()
         if (!res.ok) throw new Error(data.error)
-        setBulkBooks(bs => bs.map(b => b.slug === book.slug ? { ...b, status: 'added' } : b))
+        setBulkBooks(bs => bs.map(b => b.slug === book.slug ? { ...b, status: book._dbStatus === 'enrich' ? 'enriched' : 'added' } : b))
       } catch (err) {
         setBulkBooks(bs => bs.map(b => b.slug === book.slug ? { ...b, status: 'error', error: err.message } : b))
       }
@@ -626,7 +652,11 @@ export default function BookEditForm() {
 
               <div className="border border-gray-200 rounded-xl overflow-hidden divide-y divide-gray-100">
                 {bulkBooks.map((book, idx) => (
-                  <div key={idx} className={`flex items-center gap-3 px-3 py-2.5 ${book.status === 'added' ? 'bg-green-50' : book.status === 'error' ? 'bg-red-50' : ''}`}>
+                  <div key={idx} className={`flex items-center gap-3 px-3 py-2.5 ${
+                    book.status === 'added' || book.status === 'enriched' ? 'bg-green-50' :
+                    book.status === 'error' ? 'bg-red-50' :
+                    book._dbStatus === 'exists' ? 'opacity-50' : ''
+                  }`}>
                     <input
                       type="checkbox"
                       checked={book.selected && book.status === 'pending'}
@@ -644,16 +674,23 @@ export default function BookEditForm() {
                         {book.series_name ? `${book.series_name} #${book.series_number} · ` : ''}
                         {book.rating ? `★ ${book.rating}` : ''}
                       </p>
+                      {book._dbStatus === 'enrich' && book.status === 'pending' && (
+                        <p className="text-xs text-amber-600">Enrich: {book._enrichFields.join(', ')}</p>
+                      )}
                       {book.status === 'error' && <p className="text-xs text-red-500">{book.error}</p>}
                     </div>
                     <span className={`text-xs shrink-0 font-medium ${
-                      book.status === 'added'  ? 'text-green-600' :
-                      book.status === 'adding' ? 'text-bloom' :
-                      book.status === 'error'  ? 'text-red-500' : 'text-slate/40'
+                      book.status === 'added'    ? 'text-green-600' :
+                      book.status === 'enriched' ? 'text-green-600' :
+                      book.status === 'adding'   ? 'text-bloom' :
+                      book.status === 'error'    ? 'text-red-500' :
+                      book._dbStatus === 'exists' ? 'text-slate/40' : ''
                     }`}>
-                      {book.status === 'added'  ? '✓ Added' :
-                       book.status === 'adding' ? 'Adding...' :
-                       book.status === 'error'  ? '✗ Error' : ''}
+                      {book.status === 'added'    ? '✓ Added' :
+                       book.status === 'enriched' ? '✓ Enriched' :
+                       book.status === 'adding'   ? 'Adding...' :
+                       book.status === 'error'    ? '✗ Error' :
+                       book._dbStatus === 'exists' ? 'Exists' : ''}
                     </span>
                   </div>
                 ))}
@@ -663,11 +700,13 @@ export default function BookEditForm() {
                 <button type="button" onClick={handleBulkAdd}
                   disabled={bulkAdding || !bulkBooks.some(b => b.selected && b.status === 'pending')}
                   className="bg-bloom text-white px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-bloom/90 transition-colors disabled:opacity-60">
-                  {bulkAdding ? 'Adding...' : `Add Selected (${bulkBooks.filter(b => b.selected && b.status === 'pending').length})`}
+                  {bulkAdding ? 'Working...' : `Add / Enrich Selected (${bulkBooks.filter(b => b.selected && b.status === 'pending').length})`}
                 </button>
-                {bulkBooks.some(b => b.status === 'added') && (
+                {(bulkBooks.some(b => b.status === 'added') || bulkBooks.some(b => b.status === 'enriched')) && (
                   <span className="text-sm text-green-600 font-medium">
-                    {bulkBooks.filter(b => b.status === 'added').length} books added
+                    {bulkBooks.filter(b => b.status === 'added').length > 0 && `${bulkBooks.filter(b => b.status === 'added').length} added`}
+                    {bulkBooks.filter(b => b.status === 'added').length > 0 && bulkBooks.filter(b => b.status === 'enriched').length > 0 && ', '}
+                    {bulkBooks.filter(b => b.status === 'enriched').length > 0 && `${bulkBooks.filter(b => b.status === 'enriched').length} enriched`}
                   </span>
                 )}
               </div>
