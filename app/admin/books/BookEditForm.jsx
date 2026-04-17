@@ -440,6 +440,39 @@ export default function BookEditForm() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
           })
+          // Slug mismatch: book exists under different slug → look it up and enrich
+          if (res.status === 409) {
+            const searchRes  = await fetch(`/api/admin/books?q=${encodeURIComponent(book.title.trim())}`)
+            const searchData = await searchRes.json()
+            const existing   = (searchData.books ?? []).find(
+              b => b.title.toLowerCase() === book.title.trim().toLowerCase() &&
+                   b.author.toLowerCase() === book.author.trim().toLowerCase()
+            )
+            if (existing) {
+              const ENRICHABLE = ['cover_url', 'rating', 'rating_count', 'rating_source', 'series_name', 'series_number']
+              const patch = { id: existing.id }
+              for (const f of ENRICHABLE) {
+                if ((existing[f] == null || existing[f] === '') && book[f] != null && book[f] !== '') {
+                  patch[f] = book[f]
+                }
+              }
+              if (Object.keys(patch).length > 1) {
+                res = await fetch('/api/admin/books', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(patch),
+                })
+                const d = await res.json()
+                if (!res.ok) throw new Error(d.error)
+                setBulkBooks(bs => bs.map(b => b.slug === book.slug ? { ...b, status: 'enriched' } : b))
+              } else {
+                setBulkBooks(bs => bs.map(b => b.slug === book.slug ? { ...b, status: 'exists' } : b))
+              }
+              continue
+            } else {
+              throw new Error('Already exists (slug mismatch, could not locate)')
+            }
+          }
         }
         const data = await res.json()
         if (!res.ok) throw new Error(data.error)
