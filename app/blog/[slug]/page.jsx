@@ -5,6 +5,7 @@ import { getAllPosts, getPost, getRelatedPosts } from '@/lib/blog'
 import Breadcrumb from '@/components/Breadcrumb'
 import BookCover from '@/components/BlogBookCover'
 import RelatedPosts from '@/components/RelatedPosts'
+import BlogFeedback from '@/components/BlogFeedback'
 
 export const revalidate = 3600
 
@@ -77,6 +78,10 @@ export default function BlogPostPage({ params }) {
         prose-li:text-slate prose-p:text-slate prose-p:leading-relaxed">
         <MDXRemote source={content} components={{ BookCover: BoundBookCover }} />
       </article>
+
+      <div className="mt-10 pt-8 border-t border-gray-100">
+        <BlogFeedback slug={params.slug} />
+      </div>
 
       <RelatedPosts posts={related} />
 
