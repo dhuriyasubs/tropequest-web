@@ -1,12 +1,13 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { GENRES, GENRE_GROUPS, TROPES, TROPE_GROUPS } from '@/lib/taxonomy'
 
 const inputCls = 'w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bloom/40'
 
 const EMPTY_BOOK = {
   title: '', author: '', slug: '', cover_url: '',
   series_name: '', series_number: '', rating: '', rating_count: '', rating_source: '',
-  genres: '', tropes: '', characters: '', description: '',
+  genres: [], tropes: [], characters: '', description: '',
   release_date: '', release_year: '',
   buy_url_amazon_us: '', buy_url_amazon_in: '', buy_url_flipkart: '',
   price_amazon_us: '', price_amazon_in: '',
@@ -17,12 +18,114 @@ const SPICE_LABELS = { 1: 'Closed Door', 2: 'Fade to Black', 3: 'Some Steam', 4:
 
 function missingFields(b) {
   const missing = []
-  if (!b.description)                              missing.push('description')
-  if (!b.cover_url)                                missing.push('cover')
-  if (!b.tropes || b.tropes.length === 0)          missing.push('tropes')
-  if (!b.buy_url_amazon_us && !b.buy_url_amazon_in) missing.push('buy links')
-  if (!b.genres || b.genres.length === 0)           missing.push('genres')
+  if (!b.description)                                    missing.push('description')
+  if (!b.cover_url)                                      missing.push('cover')
+  if (!b.tropes || b.tropes.length === 0)                missing.push('tropes')
+  if (!b.buy_url_amazon_us && !b.buy_url_amazon_in)      missing.push('buy links')
+  if (!b.genres || b.genres.length === 0)                missing.push('genres')
   return missing
+}
+
+function TagPicker({ label, field, options, groups, value = [], onChange }) {
+  const [open, setOpen]           = useState(false)
+  const [search, setSearch]       = useState('')
+  const [customOpts, setCustomOpts] = useState([])
+  const ref = useRef(null)
+
+  useEffect(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem(`taxonomy_custom_${field}`) || '[]')
+      setCustomOpts(stored)
+    } catch { setCustomOpts([]) }
+  }, [field])
+
+  useEffect(() => {
+    function onOut(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', onOut)
+    return () => document.removeEventListener('mousedown', onOut)
+  }, [])
+
+  const allOpts = [...options, ...customOpts.filter(c => !options.includes(c))]
+  const lc      = search.toLowerCase()
+  const filtered = lc ? allOpts.filter(o => o.toLowerCase().includes(lc)) : allOpts
+  const canAdd   = search.trim() && !allOpts.some(o => o.toLowerCase() === search.trim().toLowerCase())
+
+  function toggle(opt) {
+    onChange(value.includes(opt) ? value.filter(v => v !== opt) : [...value, opt])
+  }
+
+  function addToTaxonomy() {
+    const val = search.trim()
+    if (!val) return
+    const next = [...customOpts, val]
+    setCustomOpts(next)
+    localStorage.setItem(`taxonomy_custom_${field}`, JSON.stringify(next))
+    if (!value.includes(val)) onChange([...value, val])
+    setSearch('')
+  }
+
+  function renderOpt(opt) {
+    const selected = value.includes(opt)
+    return (
+      <button key={opt} type="button" onClick={() => toggle(opt)}
+        className={`w-full text-left px-3 py-1.5 text-sm hover:bg-petal/20 flex items-center gap-2 ${selected ? 'text-bloom font-medium' : 'text-ink'}`}>
+        <span className={`w-3.5 h-3.5 rounded border shrink-0 flex items-center justify-center text-[10px] ${selected ? 'bg-bloom border-bloom text-white' : 'border-gray-300'}`}>
+          {selected ? '✓' : ''}
+        </span>
+        {opt}
+      </button>
+    )
+  }
+
+  return (
+    <div ref={ref} className="relative">
+      <label className="block text-xs text-slate mb-1">{label}</label>
+      <div
+        className="min-h-[38px] flex flex-wrap gap-1 border border-gray-200 rounded-lg px-2 py-1.5 cursor-text focus-within:ring-2 focus-within:ring-bloom/40"
+        onClick={() => setOpen(true)}
+      >
+        {value.map(v => (
+          <span key={v} className="flex items-center gap-1 bg-bloom/10 text-bloom text-xs px-2 py-0.5 rounded-full">
+            {v}
+            <button type="button" onClick={e => { e.stopPropagation(); toggle(v) }} className="hover:text-red-500 leading-none">×</button>
+          </span>
+        ))}
+        <input
+          value={search}
+          onChange={e => { setSearch(e.target.value); setOpen(true) }}
+          onFocus={() => setOpen(true)}
+          placeholder={value.length === 0 ? `Select ${label.toLowerCase()}...` : ''}
+          className="flex-1 min-w-[100px] outline-none text-sm bg-transparent"
+        />
+      </div>
+      {open && (
+        <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-64 overflow-y-auto">
+          {canAdd && (
+            <button type="button" onClick={addToTaxonomy}
+              className="w-full text-left px-3 py-2 text-sm text-bloom font-medium border-b border-gray-100 hover:bg-petal/10">
+              + Add &ldquo;{search.trim()}&rdquo; to taxonomy
+            </button>
+          )}
+          {groups && !lc
+            ? Object.entries(groups).map(([gName, gOpts]) => {
+                const opts = gOpts.filter(o => allOpts.includes(o))
+                if (!opts.length) return null
+                return (
+                  <div key={gName}>
+                    <p className="text-[11px] text-slate/50 px-3 pt-2 pb-0.5 font-semibold uppercase tracking-wide">{gName}</p>
+                    {opts.map(renderOpt)}
+                  </div>
+                )
+              })
+            : filtered.map(renderOpt)
+          }
+          {filtered.length === 0 && !canAdd && (
+            <p className="px-3 py-2 text-xs text-slate">No matches</p>
+          )}
+        </div>
+      )}
+    </div>
+  )
 }
 
 function toSlug(title, author) {
@@ -54,9 +157,9 @@ function buildPayload(book, isNew) {
     rating_source:     book.rating_source || null,
     release_date:      book.release_date    || null,
     release_year:      book.release_year !== '' ? Number(book.release_year) : null,
-    genres:            book.genres      ? book.genres.split(',').map(s => s.trim()).filter(Boolean)      : [],
-    tropes:            book.tropes      ? book.tropes.split(',').map(s => s.trim()).filter(Boolean)      : [],
-    characters:        book.characters  ? book.characters.split(',').map(s => s.trim()).filter(Boolean)  : [],
+    genres:            Array.isArray(book.genres)     ? book.genres     : [],
+    tropes:            Array.isArray(book.tropes)     ? book.tropes     : [],
+    characters:        book.characters ? book.characters.split(',').map(s => s.trim()).filter(Boolean) : [],
     buy_url_amazon_us: book.buy_url_amazon_us || null,
     buy_url_amazon_in: book.buy_url_amazon_in || null,
     buy_url_flipkart:  book.buy_url_flipkart  || null,
@@ -69,9 +172,9 @@ function buildPayload(book, isNew) {
 function normaliseBook(b) {
   return {
     ...b,
-    tropes:        Array.isArray(b.tropes)      ? b.tropes.join(', ')      : (b.tropes      ?? ''),
-    genres:        Array.isArray(b.genres)      ? b.genres.join(', ')      : (b.genres      ?? ''),
-    characters:    Array.isArray(b.characters)  ? b.characters.join(', ')  : (b.characters  ?? ''),
+    tropes:        Array.isArray(b.tropes)     ? b.tropes     : (b.tropes     ? String(b.tropes).split(',').map(s => s.trim()).filter(Boolean) : []),
+    genres:        Array.isArray(b.genres)     ? b.genres     : (b.genres     ? String(b.genres).split(',').map(s => s.trim()).filter(Boolean) : []),
+    characters:    Array.isArray(b.characters) ? b.characters.join(', ')  : (b.characters  ?? ''),
     series_number: b.series_number ?? '',
     rating:        b.rating        ?? '',
     rating_count:  b.rating_count  ?? '',
@@ -162,10 +265,14 @@ function BookFields({ book, set }) {
         </div>
       </div>
 
-      <div>
-        <label className="block text-xs text-slate mb-1">Genres (comma-separated)</label>
-        <input type="text" value={book.genres} onChange={e => set('genres', e.target.value)} className={inputCls} />
-      </div>
+      <TagPicker
+        label="Genres"
+        field="genres"
+        options={GENRES}
+        groups={GENRE_GROUPS}
+        value={book.genres}
+        onChange={v => set('genres', v)}
+      />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
@@ -178,10 +285,14 @@ function BookFields({ book, set }) {
         </div>
       </div>
 
-      <div>
-        <label className="block text-xs text-slate mb-1">Tropes (comma-separated)</label>
-        <textarea rows={3} value={book.tropes} onChange={e => set('tropes', e.target.value)} className={`${inputCls} resize-y`} />
-      </div>
+      <TagPicker
+        label="Tropes"
+        field="tropes"
+        options={TROPES}
+        groups={TROPE_GROUPS}
+        value={book.tropes}
+        onChange={v => set('tropes', v)}
+      />
 
       <div>
         <label className="block text-xs text-slate mb-1">Characters (comma-separated)</label>
@@ -364,7 +475,7 @@ export default function BookEditForm() {
         description:   b.description   ?? prev.description,
         series_name:   b.series_name   ?? prev.series_name,
         series_number: b.series_number ?? prev.series_number,
-        genres:        Array.isArray(b.genres) ? b.genres.join(', ') : (b.genres ?? prev.genres),
+        genres:        Array.isArray(b.genres) ? b.genres : (b.genres ? [b.genres] : prev.genres),
         release_date:  b.release_date  ?? prev.release_date,
         release_year:  b.release_year  ?? prev.release_year,
         rating:        b.rating        ?? prev.rating,
