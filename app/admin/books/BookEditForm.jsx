@@ -1,13 +1,21 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { GENRES, GENRE_GROUPS, TROPES, TROPE_GROUPS } from '@/lib/taxonomy'
+import {
+  GENRES, GENRE_GROUPS, TROPES, TROPE_GROUPS,
+  TIME_PERIODS, TIME_PERIOD_GROUPS, RELATIONSHIP_TYPES,
+  KINK_TAGS, STORY_TAGS, CONTENT_WARNINGS, REPRESENTATION,
+  SETTING_TAGS, GEOGRAPHY_TAGS,
+} from '@/lib/taxonomy'
 
 const inputCls = 'w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bloom/40'
 
 const EMPTY_BOOK = {
   title: '', author: '', slug: '', cover_url: '',
   series_name: '', series_number: '', rating: '', rating_count: '', rating_source: '',
-  genres: [], tropes: [], characters: '', description: '',
+  genres: [], tropes: [], time_period: [], relationship_type: [],
+  kink_tags: [], story_tags: [], content_warnings: [], representation: [],
+  setting_tags: [], geography_tags: [],
+  characters: '', description: '',
   release_date: '', release_year: '',
   buy_url_amazon_us: '', buy_url_amazon_in: '', buy_url_flipkart: '',
   price_amazon_us: '', price_amazon_in: '',
@@ -157,8 +165,16 @@ function buildPayload(book, isNew) {
     rating_source:     book.rating_source || null,
     release_date:      book.release_date    || null,
     release_year:      book.release_year !== '' ? Number(book.release_year) : null,
-    genres:            Array.isArray(book.genres)     ? book.genres     : [],
-    tropes:            Array.isArray(book.tropes)     ? book.tropes     : [],
+    genres:            Array.isArray(book.genres)            ? book.genres            : [],
+    tropes:            Array.isArray(book.tropes)            ? book.tropes            : [],
+    time_period:       Array.isArray(book.time_period)       ? book.time_period       : [],
+    relationship_type: Array.isArray(book.relationship_type) ? book.relationship_type : [],
+    kink_tags:         Array.isArray(book.kink_tags)         ? book.kink_tags         : [],
+    story_tags:        Array.isArray(book.story_tags)        ? book.story_tags        : [],
+    content_warnings:  Array.isArray(book.content_warnings)  ? book.content_warnings  : [],
+    representation:    Array.isArray(book.representation)    ? book.representation    : [],
+    setting_tags:      Array.isArray(book.setting_tags)      ? book.setting_tags      : [],
+    geography_tags:    Array.isArray(book.geography_tags)    ? book.geography_tags    : [],
     characters:        book.characters ? book.characters.split(',').map(s => s.trim()).filter(Boolean) : [],
     buy_url_amazon_us: book.buy_url_amazon_us || null,
     buy_url_amazon_in: book.buy_url_amazon_in || null,
@@ -172,8 +188,16 @@ function buildPayload(book, isNew) {
 function normaliseBook(b) {
   return {
     ...b,
-    tropes:        Array.isArray(b.tropes)     ? b.tropes     : (b.tropes     ? String(b.tropes).split(',').map(s => s.trim()).filter(Boolean) : []),
-    genres:        Array.isArray(b.genres)     ? b.genres     : (b.genres     ? String(b.genres).split(',').map(s => s.trim()).filter(Boolean) : []),
+    tropes:            Array.isArray(b.tropes)            ? b.tropes            : [],
+    genres:            Array.isArray(b.genres)            ? b.genres            : [],
+    time_period:       Array.isArray(b.time_period)       ? b.time_period       : [],
+    relationship_type: Array.isArray(b.relationship_type) ? b.relationship_type : [],
+    kink_tags:         Array.isArray(b.kink_tags)         ? b.kink_tags         : [],
+    story_tags:        Array.isArray(b.story_tags)        ? b.story_tags        : [],
+    content_warnings:  Array.isArray(b.content_warnings)  ? b.content_warnings  : [],
+    representation:    Array.isArray(b.representation)    ? b.representation    : [],
+    setting_tags:      Array.isArray(b.setting_tags)      ? b.setting_tags      : [],
+    geography_tags:    Array.isArray(b.geography_tags)    ? b.geography_tags    : [],
     characters:    Array.isArray(b.characters) ? b.characters.join(', ')  : (b.characters  ?? ''),
     series_number: b.series_number ?? '',
     rating:        b.rating        ?? '',
@@ -292,6 +316,72 @@ function BookFields({ book, set }) {
         groups={TROPE_GROUPS}
         value={book.tropes}
         onChange={v => set('tropes', v)}
+      />
+
+      <TagPicker
+        label="Time Period"
+        field="time_period"
+        options={TIME_PERIODS}
+        groups={TIME_PERIOD_GROUPS}
+        value={book.time_period}
+        onChange={v => set('time_period', v)}
+      />
+
+      <TagPicker
+        label="Relationship Type"
+        field="relationship_type"
+        options={RELATIONSHIP_TYPES}
+        value={book.relationship_type}
+        onChange={v => set('relationship_type', v)}
+      />
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <TagPicker
+          label="Setting Tags"
+          field="setting_tags"
+          options={SETTING_TAGS}
+          value={book.setting_tags}
+          onChange={v => set('setting_tags', v)}
+        />
+        <TagPicker
+          label="Geography Tags"
+          field="geography_tags"
+          options={GEOGRAPHY_TAGS}
+          value={book.geography_tags}
+          onChange={v => set('geography_tags', v)}
+        />
+      </div>
+
+      <TagPicker
+        label="Story Tags"
+        field="story_tags"
+        options={STORY_TAGS}
+        value={book.story_tags}
+        onChange={v => set('story_tags', v)}
+      />
+
+      <TagPicker
+        label="Content Warnings"
+        field="content_warnings"
+        options={CONTENT_WARNINGS}
+        value={book.content_warnings}
+        onChange={v => set('content_warnings', v)}
+      />
+
+      <TagPicker
+        label="Representation"
+        field="representation"
+        options={REPRESENTATION}
+        value={book.representation}
+        onChange={v => set('representation', v)}
+      />
+
+      <TagPicker
+        label="Kink Tags"
+        field="kink_tags"
+        options={KINK_TAGS}
+        value={book.kink_tags}
+        onChange={v => set('kink_tags', v)}
       />
 
       <div>
