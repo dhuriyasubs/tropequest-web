@@ -17,13 +17,14 @@ export default async function SearchPage({ searchParams }) {
   const subjects = [searchParams.subjects].flat().filter(Boolean)
   const genres   = [searchParams.genres].flat().filter(Boolean)
   const page     = Number(searchParams.page || 1)
+  const minSpice = searchParams.minSpice ? Number(searchParams.minSpice) : null
 
   const supabase = createSupabaseServer()
   const { data: { user } } = await supabase.auth.getUser()
 
   const [{ books, total }, allTropes, allGenres, shelfRes] =
     await Promise.all([
-      searchBooks({ query: query || null, tropes, subjects, genres, page }),
+      searchBooks({ query: query || null, tropes, subjects, genres, minSpice, page }),
       getPopularTropes(50),
       getPopularGenres(50),
       user
@@ -47,9 +48,10 @@ export default async function SearchPage({ searchParams }) {
         initialSelTropes={tropes}
         initialSelSubjects={subjects}
         initialSelGenres={genres}
+        initialMinSpice={minSpice}
         initialPage={page}
         shelfMap={shelfMap}
-        autoFocus={!query && !tropes.length && !genres.length}
+        autoFocus={!query && !tropes.length && !genres.length && !minSpice}
       />
     </div>
   )

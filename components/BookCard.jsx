@@ -38,9 +38,14 @@ export default function BookCard({ book, shelfStatus = null }) {
           {book.title}
         </p>
         <p className="text-xs text-slate">{book.author}</p>
-        {book.rating && (
-          <p className="text-xs text-bloom font-medium">★ {book.rating.toFixed(1)}</p>
-        )}
+        <div className="flex items-center gap-2">
+          {book.rating && (
+            <p className="text-xs text-bloom font-medium">★ {book.rating.toFixed(1)}</p>
+          )}
+          {book.spice_rating && (
+            <p className="text-xs">{'🌶️'.repeat(book.spice_rating)}</p>
+          )}
+        </div>
         {book.tropes?.length > 0 && (
           <p className="text-xs text-slate/70 line-clamp-1 mt-1">
             {book.tropes.slice(0, 2).join(' · ')}

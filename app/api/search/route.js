@@ -9,9 +9,10 @@ export async function GET(request) {
   const subjects = searchParams.getAll('subjects')
   const genres   = searchParams.getAll('genres')
   const page     = Number(searchParams.get('page') || 1)
+  const minSpice = searchParams.get('minSpice') ? Number(searchParams.get('minSpice')) : null
 
   try {
-    const result = await searchBooks({ query, tropes, subjects, genres, page })
+    const result = await searchBooks({ query, tropes, subjects, genres, minSpice, page })
     return NextResponse.json(result, {
       headers: { 'Cache-Control': 's-maxage=60, stale-while-revalidate=300' },
     })

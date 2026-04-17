@@ -10,7 +10,10 @@ const EMPTY_BOOK = {
   release_date: '', release_year: '',
   buy_url_amazon_us: '', buy_url_amazon_in: '', buy_url_flipkart: '',
   price_amazon_us: '', price_amazon_in: '',
+  spice_rating: '',
 }
+
+const SPICE_LABELS = { 1: 'Tame', 2: 'Mild', 3: 'Steamy', 4: 'Very Steamy', 5: 'Explicit' }
 
 function missingFields(b) {
   const missing = []
@@ -61,6 +64,7 @@ function buildPayload(book, isNew) {
     buy_url_flipkart:  book.buy_url_flipkart  || null,
     price_amazon_in:   book.price_amazon_in  !== '' ? Number(book.price_amazon_in)  : null,
     price_amazon_us:   book.price_amazon_us  !== '' ? Number(book.price_amazon_us)  : null,
+    spice_rating:      book.spice_rating     !== '' ? Number(book.spice_rating)     : null,
   }
 }
 
@@ -86,6 +90,7 @@ function normaliseBook(b) {
     buy_url_flipkart:  b.buy_url_flipkart  ?? '',
     price_amazon_us:   b.price_amazon_us   ?? '',
     price_amazon_in:   b.price_amazon_in   ?? '',
+    spice_rating:      b.spice_rating      ?? '',
   }
 }
 
@@ -135,6 +140,29 @@ function BookFields({ book, set }) {
         <div>
           <label className="block text-xs text-slate mb-1">Rating Source</label>
           <input type="text" value={book.rating_source} onChange={e => set('rating_source', e.target.value)} placeholder="e.g. Goodreads" className={inputCls} />
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-xs text-slate mb-2">Spice Rating</label>
+        <div className="flex items-center gap-2 flex-wrap">
+          {[1, 2, 3, 4, 5].map(n => (
+            <button
+              key={n}
+              type="button"
+              onClick={() => set('spice_rating', book.spice_rating === n ? '' : n)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm transition-colors ${
+                Number(book.spice_rating) === n
+                  ? 'bg-red-50 border-red-400 text-red-700 font-semibold'
+                  : 'border-gray-200 text-slate hover:border-red-300'
+              }`}
+            >
+              {'🌶️'.repeat(n)} <span className="text-xs">{SPICE_LABELS[n]}</span>
+            </button>
+          ))}
+          {book.spice_rating !== '' && (
+            <button type="button" onClick={() => set('spice_rating', '')} className="text-xs text-slate underline">Clear</button>
+          )}
         </div>
       </div>
 

@@ -4,10 +4,12 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useDebounce } from 'use-debounce'
 import BookCard from './BookCard'
 
+const SPICE_LABELS = { 1: 'Tame', 2: 'Mild', 3: 'Steamy', 4: 'Very Steamy', 5: 'Explicit' }
+
 export default function SearchClient({
   initialBooks, initialTotal, tropes, genres = [],
-  initialQuery = '', initialSelTropes = [], initialSelGenres = [], initialPage = 1,
-  shelfMap = {}, autoFocus = false,
+  initialQuery = '', initialSelTropes = [], initialSelGenres = [], initialMinSpice = null,
+  initialPage = 1, shelfMap = {}, autoFocus = false,
 }) {
   const router      = useRouter()
   const pathname    = usePathname()
@@ -20,6 +22,7 @@ export default function SearchClient({
   const [query,     setQuery]     = useState(initialQuery)
   const [selTropes, setSelTropes] = useState(initialSelTropes)
   const [selGenres, setSelGenres] = useState(initialSelGenres)
+  const [minSpice,  setMinSpice]  = useState(initialMinSpice)
   const [page,      setPage]      = useState(initialPage)
 
   const [books,    setBooks]    = useState(initialBooks ?? [])
@@ -29,7 +32,7 @@ export default function SearchClient({
 
   const [debouncedQuery] = useDebounce(query, 350)
 
-  const activeFilterCount = selTropes.length + selGenres.length
+  const activeFilterCount = selTropes.length + selGenres.length + (minSpice ? 1 : 0)
 
   // Lock body scroll when drawer is open
   useEffect(() => {
@@ -37,11 +40,12 @@ export default function SearchClient({
     return () => { document.body.style.overflow = '' }
   }, [drawerOpen])
 
-  const syncUrl = useCallback((q, tropes, genres, p) => {
+  const syncUrl = useCallback((q, tropes, genres, spice, p) => {
     const sp = new URLSearchParams()
     if (q) sp.set('q', q)
     tropes.forEach(t => sp.append('tropes', t))
     genres.forEach(g => sp.append('genres', g))
+    if (spice) sp.set('minSpice', spice)
     if (p > 1) sp.set('page', p)
     startTransition(() => {
       router.replace(`${pathname}?${sp.toString()}`, { scroll: false })
@@ -58,6 +62,7 @@ export default function SearchClient({
     if (debouncedQuery) sp.set('q', debouncedQuery)
     selTropes.forEach(t => sp.append('tropes', t))
     selGenres.forEach(g => sp.append('genres', g))
+    if (minSpice) sp.set('minSpice', minSpice)
     sp.set('page', page)
 
     setLoading(true)
@@ -66,10 +71,10 @@ export default function SearchClient({
       .then(({ books, total }) => { setBooks(books ?? []); setTotal(total ?? 0) })
       .finally(() => setLoading(false))
 
-    syncUrl(debouncedQuery, selTropes, selGenres, page)
-  }, [debouncedQuery, selTropes, selGenres, page, syncUrl])
+    syncUrl(debouncedQuery, selTropes, selGenres, minSpice, page)
+  }, [debouncedQuery, selTropes, selGenres, minSpice, page, syncUrl])
 
-  useEffect(() => { setPage(1) }, [debouncedQuery, selTropes, selGenres])
+  useEffect(() => { setPage(1) }, [debouncedQuery, selTropes, selGenres, minSpice])
 
   useEffect(() => {
     if (autoFocus && searchRef.current) {
@@ -88,7 +93,7 @@ export default function SearchClient({
   const toggleGenre = g =>
     setSelGenres(prev => prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g])
 
-  const clearAll = () => { setSelTropes([]); setSelGenres([]) }
+  const clearAll = () => { setSelTropes([]); setSelGenres([]); setMinSpice(null) }
 
   const closeDrawer = () => {
     setDrawerOpen(false)
@@ -112,6 +117,7 @@ export default function SearchClient({
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bloom shadow-sm"
           />
         </div>
+        <SpiceFilter value={minSpice} onChange={setMinSpice} />
         {genres.length > 0 && (
           <FilterSection title="Genres" items={genres} selected={selGenres} onToggle={toggleGenre} />
         )}
@@ -229,6 +235,7 @@ export default function SearchClient({
 
             {/* Scrollable filter content */}
             <div className="overflow-y-auto flex-1 px-4 py-4">
+              <SpiceFilter value={minSpice} onChange={setMinSpice} />
               {genres.length > 0 && (
                 <FilterSection title="Genres" items={genres} selected={selGenres} onToggle={toggleGenre} />
               )}
@@ -282,6 +289,29 @@ function FilterSection({ title, items, selected, onToggle }) {
         >
           {expanded ? 'Show less' : `+${items.length - 10} more`}
         </button>
+      )}
+    </div>
+  )
+}
+
+function SpiceFilter({ value, onChange }) {
+  return (
+    <div className="mb-6">
+      <h3 className="font-semibold text-sm mb-2">Spice Level</h3>
+      <div className="flex flex-wrap gap-1.5">
+        {[1, 2, 3, 4, 5].map(n => (
+          <button
+            key={n}
+            onClick={() => onChange(value === n ? null : n)}
+            className={`chip text-xs ${value === n ? 'chip-active' : ''}`}
+            title={SPICE_LABELS[n]}
+          >
+            {'🌶️'.repeat(n)}
+          </button>
+        ))}
+      </div>
+      {value && (
+        <p className="text-xs text-slate/60 mt-1">{SPICE_LABELS[value]} and above</p>
       )}
     </div>
   )

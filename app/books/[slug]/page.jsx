@@ -183,6 +183,17 @@ export default async function BookPage({ params }) {
               </p>
             )}
 
+            {book.spice_rating && (
+              <p className="text-sm mt-1">
+                {Array.from({ length: 5 }, (_, i) => (
+                  <span key={i} className={i < book.spice_rating ? '' : 'opacity-20'}>🌶️</span>
+                ))}
+                <span className="text-xs text-slate ml-1.5">
+                  {['', 'Tame', 'Mild', 'Steamy', 'Very Steamy', 'Explicit'][book.spice_rating]}
+                </span>
+              </p>
+            )}
+
             {/* Tropes */}
             {book.tropes?.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-4">
