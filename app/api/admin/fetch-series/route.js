@@ -22,13 +22,11 @@ function decodeEntities(str) {
 }
 
 // Goodreads series pages embed book data as HTML-escaped JSON in the page source.
-// Each book block contains fields like: imageUrl, bookUrl, title (full w/ series #),
-// bookTitleBare, avgRating, ratingsCount, authorName.
+// Field order per book: ...imageUrl... bookUrl ...title, bookTitleBare, avgRating, ratingsCount, author:{name}...
 function extractSeriesBooks(html, seriesName) {
   const books = []
   const seen  = new Set()
 
-  // Find each book by its bookUrl field
   const markerRe = /&quot;bookUrl&quot;:&quot;(\/book\/show\/[^&"]+)&quot;/g
   let m
 
@@ -37,39 +35,45 @@ function extractSeriesBooks(html, seriesName) {
     if (seen.has(bookUrl)) continue
     seen.add(bookUrl)
 
-    // Window of text around this marker (look back more than forward since imageUrl precedes bookUrl)
-    const start = Math.max(0, m.index - 2000)
-    const end   = Math.min(html.length, m.index + 3000)
-    const chunk = html.slice(start, end)
+    const start  = Math.max(0, m.index - 2000)
+    const end    = Math.min(html.length, m.index + 3000)
+    const chunk  = html.slice(start, end)
+    const relPos = m.index - start
 
-    const getStr = (key) => {
+    // Split at bookUrl so field lookups don't bleed across book boundaries
+    const beforeChunk = chunk.slice(0, relPos)
+    const afterChunk  = chunk.slice(relPos)
+
+    const getStrAfter = (key) => {
       const re = new RegExp(`&quot;${key}&quot;:&quot;((?:[^&"]|&amp;|&#x27;|&#39;|&lt;|&gt;)+)&quot;`)
-      const hit = chunk.match(re)
+      const hit = afterChunk.match(re)
       return hit ? decodeEntities(hit[1]) : null
     }
-    const getNum = (key) => {
+    const getNumAfter = (key) => {
       const re = new RegExp(`&quot;${key}&quot;:(\\d+(?:\\.\\d+)?)`)
-      const hit = chunk.match(re)
+      const hit = afterChunk.match(re)
       return hit ? parseFloat(hit[1]) : null
     }
 
-    const fullTitle = getStr('title') || ''
-    const bareTitle = getStr('bookTitleBare') || fullTitle
+    const fullTitle = getStrAfter('title') || ''
+    const bareTitle = getStrAfter('bookTitleBare') || fullTitle
     if (!bareTitle) continue
 
-    // Series number from title like "The Chase (Briar U, #1)" or "(Briar U #3.5)"
-    const numMatch = fullTitle.match(/#(\d+(?:\.\d+)?)/)
+    const numMatch     = fullTitle.match(/#(\d+(?:\.\d+)?)/)
     const seriesNumber = numMatch ? parseFloat(numMatch[1]) : null
 
-    // Cover: imageUrl field
-    const imageUrl  = getStr('imageUrl')
+    // imageUrl appears BEFORE bookUrl — take the last match to get this book's cover
+    const imageMatches = [...beforeChunk.matchAll(/&quot;imageUrl&quot;:&quot;((?:[^&"]|&amp;)+)&quot;/g)]
+    const imageUrl = imageMatches.length
+      ? decodeEntities(imageMatches[imageMatches.length - 1][1])
+      : null
 
-    // Author: try authorName, then contributor name field
-    const author = getStr('authorName') || getStr('name') || 'Unknown'
+    // author is a nested object after bookUrl: {"id":..., "name":"Elle Kennedy", ...}
+    const authorMatch = afterChunk.match(/&quot;author&quot;:\{[^}]*&quot;name&quot;:&quot;((?:[^&"]|&amp;|&#x27;|&#39;)+)&quot;/)
+    const author = authorMatch ? decodeEntities(authorMatch[1]) : 'Unknown'
 
-    // Ratings
-    const avgRating   = getNum('avgRating')
-    const ratingCount = getNum('ratingsCount')
+    const avgRating   = getNumAfter('avgRating')
+    const ratingCount = getNumAfter('ratingsCount')
 
     books.push({
       title:         bareTitle,
@@ -138,11 +142,7 @@ export async function POST(request) {
       )
     }
 
-    // Debug: show 1500 chars after the first bookUrl to reveal author/rating fields
-    const bookUrlIdx = html.indexOf('&quot;bookUrl&quot;')
-    const htmlSnippet = bookUrlIdx >= 0 ? html.slice(bookUrlIdx, bookUrlIdx + 1500) : ''
-
-    return NextResponse.json({ books, series: seriesName, html_snippet: htmlSnippet })
+    return NextResponse.json({ books, series: seriesName })
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 502 })
   }
