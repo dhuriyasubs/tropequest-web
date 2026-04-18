@@ -8,9 +8,10 @@ export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Admin' }
 
 const modules = [
-  { href: '/admin/books',      label: 'Add / Edit Books',   description: 'Search and update book fields, tropes, genres, buy links' },
-  { href: '/admin/author-bio', label: 'Author Bio',  description: 'Add or edit structured author bios with paste-to-parse' },
-  { href: '/admin/series-bio', label: 'Series Bio',  description: 'Add or edit series reading order, intro, and tips' },
+  { href: '/admin/books',           label: 'Add / Edit Books',   description: 'Search and update book fields, tropes, genres, buy links' },
+  { href: '/admin/booklist-import', label: 'Book List Import',   description: 'Paste a formatted book list to bulk-enrich spice ratings and taxonomy tags' },
+  { href: '/admin/author-bio',      label: 'Author Bio',         description: 'Add or edit structured author bios with paste-to-parse' },
+  { href: '/admin/series-bio',      label: 'Series Bio',         description: 'Add or edit series reading order, intro, and tips' },
 ]
 
 
