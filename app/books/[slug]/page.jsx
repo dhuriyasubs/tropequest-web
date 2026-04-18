@@ -10,6 +10,7 @@ import DescriptionExpander from '@/components/DescriptionExpander'
 import ShelfControls from '@/components/ShelfControls'
 import StarRating from '@/components/StarRating'
 import Breadcrumb from '@/components/Breadcrumb'
+import FeaturePromo from '@/components/FeaturePromo'
 
 export const revalidate = 3600
 
@@ -422,6 +423,7 @@ export default async function BookPage({ params }) {
             </div>
           </section>
         )}
+        <FeaturePromo />
       </div>
     </>
   )

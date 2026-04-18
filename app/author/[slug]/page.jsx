@@ -5,6 +5,7 @@ import Breadcrumb from '@/components/Breadcrumb'
 import AuthorBio from '@/components/AuthorBio'
 import { getBooksByAuthor, getAuthorBio } from '@/lib/search'
 import { slugify, formatAuthorName } from '@/lib/utils'
+import FeaturePromo from '@/components/FeaturePromo'
 
 export const revalidate = 3600
 
@@ -127,6 +128,7 @@ export default async function AuthorPage({ params }) {
           </div>
         </section>
       )}
+      <FeaturePromo />
     </div>
   )
 }

@@ -4,6 +4,7 @@ import Image from 'next/image'
 import Breadcrumb from '@/components/Breadcrumb'
 import { getAllSeries, getBooksBySeries, getBooksByTitles, getSeriesBio } from '@/lib/search'
 import { slugify } from '@/lib/utils'
+import FeaturePromo from '@/components/FeaturePromo'
 
 export const revalidate = 3600
 
@@ -312,6 +313,7 @@ export default async function SeriesDetailPage({ params }) {
           </Link>
           ? Browse all their books including standalones and other series.
         </p>
+        <FeaturePromo />
       </div>
     </>
   )

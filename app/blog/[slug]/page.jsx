@@ -7,6 +7,7 @@ import BookCover from '@/components/BlogBookCover'
 import RelatedPosts from '@/components/RelatedPosts'
 import BlogFeedback from '@/components/BlogFeedback'
 import BlogDiscoveryCTA from '@/components/BlogDiscoveryCTA'
+import FeaturePromo from '@/components/FeaturePromo'
 
 export const revalidate = 3600
 
@@ -90,6 +91,8 @@ export default function BlogPostPage({ params }) {
       </div>
 
       <RelatedPosts posts={related} />
+
+      <FeaturePromo />
 
       <div className="mt-8">
         <Link href="/blog" className="text-sm text-bloom hover:underline">
