@@ -3,6 +3,16 @@ import { createSupabaseServer, supabaseAdmin } from '@/lib/supabase'
 import { isAdmin } from '@/lib/admin'
 import { slugify } from '@/lib/utils'
 
+function normalizeAuthor(raw) {
+  return (raw ?? '')
+    .replace(/[\u00a0\u200b\u200c\u200d\ufeff]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .split(' ')
+    .map(t => t ? t[0].toUpperCase() + t.slice(1) : t)
+    .join(' ')
+}
+
 const ARRAY_FIELDS = [
   'genres', 'tropes', 'story_tags', 'content_warnings', 'representation',
   'setting_tags', 'geography_tags', 'relationship_type', 'time_period', 'kink_tags',
@@ -40,19 +50,32 @@ export async function PATCH(request) {
 
   const { updates } = await request.json()
 
+  const errors = []
   await Promise.all(updates.map(async update => {
     const { id, title, author, rating, spice_rating, ...fields } = update
 
     if (!id) {
       // Create new book
       const ds = {}
-      const row = { title, author, slug: slugify(`${title} ${author}`), data_source: ds }
+      const normalizedAuthor = normalizeAuthor(author)
+      const baseSlug = slugify(`${title} ${normalizedAuthor}`)
+
+      // Avoid slug collisions
+      const { data: existing } = await supabaseAdmin
+        .from('books').select('slug').ilike('slug', `${baseSlug}%`)
+      const usedSlugs = new Set((existing ?? []).map(r => r.slug))
+      let slug = baseSlug
+      let n = 2
+      while (usedSlugs.has(slug)) slug = `${baseSlug}-${n++}`
+
+      const row = { title, author: normalizedAuthor, slug, data_source: ds }
       for (const field of ARRAY_FIELDS) {
         if (fields[field]?.length) { row[field] = fields[field]; ds[field] = 'import' }
       }
       if (spice_rating) { row.spice_rating = spice_rating; ds.spice_rating = 'import' }
       if (rating)       { row.rating = rating;             ds.rating = 'import' }
-      await supabaseAdmin.from('books').insert(row)
+      const { error } = await supabaseAdmin.from('books').insert(row)
+      if (error) { console.error(`booklist-import INSERT failed for "${title}":`, error.message); errors.push({ title, error: error.message }) }
       return
     }
 
@@ -78,5 +101,5 @@ export async function PATCH(request) {
     await supabaseAdmin.from('books').update(patch).eq('id', id)
   }))
 
-  return NextResponse.json({ ok: true })
+  return NextResponse.json({ ok: true, errors })
 }

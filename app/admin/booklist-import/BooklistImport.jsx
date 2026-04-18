@@ -63,6 +63,7 @@ export default function BooklistImport() {
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [done, setDone] = useState(false)
+  const [saveErrors, setSaveErrors] = useState([])
 
   async function handleParse() {
     setLoading(true)
@@ -92,11 +93,13 @@ export default function BooklistImport() {
       spice_rating: r.spice_rating,
       ...r.mapped,
     }))
-    await fetch('/api/admin/booklist-import', {
+    const res = await fetch('/api/admin/booklist-import', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ updates }),
     })
+    const data = await res.json()
+    setSaveErrors(data.errors ?? [])
     setSaving(false)
     setDone(true)
   }
@@ -190,6 +193,11 @@ export default function BooklistImport() {
             </button>
           )}
           {done && <p className="text-sm text-green-600 font-semibold">Saved successfully.</p>}
+          {saveErrors.length > 0 && (
+            <div className="text-sm text-red-600 space-y-1">
+              {saveErrors.map((e, i) => <p key={i}><span className="font-semibold">{e.title}:</span> {e.error}</p>)}
+            </div>
+          )}
         </div>
       )}
     </div>
