@@ -8,9 +8,8 @@ function normalizeAuthor(raw) {
     .replace(/[\u00a0\u200b\u200c\u200d\ufeff]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
-    .split(' ')
-    .map(t => t ? t[0].toUpperCase() + t.slice(1) : t)
-    .join(' ')
+    .toLowerCase()
+    .replace(/(^|[^a-z0-9])([a-z])/g, (_, sep, ch) => sep + ch.toUpperCase())
 }
 
 const ARRAY_FIELDS = [
