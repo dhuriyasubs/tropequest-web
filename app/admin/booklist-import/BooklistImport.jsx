@@ -28,9 +28,9 @@ function parseText(text) {
     const author = lines[0].slice(byIdx + 4).trim()
     let rating = null, spice_rating = null, topics = []
     for (const line of lines.slice(1)) {
-      const rm = line.match(/^Rating:\s*(\d+\.?\d*)/)
+      const rm = line.match(/^Rating[^:]*:\s*(\d+\.?\d*)/i)
       if (rm) { rating = parseFloat(rm[1]); continue }
-      const sm = line.match(/^Steam:\s*(\d) out of 5/)
+      const sm = line.match(/^Steam[^:]*:\s*(\d)/i)
       if (sm) { spice_rating = parseInt(sm[1]); continue }
       if (line.startsWith('Topics:')) {
         topics = line.slice(7).split(',').map(t => t.trim().toLowerCase()).filter(Boolean)
