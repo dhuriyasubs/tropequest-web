@@ -16,6 +16,7 @@ export async function POST(request) {
       device_id: device_id ?? null,
       traffic_source: traffic_source ?? null,
       book_id: data?.book_id ?? null,
+      referrer: data?.referrer ?? null,
       data,
     })
   } catch (e) {
