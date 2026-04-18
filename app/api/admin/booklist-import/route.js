@@ -74,7 +74,32 @@ export async function PATCH(request) {
       if (spice_rating) { row.spice_rating = spice_rating; ds.spice_rating = 'import' }
       if (rating)       { row.rating = rating;             ds.rating = 'import' }
       const { error } = await supabaseAdmin.from('books').insert(row)
-      if (error) { console.error(`booklist-import INSERT failed for "${title}":`, error.message); errors.push({ title, error: error.message }) }
+      if (error) {
+        // Unique constraint: book exists but title lookup missed it (apostrophe/character mismatch) — merge instead
+        if (error.code === '23505') {
+          const { data: existing } = await supabaseAdmin
+            .from('books')
+            .select(['id', ...ARRAY_FIELDS, 'rating', 'spice_rating', 'data_source'].join(','))
+            .ilike('title', title)
+            .limit(5)
+          const match = existing?.find(b => normalizeAuthor(b.author) === normalizedAuthor) ?? existing?.[0]
+          if (match) {
+            const patch = { data_source: { ...(match.data_source ?? {}) } }
+            for (const field of ARRAY_FIELDS) {
+              if (fields[field]?.length) {
+                patch[field] = [...new Set([...(match[field] ?? []), ...fields[field]])]
+                patch.data_source[field] = 'import'
+              }
+            }
+            if (spice_rating && !match.spice_rating) { patch.spice_rating = spice_rating; patch.data_source.spice_rating = 'import' }
+            if (rating       && !match.rating)       { patch.rating = rating;             patch.data_source.rating = 'import' }
+            await supabaseAdmin.from('books').update(patch).eq('id', match.id)
+            return
+          }
+        }
+        console.error(`booklist-import INSERT failed for "${title}":`, error.message)
+        errors.push({ title, error: error.message })
+      }
       return
     }
 
