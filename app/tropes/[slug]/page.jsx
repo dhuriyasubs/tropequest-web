@@ -4,6 +4,7 @@ import Breadcrumb from '@/components/Breadcrumb'
 import TropeBookList from '@/components/TropeBookList'
 import { getFilterOptions, getBooksByTrope } from '@/lib/search'
 import { slugify } from '@/lib/utils'
+import PageViewTracker from '@/components/PageViewTracker'
 
 export const revalidate = 3600
 
@@ -145,6 +146,7 @@ export default async function TropeDetailPage({ params }) {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <PageViewTracker pageType="trope_detail" slug={params.slug} />
       <div className="max-w-6xl mx-auto px-4 py-10">
       <Breadcrumb crumbs={[
         { label: 'Home', href: '/' },

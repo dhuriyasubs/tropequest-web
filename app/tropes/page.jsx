@@ -1,5 +1,6 @@
 import { getFilterOptions } from '@/lib/search'
 import TropePicker from '@/components/TropePicker'
+import PageViewTracker from '@/components/PageViewTracker'
 
 export const metadata = {
   title: 'Browse by Trope',
@@ -40,6 +41,7 @@ export default async function TropesPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
+      <PageViewTracker pageType="trope_listing" />
       <h1 className="font-serif text-3xl font-bold mb-2">Browse by Trope</h1>
       <p className="text-slate mb-4">
         {tropes.length} tropes across romance, romantasy, and thriller.
