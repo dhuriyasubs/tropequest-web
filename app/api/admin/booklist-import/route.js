@@ -81,8 +81,9 @@ export async function PATCH(request) {
             .from('books')
             .select(['id', ...ARRAY_FIELDS, 'rating', 'spice_rating', 'data_source'].join(','))
             .ilike('title', title)
-            .limit(5)
-          const match = existing?.find(b => normalizeAuthor(b.author) === normalizedAuthor) ?? existing?.[0]
+            .ilike('author', normalizedAuthor)
+            .maybeSingle()
+          const match = existing
           if (match) {
             const patch = { data_source: { ...(match.data_source ?? {}) } }
             for (const field of ARRAY_FIELDS) {
