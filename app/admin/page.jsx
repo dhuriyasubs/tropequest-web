@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createSupabaseServer, supabaseAdmin } from '@/lib/supabase'
 import { isAdmin } from '@/lib/admin'
+import TagAudit from './TagAudit'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Admin' }
@@ -109,6 +110,8 @@ export default async function AdminPage() {
           </div>
         </div>
       )}
+
+      <TagAudit />
 
       <div className="space-y-3">
         {modules.map(m => (
