@@ -38,7 +38,7 @@ function bustCache(slug, author, seriesName) {
   revalidateTag('featured-books')
 }
 
-const FIELDS = 'id,title,author,slug,cover_url,series_name,series_number,rating,rating_count,rating_source,description,tropes,genres,release_date,release_year,buy_url_amazon_us,buy_url_amazon_in,buy_url_flipkart,price_amazon_in,price_amazon_us,characters,spice_rating'
+const FIELDS = 'id,title,author,slug,cover_url,series_name,series_number,rating,rating_count,rating_source,description,tropes,genres,release_date,release_year,buy_url_amazon_us,buy_url_amazon_in,buy_url_flipkart,price_amazon_in,price_amazon_us,characters,spice_rating,time_period,relationship_type,kink_tags,story_tags,content_warnings,representation,setting_tags,geography_tags,data_source'
 
 export async function GET(request) {
   const supabase = createSupabaseServer()

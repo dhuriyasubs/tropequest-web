@@ -15,6 +15,7 @@ const EMPTY_BOOK = {
   genres: [], tropes: [], time_period: [], relationship_type: [],
   kink_tags: [], story_tags: [], content_warnings: [], representation: [],
   setting_tags: [], geography_tags: [],
+  data_source: {},
   characters: '', description: '',
   release_date: '', release_year: '',
   buy_url_amazon_us: '', buy_url_amazon_in: '', buy_url_flipkart: '',
@@ -23,6 +24,23 @@ const EMPTY_BOOK = {
 }
 
 const SPICE_LABELS = { 1: 'Closed Door', 2: 'Fade to Black', 3: 'Some Steam', 4: 'Steamy', 5: 'Explicit' }
+
+const TRACKED_FIELDS = new Set([
+  'description', 'tropes', 'genres', 'time_period', 'relationship_type',
+  'kink_tags', 'story_tags', 'content_warnings', 'representation', 'setting_tags', 'geography_tags',
+])
+
+const SOURCE_CFG = {
+  admin_manual: { label: 'manual', cls: 'bg-gray-100 text-gray-500' },
+  admin_url:    { label: 'URL',    cls: 'bg-green-100 text-green-700' },
+  pipeline:     { label: 'AI',     cls: 'bg-blue-100 text-blue-700' },
+  import:       { label: 'import', cls: 'bg-orange-100 text-orange-700' },
+}
+function SourceBadge({ source }) {
+  if (!source || !SOURCE_CFG[source]) return null
+  const { label, cls } = SOURCE_CFG[source]
+  return <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${cls}`}>{label}</span>
+}
 
 function missingFields(b) {
   const missing = []
@@ -34,7 +52,7 @@ function missingFields(b) {
   return missing
 }
 
-function TagPicker({ label, field, options, groups, value = [], onChange }) {
+function TagPicker({ label, field, options, groups, value = [], onChange, badge }) {
   const [open, setOpen]           = useState(false)
   const [search, setSearch]       = useState('')
   const [customOpts, setCustomOpts] = useState([])
@@ -87,7 +105,7 @@ function TagPicker({ label, field, options, groups, value = [], onChange }) {
 
   return (
     <div ref={ref} className="relative">
-      <label className="block text-xs text-slate mb-1">{label}</label>
+      <label className="flex items-center gap-1.5 text-xs text-slate mb-1">{label}{badge}</label>
       <div
         className="min-h-[38px] flex flex-wrap gap-1 border border-gray-200 rounded-lg px-2 py-1.5 cursor-text focus-within:ring-2 focus-within:ring-bloom/40"
         onClick={() => setOpen(true)}
@@ -182,6 +200,7 @@ function buildPayload(book, isNew) {
     price_amazon_in:   book.price_amazon_in  !== '' ? Number(book.price_amazon_in)  : null,
     price_amazon_us:   book.price_amazon_us  !== '' ? Number(book.price_amazon_us)  : null,
     spice_rating:      book.spice_rating     !== '' ? Number(book.spice_rating)     : null,
+    data_source:       book.data_source      ?? {},
   }
 }
 
@@ -214,6 +233,7 @@ function normaliseBook(b) {
     price_amazon_us:   b.price_amazon_us   ?? '',
     price_amazon_in:   b.price_amazon_in   ?? '',
     spice_rating:      b.spice_rating      ?? '',
+    data_source:       b.data_source       ?? {},
   }
 }
 
@@ -296,6 +316,7 @@ function BookFields({ book, set }) {
         groups={GENRE_GROUPS}
         value={book.genres}
         onChange={v => set('genres', v)}
+        badge={<SourceBadge source={book.data_source?.genres} />}
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -316,6 +337,7 @@ function BookFields({ book, set }) {
         groups={TROPE_GROUPS}
         value={book.tropes}
         onChange={v => set('tropes', v)}
+        badge={<SourceBadge source={book.data_source?.tropes} />}
       />
 
       <TagPicker
@@ -325,6 +347,7 @@ function BookFields({ book, set }) {
         groups={TIME_PERIOD_GROUPS}
         value={book.time_period}
         onChange={v => set('time_period', v)}
+        badge={<SourceBadge source={book.data_source?.time_period} />}
       />
 
       <TagPicker
@@ -333,6 +356,7 @@ function BookFields({ book, set }) {
         options={RELATIONSHIP_TYPES}
         value={book.relationship_type}
         onChange={v => set('relationship_type', v)}
+        badge={<SourceBadge source={book.data_source?.relationship_type} />}
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -342,6 +366,7 @@ function BookFields({ book, set }) {
           options={SETTING_TAGS}
           value={book.setting_tags}
           onChange={v => set('setting_tags', v)}
+          badge={<SourceBadge source={book.data_source?.setting_tags} />}
         />
         <TagPicker
           label="Geography Tags"
@@ -349,6 +374,7 @@ function BookFields({ book, set }) {
           options={GEOGRAPHY_TAGS}
           value={book.geography_tags}
           onChange={v => set('geography_tags', v)}
+          badge={<SourceBadge source={book.data_source?.geography_tags} />}
         />
       </div>
 
@@ -358,6 +384,7 @@ function BookFields({ book, set }) {
         options={STORY_TAGS}
         value={book.story_tags}
         onChange={v => set('story_tags', v)}
+        badge={<SourceBadge source={book.data_source?.story_tags} />}
       />
 
       <TagPicker
@@ -366,6 +393,7 @@ function BookFields({ book, set }) {
         options={CONTENT_WARNINGS}
         value={book.content_warnings}
         onChange={v => set('content_warnings', v)}
+        badge={<SourceBadge source={book.data_source?.content_warnings} />}
       />
 
       <TagPicker
@@ -374,6 +402,7 @@ function BookFields({ book, set }) {
         options={REPRESENTATION}
         value={book.representation}
         onChange={v => set('representation', v)}
+        badge={<SourceBadge source={book.data_source?.representation} />}
       />
 
       <TagPicker
@@ -382,6 +411,7 @@ function BookFields({ book, set }) {
         options={KINK_TAGS}
         value={book.kink_tags}
         onChange={v => set('kink_tags', v)}
+        badge={<SourceBadge source={book.data_source?.kink_tags} />}
       />
 
       <div>
@@ -390,7 +420,9 @@ function BookFields({ book, set }) {
       </div>
 
       <div>
-        <label className="block text-xs text-slate mb-1">Description</label>
+        <label className="flex items-center gap-1.5 text-xs text-slate mb-1">
+          Description <SourceBadge source={book.data_source?.description} />
+        </label>
         <textarea rows={5} value={book.description} onChange={e => set('description', e.target.value)} className={`${inputCls} resize-y`} />
       </div>
 
@@ -504,7 +536,18 @@ export default function BookEditForm() {
     setMode('edit')
   }
 
-  function setEdit(key, value) { setEditBook(b => ({ ...b, [key]: value })) }
+  function setEdit(key, value) {
+    setEditBook(b => {
+      const next = { ...b, [key]: value }
+      if (TRACKED_FIELDS.has(key)) {
+        const hasVal = Array.isArray(value) ? value.length > 0 : Boolean(value)
+        const ds = { ...(b.data_source || {}) }
+        if (hasVal) ds[key] = 'admin_manual'; else delete ds[key]
+        next.data_source = ds
+      }
+      return next
+    })
+  }
 
   async function handleUpdate(e) {
     e.preventDefault()
@@ -531,7 +574,6 @@ export default function BookEditForm() {
   function setNew(key, value) {
     setNewBook(b => {
       const updated = { ...b, [key]: value }
-      // Auto-generate slug from title + author
       if ((key === 'title' || key === 'author') && !b._slugEdited) {
         updated.slug = toSlug(
           key === 'title'  ? value : b.title,
@@ -539,6 +581,12 @@ export default function BookEditForm() {
         )
       }
       if (key === 'slug') updated._slugEdited = true
+      if (TRACKED_FIELDS.has(key)) {
+        const hasVal = Array.isArray(value) ? value.length > 0 : Boolean(value)
+        const ds = { ...(b.data_source || {}) }
+        if (hasVal) ds[key] = 'admin_manual'; else delete ds[key]
+        updated.data_source = ds
+      }
       return updated
     })
   }
@@ -556,22 +604,29 @@ export default function BookEditForm() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       const b = data.book
-      applyTo(prev => ({
-        ...prev,
-        title:         b.title         ?? prev.title,
-        author:        b.author        ?? prev.author,
-        slug:          b.title && b.author ? toSlug(b.title, b.author) : prev.slug,
-        cover_url:     b.cover_url     ?? prev.cover_url,
-        description:   b.description   ?? prev.description,
-        series_name:   b.series_name   ?? prev.series_name,
-        series_number: b.series_number ?? prev.series_number,
-        genres:        Array.isArray(b.genres) ? b.genres : (b.genres ? [b.genres] : prev.genres),
-        release_date:  b.release_date  ?? prev.release_date,
-        release_year:  b.release_year  ?? prev.release_year,
-        rating:        b.rating        ?? prev.rating,
-        rating_count:  b.rating_count  ?? prev.rating_count,
-        rating_source: b.rating_source ?? prev.rating_source,
-      }))
+      applyTo(prev => {
+        const ds = { ...(prev.data_source || {}) }
+        if (b.description)          ds.description = 'admin_url'
+        if (b.genres?.length)       ds.genres      = 'admin_url'
+        if (b.tropes?.length)       ds.tropes      = 'admin_url'
+        return {
+          ...prev,
+          title:         b.title         ?? prev.title,
+          author:        b.author        ?? prev.author,
+          slug:          b.title && b.author ? toSlug(b.title, b.author) : prev.slug,
+          cover_url:     b.cover_url     ?? prev.cover_url,
+          description:   b.description   ?? prev.description,
+          series_name:   b.series_name   ?? prev.series_name,
+          series_number: b.series_number ?? prev.series_number,
+          genres:        Array.isArray(b.genres) ? b.genres : (b.genres ? [b.genres] : prev.genres),
+          release_date:  b.release_date  ?? prev.release_date,
+          release_year:  b.release_year  ?? prev.release_year,
+          rating:        b.rating        ?? prev.rating,
+          rating_count:  b.rating_count  ?? prev.rating_count,
+          rating_source: b.rating_source ?? prev.rating_source,
+          data_source:   ds,
+        }
+      })
       setBookUrl('')
     } catch (err) {
       setFetchError(err.message)
