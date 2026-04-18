@@ -135,7 +135,7 @@ export async function POST(request) {
       || html.match(/<h1[^>]*class="[^"]*seriesTitle[^"]*"[^>]*>([^<]+)</)
       || html.match(/<h1[^>]*>([^<]+Series[^<]*)<\/h1>/i)
     const seriesName = titleMatch
-      ? titleMatch[1].trim()
+      ? decodeEntities(titleMatch[1].trim())
       : seriesFromUrl
 
     const books = extractSeriesBooks(html, seriesName)
