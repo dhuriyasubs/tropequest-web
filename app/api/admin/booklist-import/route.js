@@ -73,8 +73,9 @@ export async function PATCH(request) {
       }
       if (spice_rating) { row.spice_rating = spice_rating; ds.spice_rating = 'import' }
       if (rating)       { row.rating = rating;             ds.rating = 'import' }
+      console.log(`booklist-import INSERT: title="${title}" author_raw="${author}" author_normalized="${normalizedAuthor}"`)
       const { error } = await supabaseAdmin.from('books').insert(row)
-      if (error) { console.error(`booklist-import INSERT failed for "${title}":`, error.message); errors.push({ title, error: error.message }) }
+      if (error) { console.error(`booklist-import INSERT failed for "${title}":`, error.message); errors.push({ title, error: `${error.message} [normalized="${normalizedAuthor}"]` }) }
       return
     }
 
