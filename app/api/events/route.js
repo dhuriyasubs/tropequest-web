@@ -3,7 +3,7 @@ import { createSupabaseServer, supabaseAdmin } from '@/lib/supabase'
 
 export async function POST(request) {
   try {
-    const { type, session_id, device_id, traffic_source, data } = await request.json()
+    const { type, session_id, device_id, traffic_source, referrer, data } = await request.json()
     if (!type) return NextResponse.json({ ok: false })
 
     const supabase = createSupabaseServer()
@@ -16,7 +16,7 @@ export async function POST(request) {
       device_id: device_id ?? null,
       traffic_source: traffic_source ?? null,
       book_id: data?.book_id ?? null,
-      referrer: data?.referrer ?? null,
+      referrer: referrer ?? null,
       data,
     })
   } catch (e) {
