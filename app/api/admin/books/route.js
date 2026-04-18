@@ -53,18 +53,26 @@ export async function GET(request) {
       const q = supabaseAdmin.from('books').select('*', { count: 'exact', head: true })
       return filter(q)
     }
-    const [total, desc, author, cover, rating, ratingCount, ratingSource, tropes, genres, isbn, isbn13] = await Promise.all([
+    const arr = f => `${f}.is.null,${f}.eq.{}`
+    const [total, desc, author, cover, rating, ratingSource, tropes, genres, isbn, isbn13,
+           timePeriod, relType, storyTags, cw, rep, setting, geo] = await Promise.all([
       supabaseAdmin.from('books').select('*', { count: 'exact', head: true }),
       c(q => q.or('description.is.null,description.eq.')),
       c(q => q.or('author.is.null,author.eq.,author.eq.Unknown')),
       c(q => q.or('cover_url.is.null,cover_url.eq.')),
       c(q => q.is('rating', null)),
-      c(q => q.is('rating_count', null)),
       c(q => q.is('rating_source', null)),
-      c(q => q.or('tropes.is.null,tropes.eq.{}')),
-      c(q => q.or('genres.is.null,genres.eq.{}')),
+      c(q => q.or(arr('tropes'))),
+      c(q => q.or(arr('genres'))),
       c(q => q.or('isbn.is.null,isbn.eq.')),
       c(q => q.or('isbn13.is.null,isbn13.eq.')),
+      c(q => q.or(arr('time_period'))),
+      c(q => q.or(arr('relationship_type'))),
+      c(q => q.or(arr('story_tags'))),
+      c(q => q.or(arr('content_warnings'))),
+      c(q => q.or(arr('representation'))),
+      c(q => q.or(arr('setting_tags'))),
+      c(q => q.or(arr('geography_tags'))),
     ])
     return NextResponse.json({
       total:                    total.count       ?? 0,
@@ -72,12 +80,18 @@ export async function GET(request) {
       missing_author:           author.count      ?? 0,
       missing_cover:            cover.count       ?? 0,
       missing_rating:           rating.count      ?? 0,
-      missing_rating_count:     ratingCount.count ?? 0,
       missing_rating_source:    ratingSource.count ?? 0,
       zero_tropes:              tropes.count      ?? 0,
       zero_genres:              genres.count      ?? 0,
       missing_isbn:             isbn.count        ?? 0,
       missing_isbn13:           isbn13.count      ?? 0,
+      zero_time_period:         timePeriod.count  ?? 0,
+      zero_relationship_type:   relType.count     ?? 0,
+      zero_story_tags:          storyTags.count   ?? 0,
+      zero_content_warnings:    cw.count          ?? 0,
+      zero_representation:      rep.count         ?? 0,
+      zero_setting_tags:        setting.count     ?? 0,
+      zero_geography_tags:      geo.count         ?? 0,
     })
   }
 
@@ -85,16 +99,23 @@ export async function GET(request) {
   const missing = searchParams.get('missing')
   if (missing) {
     const FILTERS = {
-      description:     q => q.or('description.is.null,description.eq.'),
-      author:          q => q.or('author.is.null,author.eq.,author.eq.Unknown'),
-      cover:           q => q.or('cover_url.is.null,cover_url.eq.'),
-      rating:          q => q.is('rating', null),
-      rating_count:    q => q.is('rating_count', null),
-      rating_source:   q => q.is('rating_source', null),
-      tropes:          q => q.or('tropes.is.null,tropes.eq.{}'),
-      genres:          q => q.or('genres.is.null,genres.eq.{}'),
-      isbn:            q => q.or('isbn.is.null,isbn.eq.'),
-      isbn13:          q => q.or('isbn13.is.null,isbn13.eq.'),
+      description:        q => q.or('description.is.null,description.eq.'),
+      author:             q => q.or('author.is.null,author.eq.,author.eq.Unknown'),
+      cover:              q => q.or('cover_url.is.null,cover_url.eq.'),
+      rating:             q => q.is('rating', null),
+      rating_count:       q => q.is('rating_count', null),
+      rating_source:      q => q.is('rating_source', null),
+      tropes:             q => q.or('tropes.is.null,tropes.eq.{}'),
+      genres:             q => q.or('genres.is.null,genres.eq.{}'),
+      isbn:               q => q.or('isbn.is.null,isbn.eq.'),
+      isbn13:             q => q.or('isbn13.is.null,isbn13.eq.'),
+      time_period:        q => q.or('time_period.is.null,time_period.eq.{}'),
+      relationship_type:  q => q.or('relationship_type.is.null,relationship_type.eq.{}'),
+      story_tags:         q => q.or('story_tags.is.null,story_tags.eq.{}'),
+      content_warnings:   q => q.or('content_warnings.is.null,content_warnings.eq.{}'),
+      representation:     q => q.or('representation.is.null,representation.eq.{}'),
+      setting_tags:       q => q.or('setting_tags.is.null,setting_tags.eq.{}'),
+      geography_tags:     q => q.or('geography_tags.is.null,geography_tags.eq.{}'),
     }
     const applyFilter = FILTERS[missing]
     if (!applyFilter) return NextResponse.json({ error: 'Unknown field' }, { status: 400 })
