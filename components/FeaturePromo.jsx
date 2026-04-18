@@ -17,7 +17,7 @@ const FEATURES = [
     href: '/shelf',
     icon: '📷',
     title: 'Scan Your Shelf',
-    body: 'Photograph your bookshelf and we\'ll identify and add every book to your TBR.',
+    body: 'Photograph your bookshelf and we\'ll identify and add every book to your virtual shelf.',
   },
 ]
 
