@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createSupabaseServer, supabaseAdmin } from '@/lib/supabase'
 import { isAdmin } from '@/lib/admin'
+import { slugify } from '@/lib/utils'
 
 const ARRAY_FIELDS = [
   'genres', 'tropes', 'story_tags', 'content_warnings', 'representation',
@@ -33,15 +34,29 @@ export async function POST(request) {
   return NextResponse.json({ matches })
 }
 
-// PATCH: merge fields into matched books
+// PATCH: create new books or merge fields into existing ones
 export async function PATCH(request) {
   if (!await getAdmin(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { updates } = await request.json()
 
   await Promise.all(updates.map(async update => {
-    const { id, rating, spice_rating, ...fields } = update
+    const { id, title, author, rating, spice_rating, ...fields } = update
 
+    if (!id) {
+      // Create new book
+      const ds = {}
+      const row = { title, author, slug: slugify(`${title} ${author}`), data_source: ds }
+      for (const field of ARRAY_FIELDS) {
+        if (fields[field]?.length) { row[field] = fields[field]; ds[field] = 'import' }
+      }
+      if (spice_rating) { row.spice_rating = spice_rating; ds.spice_rating = 'import' }
+      if (rating)       { row.rating = rating;             ds.rating = 'import' }
+      await supabaseAdmin.from('books').insert(row)
+      return
+    }
+
+    // Update existing book — merge array fields
     const { data: current } = await supabaseAdmin
       .from('books')
       .select([...ARRAY_FIELDS, 'rating', 'spice_rating', 'data_source'].join(','))
@@ -51,23 +66,14 @@ export async function PATCH(request) {
     if (!current) return
 
     const patch = { data_source: { ...(current.data_source ?? {}) } }
-
     for (const field of ARRAY_FIELDS) {
       if (fields[field]?.length) {
-        const merged = [...new Set([...(current[field] ?? []), ...fields[field]])]
-        patch[field] = merged
+        patch[field] = [...new Set([...(current[field] ?? []), ...fields[field]])]
         patch.data_source[field] = 'import'
       }
     }
-
-    if (spice_rating && !current.spice_rating) {
-      patch.spice_rating = spice_rating
-      patch.data_source.spice_rating = 'import'
-    }
-    if (rating && !current.rating) {
-      patch.rating = rating
-      patch.data_source.rating = 'import'
-    }
+    if (spice_rating && !current.spice_rating) { patch.spice_rating = spice_rating; patch.data_source.spice_rating = 'import' }
+    if (rating       && !current.rating)       { patch.rating = rating;             patch.data_source.rating = 'import' }
 
     await supabaseAdmin.from('books').update(patch).eq('id', id)
   }))

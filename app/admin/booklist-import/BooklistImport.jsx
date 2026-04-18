@@ -84,9 +84,14 @@ export default function BooklistImport() {
 
   async function handleSave() {
     setSaving(true)
-    const updates = rows
-      .filter(r => r.db)
-      .map(r => ({ id: r.db.id, rating: r.rating, spice_rating: r.spice_rating, ...r.mapped }))
+    const updates = rows.map(r => ({
+      id: r.db?.id ?? null,
+      title: r.title,
+      author: r.author,
+      rating: r.rating,
+      spice_rating: r.spice_rating,
+      ...r.mapped,
+    }))
     await fetch('/api/admin/booklist-import', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -96,7 +101,7 @@ export default function BooklistImport() {
     setDone(true)
   }
 
-  const matchedCount = rows?.filter(r => r.db).length ?? 0
+  const totalCount = rows?.length ?? 0
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10 space-y-8">
@@ -123,16 +128,16 @@ export default function BooklistImport() {
 
       {rows && (
         <div className="space-y-4">
-          <p className="text-sm text-slate">{matchedCount} of {rows.length} books matched in DB.</p>
+          <p className="text-sm text-slate">{rows.filter(r => r.db).length} matched · {rows.filter(r => !r.db).length} new · {rows.length} total</p>
 
           <div className="space-y-3">
             {rows.map((row, i) => (
-              <div key={i} className={`border rounded-xl px-5 py-4 ${row.db ? 'border-gray-200' : 'border-red-100 bg-red-50/30'}`}>
+              <div key={i} className={`border rounded-xl px-5 py-4 ${row.db ? 'border-gray-200' : 'border-amber-200 bg-amber-50/30'}`}>
                 <div className="flex items-start justify-between gap-4 mb-2">
                   <p className="font-semibold text-sm">
                     {row.db
                       ? <Link href={`/books/${row.db.slug}`} target="_blank" className="hover:text-bloom">{row.title}</Link>
-                      : <span className="text-red-500">{row.title}</span>
+                      : <span className="text-amber-700">{row.title}</span>
                     }
                     <span className="text-slate font-normal"> by {row.author}</span>
                   </p>
@@ -142,7 +147,7 @@ export default function BooklistImport() {
                   </div>
                 </div>
 
-                {!row.db && <p className="text-xs text-red-400">Not found in DB — check title spelling</p>}
+                {!row.db && <p className="text-xs text-amber-600 mb-2">Not in DB — will be created</p>}
 
                 {row.db && (
                   <div className="space-y-1.5 mt-3">
@@ -175,13 +180,13 @@ export default function BooklistImport() {
             ))}
           </div>
 
-          {matchedCount > 0 && !done && (
+          {totalCount > 0 && !done && (
             <button
               onClick={handleSave}
               disabled={saving}
               className="bg-ink text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-ink/90 disabled:opacity-40 transition-colors"
             >
-              {saving ? 'Saving...' : `Save ${matchedCount} book${matchedCount !== 1 ? 's' : ''}`}
+              {saving ? 'Saving...' : `Save ${totalCount} book${totalCount !== 1 ? 's' : ''}`}
             </button>
           )}
           {done && <p className="text-sm text-green-600 font-semibold">Saved successfully.</p>}
