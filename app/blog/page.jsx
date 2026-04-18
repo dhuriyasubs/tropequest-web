@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { getAllPosts } from '@/lib/blog'
 import Breadcrumb from '@/components/Breadcrumb'
+import PageViewTracker from '@/components/PageViewTracker'
 
 export const metadata = {
   title: 'Blog',
@@ -25,6 +26,7 @@ export default function BlogPage({ searchParams }) {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-16">
+      <PageViewTracker pageType="blog_listing" />
       <Breadcrumb crumbs={[{ label: 'Home', href: '/' }, { label: 'Blog' }]} />
       <h1 className="font-serif text-4xl font-bold mb-2">Blog</h1>
       <p className="text-slate mb-6">Trope guides, reading lists, and book recommendations.</p>

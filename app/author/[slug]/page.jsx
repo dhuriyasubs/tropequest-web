@@ -6,6 +6,7 @@ import AuthorBio from '@/components/AuthorBio'
 import { getBooksByAuthor, getAuthorBio } from '@/lib/search'
 import { slugify, formatAuthorName } from '@/lib/utils'
 import FeaturePromo from '@/components/FeaturePromo'
+import PageViewTracker from '@/components/PageViewTracker'
 
 export const revalidate = 3600
 
@@ -97,6 +98,7 @@ export default async function AuthorPage({ params }) {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
+      <PageViewTracker pageType="author" slug={params.slug} />
       <Breadcrumb crumbs={[
         { label: 'Home', href: '/' },
         { label: 'Authors', href: '/author' },

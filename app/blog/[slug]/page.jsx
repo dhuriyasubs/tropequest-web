@@ -8,6 +8,7 @@ import RelatedPosts from '@/components/RelatedPosts'
 import BlogFeedback from '@/components/BlogFeedback'
 import BlogDiscoveryCTA from '@/components/BlogDiscoveryCTA'
 import FeaturePromo from '@/components/FeaturePromo'
+import PageViewTracker from '@/components/PageViewTracker'
 
 export const revalidate = 3600
 
@@ -44,6 +45,7 @@ export default function BlogPostPage({ params }) {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-16">
+      <PageViewTracker pageType="blog_post" slug={params.slug} />
       <Breadcrumb crumbs={[
         { label: 'Home', href: '/' },
         { label: 'Blog', href: '/blog' },

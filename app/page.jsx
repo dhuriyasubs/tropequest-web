@@ -7,6 +7,7 @@ import SeriesCompletionSection from '@/components/SeriesCompletionSection'
 import { getFeaturedBooks, getPopularTropes, getPersonalizedBooks, getSeriesCompletionBooks, getBecauseYouReadBooks } from '@/lib/search'
 import { createSupabaseServer } from '@/lib/supabase'
 import { getAllPosts } from '@/lib/blog'
+import PageViewTracker from '@/components/PageViewTracker'
 
 export const dynamic = 'force-dynamic'
 
@@ -101,6 +102,7 @@ export default async function HomePage() {
 
   return (
     <>
+      <PageViewTracker pageType="home" />
       <HeroGrid tropes={popularTropes} />
       <DiscoverStrip />
 

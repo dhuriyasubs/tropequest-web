@@ -5,6 +5,7 @@ import Breadcrumb from '@/components/Breadcrumb'
 import { getAllSeries, getBooksBySeries, getBooksByTitles, getSeriesBio } from '@/lib/search'
 import { slugify } from '@/lib/utils'
 import FeaturePromo from '@/components/FeaturePromo'
+import PageViewTracker from '@/components/PageViewTracker'
 
 export const revalidate = 3600
 
@@ -90,6 +91,7 @@ export default async function SeriesDetailPage({ params }) {
 
   return (
     <>
+      <PageViewTracker pageType="series" slug={params.slug} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <div className="max-w-3xl mx-auto px-4 py-10">
