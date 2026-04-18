@@ -54,13 +54,14 @@ export async function GET(request) {
       return filter(q)
     }
     const arr = f => `${f}.is.null,${f}.eq.{}`
-    const [total, desc, author, cover, rating, ratingSource, tropes, genres, isbn, isbn13,
+    const [total, desc, author, cover, rating, ratingCount, ratingSource, tropes, genres, isbn, isbn13,
            timePeriod, relType, storyTags, cw, rep, setting, geo] = await Promise.all([
       supabaseAdmin.from('books').select('*', { count: 'exact', head: true }),
       c(q => q.or('description.is.null,description.eq.')),
       c(q => q.or('author.is.null,author.eq.,author.eq.Unknown')),
       c(q => q.or('cover_url.is.null,cover_url.eq.')),
       c(q => q.is('rating', null)),
+      c(q => q.is('rating_count', null)),
       c(q => q.is('rating_source', null)),
       c(q => q.or(arr('tropes'))),
       c(q => q.or(arr('genres'))),
@@ -75,23 +76,24 @@ export async function GET(request) {
       c(q => q.or(arr('geography_tags'))),
     ])
     return NextResponse.json({
-      total:                    total.count       ?? 0,
-      missing_description:      desc.count        ?? 0,
-      missing_author:           author.count      ?? 0,
-      missing_cover:            cover.count       ?? 0,
-      missing_rating:           rating.count      ?? 0,
+      total:                    total.count        ?? 0,
+      missing_description:      desc.count         ?? 0,
+      missing_author:           author.count       ?? 0,
+      missing_cover:            cover.count        ?? 0,
+      missing_rating:           rating.count       ?? 0,
+      missing_rating_count:     ratingCount.count  ?? 0,
       missing_rating_source:    ratingSource.count ?? 0,
-      zero_tropes:              tropes.count      ?? 0,
-      zero_genres:              genres.count      ?? 0,
-      missing_isbn:             isbn.count        ?? 0,
-      missing_isbn13:           isbn13.count      ?? 0,
-      zero_time_period:         timePeriod.count  ?? 0,
-      zero_relationship_type:   relType.count     ?? 0,
-      zero_story_tags:          storyTags.count   ?? 0,
-      zero_content_warnings:    cw.count          ?? 0,
-      zero_representation:      rep.count         ?? 0,
-      zero_setting_tags:        setting.count     ?? 0,
-      zero_geography_tags:      geo.count         ?? 0,
+      zero_tropes:              tropes.count       ?? 0,
+      zero_genres:              genres.count       ?? 0,
+      missing_isbn:             isbn.count         ?? 0,
+      missing_isbn13:           isbn13.count       ?? 0,
+      zero_time_period:         timePeriod.count   ?? 0,
+      zero_relationship_type:   relType.count      ?? 0,
+      zero_story_tags:          storyTags.count    ?? 0,
+      zero_content_warnings:    cw.count           ?? 0,
+      zero_representation:      rep.count          ?? 0,
+      zero_setting_tags:        setting.count      ?? 0,
+      zero_geography_tags:      geo.count          ?? 0,
     })
   }
 
