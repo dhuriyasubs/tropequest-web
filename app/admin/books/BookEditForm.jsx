@@ -1134,10 +1134,17 @@ export default function BookEditForm() {
           { key: 'missing_rating',          field: 'rating',          label: 'Rating' },
           { key: 'missing_rating_count',    field: 'rating_count',    label: 'Rating Count' },
           { key: 'missing_rating_source',   field: 'rating_source',   label: 'Rating Source' },
-          { key: 'zero_tropes',             field: 'tropes',          label: 'Tropes' },
-          { key: 'zero_genres',             field: 'genres',          label: 'Genres' },
-          { key: 'missing_isbn',            field: 'isbn',            label: 'ISBN' },
-          { key: 'missing_isbn13',          field: 'isbn13',          label: 'ISBN13' },
+          { key: 'zero_tropes',             field: 'tropes',            label: 'Tropes' },
+          { key: 'zero_genres',             field: 'genres',            label: 'Genres' },
+          { key: 'zero_time_period',        field: 'time_period',       label: 'Time Period' },
+          { key: 'zero_relationship_type',  field: 'relationship_type', label: 'Relationship' },
+          { key: 'zero_story_tags',         field: 'story_tags',        label: 'Story Tags' },
+          { key: 'zero_content_warnings',   field: 'content_warnings',  label: 'Content Warnings' },
+          { key: 'zero_representation',     field: 'representation',    label: 'Representation' },
+          { key: 'zero_setting_tags',       field: 'setting_tags',      label: 'Setting' },
+          { key: 'zero_geography_tags',     field: 'geography_tags',    label: 'Geography' },
+          { key: 'missing_isbn',            field: 'isbn',              label: 'ISBN' },
+          { key: 'missing_isbn13',          field: 'isbn13',            label: 'ISBN13' },
         ]
         return (
           <div>
