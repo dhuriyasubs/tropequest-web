@@ -12,13 +12,18 @@ function toSlug(title, author) {
 }
 
 function decodeEntities(str) {
-  return str
-    .replace(/&quot;/g, '"')
-    .replace(/&#x27;/g, "'")
-    .replace(/&#39;/g, "'")
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
+  let s = str, prev
+  do {
+    prev = s
+    s = s
+      .replace(/&quot;/g, '"')
+      .replace(/&#x27;/g, "'")
+      .replace(/&#39;/g, "'")
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+  } while (s !== prev)
+  return s
 }
 
 // Goodreads series pages embed book data as HTML-escaped JSON in the page source.
