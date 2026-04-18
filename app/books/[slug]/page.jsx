@@ -11,6 +11,8 @@ import ShelfControls from '@/components/ShelfControls'
 import StarRating from '@/components/StarRating'
 import Breadcrumb from '@/components/Breadcrumb'
 import FeaturePromo from '@/components/FeaturePromo'
+import BookViewTracker from '@/components/BookViewTracker'
+import RecLink from '@/components/RecLink'
 
 export const revalidate = 3600
 
@@ -130,6 +132,7 @@ export default async function BookPage({ params }) {
 
   return (
     <>
+      <BookViewTracker bookId={book.id} slug={book.slug} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -267,7 +270,7 @@ export default async function BookPage({ params }) {
               {seriesBooks.map(b => {
                 const status = sectionShelfMap[b.id] ?? null
                 return (
-                  <Link key={b.id} href={`/books/${b.slug}`} className="group text-center">
+                  <RecLink key={b.id} href={`/books/${b.slug}`} section="more_in_series" bookId={b.id} className="group text-center">
                     <div className="relative aspect-[2/3] rounded overflow-hidden bg-gray-100 mb-1">
                       {b.cover_url ? (
                         // eslint-disable-next-line @next/next/no-img-element
@@ -286,7 +289,7 @@ export default async function BookPage({ params }) {
                       )}
                     </div>
                     <p className="text-xs font-medium line-clamp-2">{b.title}</p>
-                  </Link>
+                  </RecLink>
                 )
               })}
             </div>
@@ -299,7 +302,7 @@ export default async function BookPage({ params }) {
             <h2 className="font-serif text-xl font-semibold mb-4">Readers also enjoyed</h2>
             <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-8 gap-4">
               {readersAlsoEnjoyed.map(b => (
-                <Link key={b.id} href={`/books/${b.slug}`} className="group">
+                <RecLink key={b.id} href={`/books/${b.slug}`} section="readers_also_enjoyed" bookId={b.id} className="group">
                   <div className="relative aspect-[2/3] rounded overflow-hidden bg-gray-100 mb-1">
                     {b.cover_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -310,7 +313,7 @@ export default async function BookPage({ params }) {
                   </div>
                   <p className="text-xs font-medium line-clamp-2">{b.title}</p>
                   <p className="text-xs text-slate line-clamp-1">{b.author}</p>
-                </Link>
+                </RecLink>
               ))}
             </div>
           </section>
@@ -336,10 +339,10 @@ export default async function BookPage({ params }) {
           const seriesGroups = Object.entries(seriesMap)
           const hasSeries = seriesGroups.length > 0
 
-          const BookCard = ({ b }) => {
+          const AuthorBookCard = ({ b }) => {
             const status = sectionShelfMap[b.id] ?? null
             return (
-              <Link href={`/books/${b.slug}`} className="group">
+              <RecLink href={`/books/${b.slug}`} section="more_by_author" bookId={b.id} className="group">
                 <div className="relative aspect-[2/3] rounded overflow-hidden bg-gray-100 mb-1">
                   {b.cover_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -358,7 +361,7 @@ export default async function BookPage({ params }) {
                   )}
                 </div>
                 <p className="text-xs font-medium line-clamp-2">{b.title}</p>
-              </Link>
+              </RecLink>
             )
           }
 
@@ -379,7 +382,7 @@ export default async function BookPage({ params }) {
                         </Link>
                       </p>
                       <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 gap-4">
-                        {books.map(b => <BookCard key={b.id} b={b} />)}
+                        {books.map(b => <AuthorBookCard key={b.id} b={b} />)}
                       </div>
                     </div>
                   ))}
@@ -387,14 +390,14 @@ export default async function BookPage({ params }) {
                     <div>
                       <p className="text-sm font-semibold text-slate mb-3">Standalone</p>
                       <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 gap-4">
-                        {standalone.map(b => <BookCard key={b.id} b={b} />)}
+                        {standalone.map(b => <AuthorBookCard key={b.id} b={b} />)}
                       </div>
                     </div>
                   )}
                 </div>
               ) : (
                 <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 gap-4">
-                  {moreByAuthor.map(b => <BookCard key={b.id} b={b} />)}
+                  {moreByAuthor.map(b => <AuthorBookCard key={b.id} b={b} />)}
                 </div>
               )}
             </section>

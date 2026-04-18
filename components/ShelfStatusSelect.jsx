@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { trackEvent } from '@/lib/events'
 
 const OPTIONS = [
   { value: 'unread',  label: 'Unread'  },
@@ -29,6 +30,7 @@ export default function ShelfStatusSelect({ bookId, currentStatus, onStatusChang
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ bookId, status: newStatus }),
     })
+    trackEvent('shelf_action', { book_id: bookId, action: 'status_change', status: newStatus })
     setLoading(false)
     router.refresh()
   }

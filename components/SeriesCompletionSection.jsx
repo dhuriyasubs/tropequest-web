@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import RecLink from '@/components/RecLink'
 
 const STATUS_BADGE = {
   read:    { label: '✓ Read',    cls: 'bg-green-600 text-white' },
@@ -11,8 +11,10 @@ function SeriesBook({ book }) {
   const isRead = book.shelfStatus === 'read'
 
   return (
-    <Link
+    <RecLink
       href={`/books/${book.slug}`}
+      section="complete_the_series"
+      bookId={book.id}
       className={`group shrink-0 w-28 flex flex-col ${isRead ? 'opacity-60' : ''}`}
     >
       <div className="relative w-full rounded-xl overflow-hidden bg-gray-100" style={{ aspectRatio: '2/3' }}>
@@ -50,7 +52,7 @@ function SeriesBook({ book }) {
         )}
       </div>
       <p className="mt-1.5 text-xs font-medium text-ink line-clamp-2 leading-tight">{book.title}</p>
-    </Link>
+    </RecLink>
   )
 }
 

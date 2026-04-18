@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createSupabaseBrowser } from '@/lib/supabase-browser'
 import ShelfStatusSelect from '@/components/ShelfStatusSelect'
+import { trackEvent } from '@/lib/events'
 
 function ShelfIcon({ filled, className }) {
   return filled ? (
@@ -48,6 +49,7 @@ export default function ShelfControls({ bookId, initialStatus = null }) {
     if (res.ok) {
       const { status: newStatus } = await res.json()
       setStatus(newStatus)
+      trackEvent('shelf_action', { book_id: bookId, action: newStatus ? 'add' : 'remove', status: newStatus })
       window.dispatchEvent(new CustomEvent('toast', {
         detail: { message: newStatus ? 'Added to shelf' : 'Removed from shelf' },
       }))

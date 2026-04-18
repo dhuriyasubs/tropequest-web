@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, useTransition, useRef } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useDebounce } from 'use-debounce'
 import BookCard from './BookCard'
+import { trackEvent } from '@/lib/events'
 
 const SPICE_LABELS = { 1: 'Tame', 2: 'Mild', 3: 'Steamy', 4: 'Very Steamy', 5: 'Explicit' }
 
@@ -68,7 +69,11 @@ export default function SearchClient({
     setLoading(true)
     fetch(`/api/search?${sp.toString()}`)
       .then(r => r.json())
-      .then(({ books, total }) => { setBooks(books ?? []); setTotal(total ?? 0) })
+      .then(({ books, total }) => {
+        setBooks(books ?? [])
+        setTotal(total ?? 0)
+        trackEvent('search', { query: debouncedQuery, genres: selGenres, tropes: selTropes, min_spice: minSpice, result_count: total ?? 0 })
+      })
       .finally(() => setLoading(false))
 
     syncUrl(debouncedQuery, selTropes, selGenres, minSpice, page)
@@ -87,11 +92,22 @@ export default function SearchClient({
     }
   }, [autoFocus])
 
-  const toggleTrope = t =>
+  const toggleTrope = t => {
+    const adding = !selTropes.includes(t)
     setSelTropes(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t])
+    if (adding) trackEvent('filter_apply', { filter_type: 'trope', value: t, query: debouncedQuery })
+  }
 
-  const toggleGenre = g =>
+  const toggleGenre = g => {
+    const adding = !selGenres.includes(g)
     setSelGenres(prev => prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g])
+    if (adding) trackEvent('filter_apply', { filter_type: 'genre', value: g, query: debouncedQuery })
+  }
+
+  const handleSpiceChange = v => {
+    setMinSpice(v)
+    if (v) trackEvent('filter_apply', { filter_type: 'spice', value: v, query: debouncedQuery })
+  }
 
   const clearAll = () => { setSelTropes([]); setSelGenres([]); setMinSpice(null) }
 
@@ -117,7 +133,7 @@ export default function SearchClient({
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bloom shadow-sm"
           />
         </div>
-        <SpiceFilter value={minSpice} onChange={setMinSpice} />
+        <SpiceFilter value={minSpice} onChange={handleSpiceChange} />
         {genres.length > 0 && (
           <FilterSection title="Genres" items={genres} selected={selGenres} onToggle={toggleGenre} />
         )}
@@ -235,7 +251,7 @@ export default function SearchClient({
 
             {/* Scrollable filter content */}
             <div className="overflow-y-auto flex-1 px-4 py-4">
-              <SpiceFilter value={minSpice} onChange={setMinSpice} />
+              <SpiceFilter value={minSpice} onChange={handleSpiceChange} />
               {genres.length > 0 && (
                 <FilterSection title="Genres" items={genres} selected={selGenres} onToggle={toggleGenre} />
               )}

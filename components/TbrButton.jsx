@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createSupabaseBrowser } from '@/lib/supabase-browser'
+import { trackEvent } from '@/lib/events'
 
 export default function TbrButton({ bookId, initialSaved = false, size = 'md', id }) {
   const [saved,   setSaved]   = useState(initialSaved)
@@ -29,6 +30,7 @@ export default function TbrButton({ bookId, initialSaved = false, size = 'md', i
     if (res.ok) {
       const { saved: newSaved } = await res.json()
       setSaved(newSaved)
+      trackEvent('tbr_action', { book_id: bookId, action: newSaved ? 'add' : 'remove' })
       window.dispatchEvent(new CustomEvent('toast', {
         detail: { message: newSaved ? 'Added to TBR' : 'Removed from TBR' },
       }))
