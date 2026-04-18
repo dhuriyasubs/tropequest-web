@@ -9,7 +9,7 @@ function normalizeAuthor(raw) {
     .replace(/\s+/g, ' ')
     .trim()
     .toLowerCase()
-    .replace(/(^|[^a-z0-9])([a-z])/g, (_, sep, ch) => sep + ch.toUpperCase())
+    .replace(/(^|\s)([a-z])/g, (_, sep, ch) => sep + ch.toUpperCase())
 }
 
 const ARRAY_FIELDS = [
@@ -73,10 +73,8 @@ export async function PATCH(request) {
       }
       if (spice_rating) { row.spice_rating = spice_rating; ds.spice_rating = 'import' }
       if (rating)       { row.rating = rating;             ds.rating = 'import' }
-      const normCodes = [...normalizedAuthor].map(c => c.codePointAt(0).toString(16)).join(' ')
-      console.log(`booklist-import INSERT: title="${title}" author_raw="${author}" normalized="${normalizedAuthor}" codepoints=[${normCodes}]`)
       const { error } = await supabaseAdmin.from('books').insert(row)
-      if (error) { console.error(`booklist-import INSERT failed for "${title}":`, error.message); errors.push({ title, error: `${error.message} [normalized="${normalizedAuthor}" cp=${normCodes}]` }) }
+      if (error) { console.error(`booklist-import INSERT failed for "${title}":`, error.message); errors.push({ title, error: error.message }) }
       return
     }
 

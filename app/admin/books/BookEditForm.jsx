@@ -164,7 +164,7 @@ function normalizeAuthor(raw) {
     .replace(/\s+/g, ' ')
     .trim()
     .toLowerCase()
-    .replace(/(^|[^a-z0-9])([a-z])/g, (_, sep, ch) => sep + ch.toUpperCase())
+    .replace(/(^|\s)([a-z])/g, (_, sep, ch) => sep + ch.toUpperCase())
 }
 
 function buildPayload(book, isNew) {
