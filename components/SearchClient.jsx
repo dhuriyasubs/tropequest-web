@@ -8,8 +8,8 @@ import { trackEvent } from '@/lib/events'
 const SPICE_LABELS = { 1: 'Tame', 2: 'Mild', 3: 'Steamy', 4: 'Very Steamy', 5: 'Explicit' }
 
 export default function SearchClient({
-  initialBooks, initialTotal, tropes, genres = [],
-  initialQuery = '', initialSelTropes = [], initialSelGenres = [], initialMinSpice = null,
+  initialBooks, initialTotal, tropes, genres = [], relationshipTypes = [],
+  initialQuery = '', initialSelTropes = [], initialSelGenres = [], initialSelRelTypes = [], initialMinSpice = null,
   initialPage = 1, shelfMap = {}, autoFocus = false,
 }) {
   const router      = useRouter()
@@ -21,9 +21,10 @@ export default function SearchClient({
   const searchWrapRef = useRef(null)
 
   const [query,     setQuery]     = useState(initialQuery)
-  const [selTropes, setSelTropes] = useState(initialSelTropes)
-  const [selGenres, setSelGenres] = useState(initialSelGenres)
-  const [minSpice,  setMinSpice]  = useState(initialMinSpice)
+  const [selTropes,   setSelTropes]   = useState(initialSelTropes)
+  const [selGenres,   setSelGenres]   = useState(initialSelGenres)
+  const [selRelTypes, setSelRelTypes] = useState(initialSelRelTypes)
+  const [minSpice,    setMinSpice]    = useState(initialMinSpice)
   const [page,      setPage]      = useState(initialPage)
 
   const [books,    setBooks]    = useState(initialBooks ?? [])
@@ -33,7 +34,7 @@ export default function SearchClient({
 
   const [debouncedQuery] = useDebounce(query, 350)
 
-  const activeFilterCount = selTropes.length + selGenres.length + (minSpice ? 1 : 0)
+  const activeFilterCount = selTropes.length + selGenres.length + selRelTypes.length + (minSpice ? 1 : 0)
 
   // Lock body scroll when drawer is open
   useEffect(() => {
@@ -41,11 +42,12 @@ export default function SearchClient({
     return () => { document.body.style.overflow = '' }
   }, [drawerOpen])
 
-  const syncUrl = useCallback((q, tropes, genres, spice, p) => {
+  const syncUrl = useCallback((q, tropes, genres, relTypes, spice, p) => {
     const sp = new URLSearchParams()
     if (q) sp.set('q', q)
     tropes.forEach(t => sp.append('tropes', t))
     genres.forEach(g => sp.append('genres', g))
+    relTypes.forEach(r => sp.append('relTypes', r))
     if (spice) sp.set('minSpice', spice)
     if (p > 1) sp.set('page', p)
     startTransition(() => {
@@ -63,6 +65,7 @@ export default function SearchClient({
     if (debouncedQuery) sp.set('q', debouncedQuery)
     selTropes.forEach(t => sp.append('tropes', t))
     selGenres.forEach(g => sp.append('genres', g))
+    selRelTypes.forEach(r => sp.append('relTypes', r))
     if (minSpice) sp.set('minSpice', minSpice)
     sp.set('page', page)
 
@@ -72,14 +75,14 @@ export default function SearchClient({
       .then(({ books, total }) => {
         setBooks(books ?? [])
         setTotal(total ?? 0)
-        trackEvent('search', { query: debouncedQuery, genres: selGenres, tropes: selTropes, min_spice: minSpice, result_count: total ?? 0 })
+        trackEvent('search', { query: debouncedQuery, genres: selGenres, tropes: selTropes, rel_types: selRelTypes, min_spice: minSpice, result_count: total ?? 0 })
       })
       .finally(() => setLoading(false))
 
-    syncUrl(debouncedQuery, selTropes, selGenres, minSpice, page)
-  }, [debouncedQuery, selTropes, selGenres, minSpice, page, syncUrl])
+    syncUrl(debouncedQuery, selTropes, selGenres, selRelTypes, minSpice, page)
+  }, [debouncedQuery, selTropes, selGenres, selRelTypes, minSpice, page, syncUrl])
 
-  useEffect(() => { setPage(1) }, [debouncedQuery, selTropes, selGenres, minSpice])
+  useEffect(() => { setPage(1) }, [debouncedQuery, selTropes, selGenres, selRelTypes, minSpice])
 
   useEffect(() => {
     if (autoFocus && searchRef.current) {
@@ -109,7 +112,13 @@ export default function SearchClient({
     if (v) trackEvent('filter_apply', { filter_type: 'spice', value: v, query: debouncedQuery })
   }
 
-  const clearAll = () => { setSelTropes([]); setSelGenres([]); setMinSpice(null) }
+  const toggleRelType = r => {
+    const adding = !selRelTypes.includes(r)
+    setSelRelTypes(prev => prev.includes(r) ? prev.filter(x => x !== r) : [...prev, r])
+    if (adding) trackEvent('filter_apply', { filter_type: 'relationship_type', value: r, query: debouncedQuery })
+  }
+
+  const clearAll = () => { setSelTropes([]); setSelGenres([]); setSelRelTypes([]); setMinSpice(null) }
 
   const closeDrawer = () => {
     setDrawerOpen(false)
@@ -138,6 +147,9 @@ export default function SearchClient({
           <FilterSection title="Genres" items={genres} selected={selGenres} onToggle={toggleGenre} />
         )}
         <FilterSection title="Tropes" items={tropes} selected={selTropes} onToggle={toggleTrope} />
+        {relationshipTypes.length > 0 && (
+          <FilterSection title="Who Falls in Love" items={relationshipTypes} selected={selRelTypes} onToggle={toggleRelType} />
+        )}
       </aside>
 
       {/* ── Results column ── */}
@@ -179,6 +191,11 @@ export default function SearchClient({
             {selTropes.map(t => (
               <button key={t} onClick={() => toggleTrope(t)} className="chip chip-active text-xs flex items-center gap-1">
                 {t} <span className="opacity-60">×</span>
+              </button>
+            ))}
+            {selRelTypes.map(r => (
+              <button key={r} onClick={() => toggleRelType(r)} className="chip chip-active text-xs flex items-center gap-1">
+                {r} <span className="opacity-60">×</span>
               </button>
             ))}
             <button onClick={clearAll} className="text-xs text-bloom hover:underline ml-1">
@@ -256,6 +273,9 @@ export default function SearchClient({
                 <FilterSection title="Genres" items={genres} selected={selGenres} onToggle={toggleGenre} />
               )}
               <FilterSection title="Tropes" items={tropes} selected={selTropes} onToggle={toggleTrope} />
+              {relationshipTypes.length > 0 && (
+                <FilterSection title="Who Falls in Love" items={relationshipTypes} selected={selRelTypes} onToggle={toggleRelType} />
+              )}
             </div>
 
             {/* Footer CTA */}
