@@ -6,6 +6,7 @@ import Breadcrumb from '@/components/Breadcrumb'
 import BookCover from '@/components/BlogBookCover'
 import RelatedPosts from '@/components/RelatedPosts'
 import BlogFeedback from '@/components/BlogFeedback'
+import BlogDiscoveryCTA from '@/components/BlogDiscoveryCTA'
 
 export const revalidate = 3600
 
@@ -79,7 +80,12 @@ export default function BlogPostPage({ params }) {
         <MDXRemote source={content} components={{ BookCover: BoundBookCover }} />
       </article>
 
-      <div className="mt-10 pt-8 border-t border-gray-100">
+      <BlogDiscoveryCTA
+        tropes={frontmatter.tropes}
+        genres={frontmatter.genres}
+      />
+
+      <div className="pt-8 border-t border-gray-100">
         <BlogFeedback slug={params.slug} />
       </div>
 
