@@ -118,8 +118,8 @@ export default async function TbrPage() {
                 </div>
 
                 <div className="flex items-center gap-3 mt-2">
-                  <TbrButton bookId={book.id} initialSaved={true} size="sm" />
-                  <span className="text-xs text-slate">Remove from TBR</span>
+                  <TbrButton bookId={book.id} initialSaved={true} size="sm" id={`tbr-${book.id}`} />
+                  <label htmlFor={`tbr-${book.id}`} className="text-xs text-slate cursor-pointer hover:text-bloom transition-colors">Remove from TBR</label>
                 </div>
               </div>
             </div>

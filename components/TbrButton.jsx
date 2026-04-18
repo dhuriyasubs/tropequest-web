@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createSupabaseBrowser } from '@/lib/supabase-browser'
 
-export default function TbrButton({ bookId, initialSaved = false, size = 'md' }) {
+export default function TbrButton({ bookId, initialSaved = false, size = 'md', id }) {
   const [saved,   setSaved]   = useState(initialSaved)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -40,6 +40,7 @@ export default function TbrButton({ bookId, initialSaved = false, size = 'md' })
 
   return (
     <button
+      id={id}
       onClick={toggle}
       disabled={loading}
       aria-label={saved ? 'Remove from TBR' : 'Add to TBR'}
