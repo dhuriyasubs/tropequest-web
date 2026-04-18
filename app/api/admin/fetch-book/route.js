@@ -5,6 +5,11 @@ import { isAdmin } from '@/lib/admin'
 
 const gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
 
+function isCompleteDescription(text) {
+  if (!text || text.length < 80) return false
+  return /[.!?""''\u201C\u201D\u2018\u2019)]$/.test(text.trim())
+}
+
 const PROMPT = `Extract book metadata from the following web page data and return ONLY a valid JSON object. No markdown, no explanation.
 
 {
@@ -121,6 +126,9 @@ export async function POST(request) {
     const text   = result.response.text().trim()
     const clean  = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim()
     const book   = JSON.parse(clean)
+    if (book.description && !isCompleteDescription(book.description)) {
+      book.description = null
+    }
     return NextResponse.json({ book })
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 })
