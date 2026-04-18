@@ -237,10 +237,108 @@ function normaliseBook(b) {
   }
 }
 
+// ── Tag splitter ──────────────────────────────────────────────────────────
+const SPLITTER_FIELD_MAP = [
+  ['genres',            GENRES],
+  ['tropes',            TROPES],
+  ['time_period',       TIME_PERIODS],
+  ['relationship_type', RELATIONSHIP_TYPES],
+  ['kink_tags',         KINK_TAGS],
+  ['story_tags',        STORY_TAGS],
+  ['content_warnings',  CONTENT_WARNINGS],
+  ['representation',    REPRESENTATION],
+  ['setting_tags',      SETTING_TAGS],
+  ['geography_tags',    GEOGRAPHY_TAGS],
+]
+const SPLITTER_FIELD_LABELS = {
+  genres: 'Genres', tropes: 'Tropes', time_period: 'Time Period',
+  relationship_type: 'Relationship Type', kink_tags: 'Kink Tags',
+  story_tags: 'Story Tags', content_warnings: 'Content Warnings',
+  representation: 'Representation', setting_tags: 'Setting Tags',
+  geography_tags: 'Geography Tags',
+}
+
+function TagSplitter({ book, set }) {
+  const [raw, setRaw]       = useState('')
+  const [result, setResult] = useState(null)
+
+  function parse() {
+    const tokens = raw.split(/[\n,]+/).map(t => t.trim()).filter(Boolean)
+    const matched = {}
+    const unmatched = []
+    for (const token of tokens) {
+      const lc = token.toLowerCase()
+      let found = false
+      for (const [field, opts] of SPLITTER_FIELD_MAP) {
+        const canonical = opts.find(o => o.toLowerCase() === lc)
+        if (canonical) {
+          if (!matched[field]) matched[field] = []
+          if (!matched[field].includes(canonical)) matched[field].push(canonical)
+          found = true
+          break
+        }
+      }
+      if (!found) unmatched.push(token)
+    }
+    setResult({ matched, unmatched })
+  }
+
+  function apply() {
+    if (!result) return
+    for (const [field, tags] of Object.entries(result.matched)) {
+      const existing = Array.isArray(book[field]) ? book[field] : []
+      set(field, [...new Set([...existing, ...tags])])
+    }
+    setRaw('')
+    setResult(null)
+  }
+
+  return (
+    <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 space-y-3">
+      <label className="block text-sm font-semibold">Paste Tags</label>
+      <p className="text-xs text-slate">Comma or newline separated — matched tags are routed to the right fields automatically.</p>
+      <textarea
+        rows={3}
+        value={raw}
+        onChange={e => { setRaw(e.target.value); setResult(null) }}
+        placeholder="enemies to lovers, dark romance, slow burn, ..."
+        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bloom/40 bg-white resize-y"
+      />
+      <button type="button" onClick={parse} disabled={!raw.trim()}
+        className="px-4 py-2 text-sm bg-bloom text-white rounded-lg hover:bg-bloom/90 transition-colors disabled:opacity-50">
+        Parse Tags
+      </button>
+      {result && (
+        <div className="space-y-2 pt-1">
+          {Object.entries(result.matched).map(([field, tags]) => (
+            <p key={field} className="text-xs">
+              <span className="font-semibold text-green-700">{SPLITTER_FIELD_LABELS[field]}:</span>{' '}
+              <span className="text-green-600">{tags.join(', ')}</span>
+            </p>
+          ))}
+          {result.unmatched.length > 0 && (
+            <p className="text-xs">
+              <span className="font-semibold text-amber-700">Unmatched:</span>{' '}
+              <span className="text-amber-600">{result.unmatched.join(', ')}</span>
+            </p>
+          )}
+          {Object.keys(result.matched).length > 0 && (
+            <button type="button" onClick={apply}
+              className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+              Apply to Fields
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Shared book fields ────────────────────────────────────────────────────
 function BookFields({ book, set }) {
   return (
     <div className="space-y-6">
+      <TagSplitter book={book} set={set} />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-xs text-slate mb-1">Title <span className="text-red-400">*</span></label>
