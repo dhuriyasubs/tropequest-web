@@ -13,7 +13,7 @@ export default function BlogDiscoveryCTA({ tropes, genres }) {
     <div className="bg-petal/20 border border-petal/60 rounded-2xl px-6 py-7 my-10">
       <p className="font-serif text-xl font-bold text-ink mb-1">Find your next read</p>
       <p className="text-sm text-slate mb-5">
-        Browse 2,000+ romance books — filter by trope, genre, spice level, and more.
+        Browse 2,000+ romance books. Filter by trope, genre, spice level, and more.
       </p>
 
       {tropeChips.length > 0 && (

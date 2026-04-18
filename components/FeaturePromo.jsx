@@ -5,7 +5,7 @@ const FEATURES = [
     href: '/reels',
     icon: '🎬',
     title: 'Books from Videos',
-    body: 'Paste a YouTube URL — we transcribe it and pull out every book mentioned.',
+    body: 'Paste a YouTube URL. We transcribe it and pull out every book mentioned.',
   },
   {
     href: '/shelf/import',
