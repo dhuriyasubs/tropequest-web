@@ -297,7 +297,7 @@ export default function SwipeStack({ initialBooks, userId, initialExcludeIds = [
 
           {/* Cover — portrait aspect ratio, no cropping */}
           <div className="w-full flex justify-center px-6 pt-5 pb-3 flex-shrink-0 pointer-events-none">
-            <div className="w-36 aspect-[2/3] rounded-lg overflow-hidden shadow-md bg-gray-100">
+            <div className="w-36 aspect-[2/3] rounded-lg overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.25)] bg-gray-100">
               {book.cover_url
                 ? <img src={book.cover_url} alt={book.title} className="w-full h-full object-cover" />
                 : <div className="w-full h-full flex items-center justify-center text-5xl">📚</div>
