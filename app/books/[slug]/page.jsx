@@ -3,7 +3,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { getBookBySlug, getSeriesBooks, getMoreByAuthor, getSimilarBooks } from '@/lib/search'
 import { getPostsFeaturingBook } from '@/lib/blog'
-import { slugify, toTitleCase } from '@/lib/utils'
+import { slugify, toTitleCase, formatAuthorName } from '@/lib/utils'
 import { createSupabaseServer, supabaseAdmin } from '@/lib/supabase'
 import TbrButton from '@/components/TbrButton'
 import DescriptionExpander from '@/components/DescriptionExpander'
@@ -28,7 +28,7 @@ function AuthorLinks({ author, className }) {
         <span key={a}>
           {i > 0 && <span className="text-slate"> & </span>}
           <Link href={`/author/${encodeURIComponent(a)}`} className={className}>
-            {a}
+            {formatAuthorName(a)}
           </Link>
         </span>
       ))}
