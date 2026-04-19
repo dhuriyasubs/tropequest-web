@@ -17,7 +17,7 @@ export default function BuyButtons({ book }) {
   }
 
   return (
-    <div className="flex flex-wrap gap-3 mt-5">
+    <div className="flex flex-wrap gap-3 items-center">
       {available.map(s => (
         <a
           key={s.key}
