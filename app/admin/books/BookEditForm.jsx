@@ -910,18 +910,20 @@ export default function BookEditForm() {
           })
         } else {
           const payload = {
-            title:         book.title.trim(),
-            author:        book.author.trim(),
-            slug:          book.slug.trim(),
-            cover_url:     book.cover_url     || null,
-            series_name:   book.series_name   || null,
-            series_number: book.series_number ?? null,
-            rating:        book.rating        ?? null,
-            rating_count:  book.rating_count  ?? null,
-            rating_source: book.rating_source || null,
-            genres:        [],
-            tropes:        [],
-            characters:    [],
+            title:            book.title.trim(),
+            author:           book.author.trim(),
+            slug:             book.slug.trim(),
+            cover_url:        book.cover_url     || null,
+            series_name:      book.series_name   || null,
+            series_number:    book.series_number ?? null,
+            rating:           book.rating        ?? null,
+            rating_count:     book.rating_count  ?? null,
+            rating_source:    book.rating_source || null,
+            buy_url_amazon_us: book.buy_url_amazon_us || null,
+            buy_url_amazon_in: buildAmazonInUrl(book.title.trim(), book.author.trim()) || null,
+            genres:           [],
+            tropes:           [],
+            characters:       [],
           }
           res = await fetch('/api/admin/books', {
             method: 'PUT',
@@ -937,11 +939,12 @@ export default function BookEditForm() {
                    b.author.toLowerCase() === book.author.trim().toLowerCase()
             )
             if (existing) {
-              const ENRICHABLE = ['cover_url', 'rating', 'rating_count', 'rating_source', 'series_name', 'series_number']
+              const ENRICHABLE = ['cover_url', 'rating', 'rating_count', 'rating_source', 'series_name', 'series_number', 'buy_url_amazon_us', 'buy_url_amazon_in']
+              const enrichBook = { ...book, buy_url_amazon_in: book.buy_url_amazon_in || buildAmazonInUrl(book.title.trim(), book.author.trim()) }
               const patch = { id: existing.id }
               for (const f of ENRICHABLE) {
-                if ((existing[f] == null || existing[f] === '') && book[f] != null && book[f] !== '') {
-                  patch[f] = book[f]
+                if ((existing[f] == null || existing[f] === '') && enrichBook[f] != null && enrichBook[f] !== '') {
+                  patch[f] = enrichBook[f]
                 }
               }
               if (Object.keys(patch).length > 1) {
