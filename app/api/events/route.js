@@ -9,8 +9,10 @@ export async function POST(request) {
     const supabase = createSupabaseServer()
     const { data: { user } } = await supabase.auth.getUser()
 
+    const CLICK_TYPES = new Set(['rec_click', 'buy_click'])
     await supabaseAdmin.from('page_events').insert({
       event_type: type,
+      event: CLICK_TYPES.has(type) ? 'click' : 'impression',
       user_id: user?.id ?? null,
       session_id: session_id ?? null,
       device_id: device_id ?? null,
