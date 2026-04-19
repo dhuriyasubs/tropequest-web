@@ -158,6 +158,12 @@ function toSlug(title, author) {
   return `${title}-${author}`.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 }
 
+function buildAmazonInUrl(title, author) {
+  if (!title || !author) return ''
+  const q = `${title} ${author}`.replace(/&/g, '%26').replace(/'/g, '%27').replace(/ /g, '-')
+  return `https://www.amazon.in/s?k=${q}`
+}
+
 function normalizeAuthor(raw) {
   return (raw ?? '')
     .replace(/[\u00a0\u200b\u200c\u200d\ufeff]/g, ' ')
@@ -712,11 +718,11 @@ export default function BookEditForm() {
   function setNew(key, value) {
     setNewBook(b => {
       const updated = { ...b, [key]: value }
-      if ((key === 'title' || key === 'author') && !b._slugEdited) {
-        updated.slug = toSlug(
-          key === 'title'  ? value : b.title,
-          key === 'author' ? value : b.author,
-        )
+      if (key === 'title' || key === 'author') {
+        const t = key === 'title'  ? value : b.title
+        const a = key === 'author' ? value : b.author
+        if (!b._slugEdited) updated.slug = toSlug(t, a)
+        updated.buy_url_amazon_in = buildAmazonInUrl(t, a)
       }
       if (key === 'slug') updated._slugEdited = true
       if (TRACKED_FIELDS.has(key)) {
@@ -744,30 +750,31 @@ export default function BookEditForm() {
       const b = data.book
       const fetchedUrl = bookUrl.trim()
       const isAmazonUS = /amazon\.com/i.test(fetchedUrl)
-      const isAmazonIN = /amazon\.in/i.test(fetchedUrl)
       applyTo(prev => {
         const ds = { ...(prev.data_source || {}) }
         if (b.description)          ds.description = 'admin_url'
         if (b.genres?.length)       ds.genres      = 'admin_url'
         if (b.tropes?.length)       ds.tropes      = 'admin_url'
+        const title  = b.title  ?? prev.title
+        const author = b.author ?? prev.author
         return {
           ...prev,
-          title:              b.title         ?? prev.title,
-          author:             b.author        ?? prev.author,
-          slug:               b.title && b.author ? toSlug(b.title, b.author) : prev.slug,
-          cover_url:          b.cover_url     ?? prev.cover_url,
-          description:        b.description   ?? prev.description,
-          series_name:        b.series_name   ?? prev.series_name,
-          series_number:      b.series_number ?? prev.series_number,
-          genres:             Array.isArray(b.genres) ? b.genres : (b.genres ? [b.genres] : prev.genres),
-          release_date:       b.release_date  ?? prev.release_date,
-          release_year:       b.release_year  ?? prev.release_year,
-          rating:             b.rating        ?? prev.rating,
-          rating_count:       b.rating_count  ?? prev.rating_count,
-          rating_source:      b.rating_source ?? prev.rating_source,
-          buy_url_amazon_us:  isAmazonUS ? fetchedUrl : (b.buy_url_amazon_us ?? prev.buy_url_amazon_us),
-          buy_url_amazon_in:  isAmazonIN ? fetchedUrl : (b.buy_url_amazon_in ?? prev.buy_url_amazon_in),
-          data_source:        ds,
+          title,
+          author,
+          slug:              b.title && b.author ? toSlug(b.title, b.author) : prev.slug,
+          cover_url:         b.cover_url     ?? prev.cover_url,
+          description:       b.description   ?? prev.description,
+          series_name:       b.series_name   ?? prev.series_name,
+          series_number:     b.series_number ?? prev.series_number,
+          genres:            Array.isArray(b.genres) ? b.genres : (b.genres ? [b.genres] : prev.genres),
+          release_date:      b.release_date  ?? prev.release_date,
+          release_year:      b.release_year  ?? prev.release_year,
+          rating:            b.rating        ?? prev.rating,
+          rating_count:      b.rating_count  ?? prev.rating_count,
+          rating_source:     b.rating_source ?? prev.rating_source,
+          buy_url_amazon_us: isAmazonUS ? fetchedUrl : (b.buy_url_amazon_us ?? prev.buy_url_amazon_us),
+          buy_url_amazon_in: buildAmazonInUrl(title, author) || prev.buy_url_amazon_in,
+          data_source:       ds,
         }
       })
       setBookUrl('')
