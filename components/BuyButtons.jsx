@@ -1,5 +1,7 @@
 'use client'
 
+import { trackEvent } from '@/lib/events'
+
 const STORES = [
   { key: 'amazon_in', label: 'Amazon IN', urlKey: 'buy_url_amazon_in', priceKey: 'price_amazon_in', flag: '🇮🇳' },
   { key: 'amazon_us', label: 'Amazon US', urlKey: 'buy_url_amazon_us', priceKey: 'price_amazon_us', flag: '🇺🇸' },
@@ -10,12 +12,8 @@ export default function BuyButtons({ book }) {
   const available = STORES.filter(s => book[s.urlKey])
   if (available.length === 0) return null
 
-  const handleClick = async (store) => {
-    await fetch('/api/click', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ book_id: book.id, store }),
-    })
+  const handleClick = (store) => {
+    trackEvent('buy_click', { book_id: book.id, store })
   }
 
   return (
