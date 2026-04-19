@@ -160,7 +160,7 @@ function toSlug(title, author) {
 
 function buildAmazonInUrl(title, author) {
   if (!title || !author) return ''
-  const q = `${title} ${author}`.replace(/&/g, '%26').replace(/'/g, '%27').replace(/ /g, '-')
+  const q = `${title} ${author}`.replace(/&/g, '%26').replace(/'/g, '%27').replace(/ /g, '+')
   return `https://www.amazon.in/s?k=${q}`
 }
 
