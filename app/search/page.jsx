@@ -1,5 +1,4 @@
-import { searchBooks, getPopularTropes, getPopularGenres } from '@/lib/search'
-import { RELATIONSHIP_TYPES } from '@/lib/taxonomy'
+import { searchBooks, getPopularTropes, getPopularGenres, getPopularRelationshipTypes } from '@/lib/search'
 import { createSupabaseServer } from '@/lib/supabase'
 import SearchClient from '@/components/SearchClient'
 
@@ -24,11 +23,12 @@ export default async function SearchPage({ searchParams }) {
   const supabase = createSupabaseServer()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const [{ books, total }, allTropes, allGenres, shelfRes] =
+  const [{ books, total }, allTropes, allGenres, allRelTypes, shelfRes] =
     await Promise.all([
       searchBooks({ query: query || null, tropes, subjects, genres, spice, relationshipTypes, page }),
       getPopularTropes(50),
       getPopularGenres(50),
+      getPopularRelationshipTypes(),
       user
         ? supabase.from('shelf').select('book_id, status').eq('user_id', user.id)
         : Promise.resolve({ data: [] }),
@@ -46,7 +46,7 @@ export default async function SearchPage({ searchParams }) {
         initialTotal={total}
         tropes={allTropes}
         genres={allGenres}
-        relationshipTypes={RELATIONSHIP_TYPES}
+        relationshipTypes={allRelTypes}
         initialQuery={query}
         initialSelTropes={tropes}
         initialSelSubjects={subjects}
