@@ -13,7 +13,7 @@ export default function BookCard({ book, shelfStatus = null, section = null }) {
       className="group flex flex-col bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden"
       onClick={section ? () => trackEvent('rec_click', { section, book_id: book.id, book_slug: book.slug }) : undefined}
     >
-      <div className="relative aspect-[2/3] bg-gray-100 overflow-hidden">
+      <div className="relative aspect-[2/3] bg-gray-100 overflow-hidden shadow-[0_4px_12px_rgba(0,0,0,0.15)]">
         {book.cover_url ? (
           <Image
             src={book.cover_url}
