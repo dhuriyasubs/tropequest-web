@@ -3,7 +3,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { getBookBySlug, getSeriesBooks, getMoreByAuthor, getSimilarBooks } from '@/lib/search'
 import { getPostsFeaturingBook } from '@/lib/blog'
-import { slugify } from '@/lib/utils'
+import { slugify, toTitleCase } from '@/lib/utils'
 import { createSupabaseServer, supabaseAdmin } from '@/lib/supabase'
 import TbrButton from '@/components/TbrButton'
 import DescriptionExpander from '@/components/DescriptionExpander'
@@ -202,19 +202,19 @@ export default async function BookPage({ params }) {
             {(book.genres?.length > 0 || book.tropes?.length > 0 || book.relationship_type?.length > 0 || book.story_tags?.length > 0 || book.content_warnings?.length > 0) && (
               <div className="flex flex-wrap gap-2 mt-4">
                 {book.genres?.map(g => (
-                  <Link key={g} href={`/search?genres=${encodeURIComponent(g)}`} className="chip text-xs bg-petal/30">{g}</Link>
+                  <Link key={g} href={`/search?genres=${encodeURIComponent(g)}`} className="chip text-xs bg-petal/30">{toTitleCase(g)}</Link>
                 ))}
                 {book.tropes?.map(t => (
-                  <Link key={t} href={`/tropes/${slugify(t)}`} className="chip text-xs">{t}</Link>
+                  <Link key={t} href={`/tropes/${slugify(t)}`} className="chip text-xs">{toTitleCase(t)}</Link>
                 ))}
                 {book.relationship_type?.map(r => (
-                  <Link key={r} href={`/search?relTypes=${encodeURIComponent(r)}`} className="chip text-xs bg-lavender/20">{r}</Link>
+                  <Link key={r} href={`/search?relTypes=${encodeURIComponent(r)}`} className="chip text-xs bg-lavender/20">{toTitleCase(r)}</Link>
                 ))}
                 {book.story_tags?.map(s => (
-                  <Link key={s} href={`/search?subjects=${encodeURIComponent(s)}`} className="chip text-xs bg-lavender/20">{s}</Link>
+                  <Link key={s} href={`/search?subjects=${encodeURIComponent(s)}`} className="chip text-xs bg-lavender/20">{toTitleCase(s)}</Link>
                 ))}
                 {book.content_warnings?.map(w => (
-                  <span key={w} className="chip text-xs bg-slate/10 text-slate/60">{w}</span>
+                  <span key={w} className="chip text-xs bg-slate/10 text-slate/60">{toTitleCase(w)}</span>
                 ))}
               </div>
             )}
