@@ -288,18 +288,76 @@ const SPLITTER_FIELD_LABELS = {
   geography_tags: 'Geography Tags',
 }
 
+// Storygraph format: "tag1{n}tag2{n}...sectionLabel\ntag1{n}..."
+// Numbers are counts (not separators) — tags are delimited by the digits themselves.
+function parseStorygraphTokens(text) {
+  const SECTION_MAP = {
+    'content warnings': 'content_warnings',
+    'geography':        'geography_tags',
+  }
+  const tokens = []          // [{ token: string, fieldOverride: string|null }]
+  let pendingSection = null  // set when we see a section label
+
+  for (const rawLine of text.split('\n')) {
+    const line = rawLine.trim()
+    if (!line) continue
+
+    // Line with no digits at all → pure section label
+    if (!/\d/.test(line)) {
+      pendingSection = SECTION_MAP[line.toLowerCase()] ?? null
+      continue
+    }
+
+    const section = pendingSection
+    pendingSection = null  // consume
+
+    // Extract (tag)(count) pairs
+    const re = /([^0-9]+?)(\d+)/g
+    let lastIndex = 0
+    let match
+    while ((match = re.exec(line)) !== null) {
+      const tag = match[1].trim()
+      if (tag) tokens.push({ token: tag, fieldOverride: section })
+      lastIndex = match.index + match[0].length
+    }
+
+    // Trailing text after last number → section label for next line
+    const trailing = line.slice(lastIndex).trim()
+    if (trailing) pendingSection = SECTION_MAP[trailing.toLowerCase()] ?? null
+  }
+  return tokens
+}
+
+function isStorygraphFormat(text) {
+  // Has digits embedded inline between words (no commas), e.g. "fantasy6viking hero6"
+  return /[a-z]\d+[a-z]/i.test(text) && !text.includes(',')
+}
+
 function TagSplitter({ book, set }) {
   const [raw, setRaw]       = useState('')
   const [result, setResult] = useState(null)
 
   function parse() {
-    const tokens = raw.split(/[\n,]+/).map(t => t.trim()).filter(Boolean)
+    // Pre-process Storygraph format into token list with optional field overrides
+    let tokenItems  // { token: string, fieldOverride: string|null }[]
+    if (isStorygraphFormat(raw)) {
+      tokenItems = parseStorygraphTokens(raw)
+    } else {
+      tokenItems = raw.split(/[\n,]+/).map(t => t.trim()).filter(Boolean).map(t => ({ token: t, fieldOverride: null }))
+    }
     const matched = {}
     const unmatched = []
-    for (const token of tokens) {
+    for (const { token, fieldOverride } of tokenItems) {
       const lc = token.toLowerCase()
       let found = false
-      for (const [field, opts] of SPLITTER_FIELD_MAP) {
+
+      // If section context forces a specific field, try that field first
+      const orderedFields = fieldOverride
+        ? [[fieldOverride, SPLITTER_FIELD_MAP.find(([f]) => f === fieldOverride)?.[1] ?? []], ...SPLITTER_FIELD_MAP.filter(([f]) => f !== fieldOverride)]
+        : SPLITTER_FIELD_MAP
+
+      for (const [field, opts] of orderedFields) {
+        if (!opts) continue
         const canonical = opts.find(o => o.toLowerCase() === lc)
         if (canonical) {
           if (!matched[field]) matched[field] = []
@@ -311,7 +369,8 @@ function TagSplitter({ book, set }) {
       if (!found) {
         const alt = normalizeToken(lc)
         if (alt) {
-          for (const [field, opts] of SPLITTER_FIELD_MAP) {
+          for (const [field, opts] of orderedFields) {
+            if (!opts) continue
             const canonical = opts.find(o => o.toLowerCase() === alt)
             if (canonical) {
               if (!matched[field]) matched[field] = []
@@ -342,12 +401,12 @@ function TagSplitter({ book, set }) {
   return (
     <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 space-y-3">
       <label className="block text-sm font-semibold">Paste Tags</label>
-      <p className="text-xs text-slate">Comma or newline separated — matched tags are routed to the right fields automatically.</p>
+      <p className="text-xs text-slate">Comma/newline separated <em>or</em> Storygraph format (fantasy6viking hero6...) — tags are routed automatically.</p>
       <textarea
-        rows={3}
+        rows={4}
         value={raw}
         onChange={e => { setRaw(e.target.value); setResult(null) }}
-        placeholder="enemies to lovers, dark romance, slow burn, ..."
+        placeholder="enemies to lovers, dark romance, slow burn …  OR  fantasy6viking hero6magic4..."
         className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bloom/40 bg-white resize-y"
       />
       <button type="button" onClick={parse} disabled={!raw.trim()}
