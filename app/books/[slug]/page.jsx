@@ -148,7 +148,7 @@ export default async function BookPage({ params }) {
         <div className="flex flex-col sm:flex-row gap-10">
           {/* Cover */}
           <div className="shrink-0 mx-auto sm:mx-0">
-            <div className="w-44 aspect-[2/3] rounded-lg overflow-hidden shadow-lg bg-gray-100 relative">
+            <div className="w-44 aspect-[2/3] rounded-lg overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.25)] bg-gray-100 relative">
               {book.cover_url ? (
                 <Image
                   src={book.cover_url}
