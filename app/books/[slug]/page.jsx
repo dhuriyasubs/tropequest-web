@@ -13,6 +13,7 @@ import Breadcrumb from '@/components/Breadcrumb'
 import FeaturePromo from '@/components/FeaturePromo'
 import BookViewTracker from '@/components/BookViewTracker'
 import RecLink from '@/components/RecLink'
+import BuyButtons from '@/components/BuyButtons'
 
 export const revalidate = 3600
 
@@ -226,16 +227,7 @@ export default async function BookPage({ params }) {
 
             {/* Buy Now + TBR + Shelf */}
             <div className="flex items-center gap-3 mt-4 flex-wrap">
-              {book.buy_url_amazon_in && (
-                <a
-                  href={book.buy_url_amazon_in}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block px-6 py-2.5 bg-bloom text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-opacity"
-                >
-                  Buy Now
-                </a>
-              )}
+              <BuyButtons book={book} />
               <TbrButton bookId={book.id} initialSaved={isSaved} />
               <ShelfControls bookId={book.id} initialStatus={shelfStatus} />
             </div>
