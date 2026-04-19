@@ -911,7 +911,7 @@ export default function BookEditForm() {
         } else {
           const payload = {
             title:            book.title.trim(),
-            author:           book.author.trim(),
+            author:           normalizeAuthor(book.author),
             slug:             book.slug.trim(),
             cover_url:        book.cover_url     || null,
             series_name:      book.series_name   || null,
@@ -920,7 +920,7 @@ export default function BookEditForm() {
             rating_count:     book.rating_count  ?? null,
             rating_source:    book.rating_source || null,
             buy_url_amazon_us: book.buy_url_amazon_us || null,
-            buy_url_amazon_in: buildAmazonInUrl(book.title.trim(), book.author.trim()) || null,
+            buy_url_amazon_in: buildAmazonInUrl(book.title.trim(), normalizeAuthor(book.author)) || null,
             genres:           [],
             tropes:           [],
             characters:       [],
