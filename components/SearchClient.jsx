@@ -9,7 +9,7 @@ const SPICE_LABELS = { 1: 'Tame', 2: 'Mild', 3: 'Steamy', 4: 'Very Steamy', 5: '
 
 export default function SearchClient({
   initialBooks, initialTotal, tropes, genres = [], relationshipTypes = [],
-  initialQuery = '', initialSelTropes = [], initialSelGenres = [], initialSelRelTypes = [], initialMinSpice = null,
+  initialQuery = '', initialSelTropes = [], initialSelGenres = [], initialSelRelTypes = [], initialSpice = null,
   initialPage = 1, shelfMap = {}, autoFocus = false,
 }) {
   const router      = useRouter()
@@ -24,7 +24,7 @@ export default function SearchClient({
   const [selTropes,   setSelTropes]   = useState(initialSelTropes)
   const [selGenres,   setSelGenres]   = useState(initialSelGenres)
   const [selRelTypes, setSelRelTypes] = useState(initialSelRelTypes)
-  const [minSpice,    setMinSpice]    = useState(initialMinSpice)
+  const [spice,    setSpice]    = useState(initialSpice)
   const [page,      setPage]      = useState(initialPage)
 
   const [books,    setBooks]    = useState(initialBooks ?? [])
@@ -34,7 +34,7 @@ export default function SearchClient({
 
   const [debouncedQuery] = useDebounce(query, 350)
 
-  const activeFilterCount = selTropes.length + selGenres.length + selRelTypes.length + (minSpice ? 1 : 0)
+  const activeFilterCount = selTropes.length + selGenres.length + selRelTypes.length + (spice ? 1 : 0)
 
   // Lock body scroll when drawer is open
   useEffect(() => {
@@ -48,7 +48,7 @@ export default function SearchClient({
     tropes.forEach(t => sp.append('tropes', t))
     genres.forEach(g => sp.append('genres', g))
     relTypes.forEach(r => sp.append('relTypes', r))
-    if (spice) sp.set('minSpice', spice)
+    if (spice) sp.set('spice', spice)
     if (p > 1) sp.set('page', p)
     startTransition(() => {
       router.replace(`${pathname}?${sp.toString()}`, { scroll: false })
@@ -66,7 +66,7 @@ export default function SearchClient({
     selTropes.forEach(t => sp.append('tropes', t))
     selGenres.forEach(g => sp.append('genres', g))
     selRelTypes.forEach(r => sp.append('relTypes', r))
-    if (minSpice) sp.set('minSpice', minSpice)
+    if (spice) sp.set('spice', spice)
     sp.set('page', page)
 
     setLoading(true)
@@ -75,14 +75,14 @@ export default function SearchClient({
       .then(({ books, total }) => {
         setBooks(books ?? [])
         setTotal(total ?? 0)
-        trackEvent('search', { query: debouncedQuery, genres: selGenres, tropes: selTropes, rel_types: selRelTypes, min_spice: minSpice, result_count: total ?? 0 })
+        trackEvent('search', { query: debouncedQuery, genres: selGenres, tropes: selTropes, rel_types: selRelTypes, spice: spice, result_count: total ?? 0 })
       })
       .finally(() => setLoading(false))
 
-    syncUrl(debouncedQuery, selTropes, selGenres, selRelTypes, minSpice, page)
-  }, [debouncedQuery, selTropes, selGenres, selRelTypes, minSpice, page, syncUrl])
+    syncUrl(debouncedQuery, selTropes, selGenres, selRelTypes, spice, page)
+  }, [debouncedQuery, selTropes, selGenres, selRelTypes, spice, page, syncUrl])
 
-  useEffect(() => { setPage(1) }, [debouncedQuery, selTropes, selGenres, selRelTypes, minSpice])
+  useEffect(() => { setPage(1) }, [debouncedQuery, selTropes, selGenres, selRelTypes, spice])
 
   useEffect(() => {
     if (autoFocus && searchRef.current) {
@@ -108,7 +108,7 @@ export default function SearchClient({
   }
 
   const handleSpiceChange = v => {
-    setMinSpice(v)
+    setSpice(v)
     if (v) trackEvent('filter_apply', { filter_type: 'spice', value: v, query: debouncedQuery })
   }
 
@@ -118,7 +118,7 @@ export default function SearchClient({
     if (adding) trackEvent('filter_apply', { filter_type: 'relationship_type', value: r, query: debouncedQuery })
   }
 
-  const clearAll = () => { setSelTropes([]); setSelGenres([]); setSelRelTypes([]); setMinSpice(null) }
+  const clearAll = () => { setSelTropes([]); setSelGenres([]); setSelRelTypes([]); setSpice(null) }
 
   const closeDrawer = () => {
     setDrawerOpen(false)
@@ -142,7 +142,7 @@ export default function SearchClient({
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bloom shadow-sm"
           />
         </div>
-        <SpiceFilter value={minSpice} onChange={handleSpiceChange} />
+        <SpiceFilter value={spice} onChange={handleSpiceChange} />
         {genres.length > 0 && (
           <FilterSection title="Genres" items={genres} selected={selGenres} onToggle={toggleGenre} />
         )}
@@ -268,7 +268,7 @@ export default function SearchClient({
 
             {/* Scrollable filter content */}
             <div className="overflow-y-auto flex-1 px-4 py-4">
-              <SpiceFilter value={minSpice} onChange={handleSpiceChange} />
+              <SpiceFilter value={spice} onChange={handleSpiceChange} />
               {genres.length > 0 && (
                 <FilterSection title="Genres" items={genres} selected={selGenres} onToggle={toggleGenre} />
               )}
