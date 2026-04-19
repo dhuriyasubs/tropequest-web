@@ -24,7 +24,9 @@ const PROMPT = `Extract book metadata from the following web page data and retur
   "release_year": integer year or null,
   "rating": number or null (out of 5),
   "rating_count": integer or null,
-  "rating_source": "source of rating e.g. Goodreads, Amazon, or null"
+  "rating_source": "source of rating e.g. Goodreads, Amazon, or null",
+  "buy_url_amazon_us": "amazon.com product URL or null",
+  "buy_url_amazon_in": "amazon.in product URL or null"
 }
 
 If a field has no matching content, use null. Data:`
