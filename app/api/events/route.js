@@ -8,6 +8,12 @@ export async function POST(request) {
     const { type, session_id, device_id, traffic_source, referrer, data } = await request.json()
     if (!type) return NextResponse.json({ ok: false })
 
+    const ip =
+      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+      request.headers.get('x-real-ip') ??
+      null
+    const user_agent = request.headers.get('user-agent') ?? null
+
     let userId = null
     try {
       const supabase = createSupabaseServer()
@@ -24,6 +30,8 @@ export async function POST(request) {
       traffic_source: traffic_source ?? null,
       book_id: data?.book_id ?? null,
       referrer: referrer ?? null,
+      ip,
+      user_agent,
       data,
     })
   } catch (e) {
