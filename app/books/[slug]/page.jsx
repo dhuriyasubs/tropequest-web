@@ -273,7 +273,7 @@ export default async function BookPage({ params }) {
                 const status = sectionShelfMap[b.id] ?? null
                 return (
                   <RecLink key={b.id} href={`/books/${b.slug}`} section="more_in_series" bookId={b.id} className="group text-center">
-                    <div className="relative aspect-[2/3] rounded overflow-hidden bg-gray-100 mb-1">
+                    <div className="relative aspect-[2/3] rounded overflow-hidden bg-gray-100 shadow-[0_8px_30px_rgba(0,0,0,0.25)] mb-1">
                       {b.cover_url ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={b.cover_url} alt={b.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" loading="lazy" />
@@ -305,7 +305,7 @@ export default async function BookPage({ params }) {
             <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-8 gap-4">
               {readersAlsoEnjoyed.map(b => (
                 <RecLink key={b.id} href={`/books/${b.slug}`} section="readers_also_enjoyed" bookId={b.id} className="group">
-                  <div className="relative aspect-[2/3] rounded overflow-hidden bg-gray-100 mb-1">
+                  <div className="relative aspect-[2/3] rounded overflow-hidden bg-gray-100 shadow-[0_8px_30px_rgba(0,0,0,0.25)] mb-1">
                     {b.cover_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={b.cover_url} alt={b.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" loading="lazy" />
@@ -345,7 +345,7 @@ export default async function BookPage({ params }) {
             const status = sectionShelfMap[b.id] ?? null
             return (
               <RecLink href={`/books/${b.slug}`} section="more_by_author" bookId={b.id} className="group">
-                <div className="relative aspect-[2/3] rounded overflow-hidden bg-gray-100 mb-1">
+                <div className="relative aspect-[2/3] rounded overflow-hidden bg-gray-100 shadow-[0_8px_30px_rgba(0,0,0,0.25)] mb-1">
                   {b.cover_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={b.cover_url} alt={b.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" loading="lazy" />
