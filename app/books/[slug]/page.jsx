@@ -202,16 +202,16 @@ export default async function BookPage({ params }) {
             {(book.genres?.length > 0 || book.tropes?.length > 0 || book.relationship_type?.length > 0 || book.story_tags?.length > 0 || book.content_warnings?.length > 0) && (
               <div className="flex flex-wrap gap-2 mt-4">
                 {book.genres?.map(g => (
-                  <span key={g} className="chip text-xs bg-petal/30">{g}</span>
+                  <Link key={g} href={`/search?genres=${encodeURIComponent(g)}`} className="chip text-xs bg-petal/30">{g}</Link>
                 ))}
                 {book.tropes?.map(t => (
                   <Link key={t} href={`/tropes/${slugify(t)}`} className="chip text-xs">{t}</Link>
                 ))}
                 {book.relationship_type?.map(r => (
-                  <span key={r} className="chip text-xs bg-lavender/20">{r}</span>
+                  <Link key={r} href={`/search?relTypes=${encodeURIComponent(r)}`} className="chip text-xs bg-lavender/20">{r}</Link>
                 ))}
                 {book.story_tags?.map(s => (
-                  <span key={s} className="chip text-xs bg-lavender/20">{s}</span>
+                  <Link key={s} href={`/search?subjects=${encodeURIComponent(s)}`} className="chip text-xs bg-lavender/20">{s}</Link>
                 ))}
                 {book.content_warnings?.map(w => (
                   <span key={w} className="chip text-xs bg-slate/10 text-slate/60">{w}</span>
