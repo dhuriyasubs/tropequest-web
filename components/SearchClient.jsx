@@ -347,7 +347,7 @@ function SpiceFilter({ value, onChange }) {
         ))}
       </div>
       {value && (
-        <p className="text-xs text-slate/60 mt-1">{SPICE_LABELS[value]} and above</p>
+        <p className="text-xs text-slate/60 mt-1">{SPICE_LABELS[value]}{value < 5 ? ' and above' : ' only'}</p>
       )}
     </div>
   )
