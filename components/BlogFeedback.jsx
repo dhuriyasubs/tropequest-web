@@ -2,6 +2,18 @@
 
 import { useState, useEffect } from 'react'
 
+function getDeviceId() {
+  let id = localStorage.getItem('tq_did')
+  if (!id) { id = crypto.randomUUID(); localStorage.setItem('tq_did', id) }
+  return id
+}
+
+function getSessionId() {
+  let id = sessionStorage.getItem('tq_sid')
+  if (!id) { id = crypto.randomUUID(); sessionStorage.setItem('tq_sid', id) }
+  return id
+}
+
 export default function BlogFeedback({ slug }) {
   const storageKey = `blog_feedback_${slug}`
   const [voted, setVoted] = useState(null) // 'helpful' | 'not_helpful' | null
@@ -18,7 +30,12 @@ export default function BlogFeedback({ slug }) {
     await fetch('/api/blog/feedback', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ slug, helpful }),
+      body: JSON.stringify({
+        slug,
+        helpful,
+        device_id: getDeviceId(),
+        session_id: getSessionId(),
+      }),
     })
   }
 
