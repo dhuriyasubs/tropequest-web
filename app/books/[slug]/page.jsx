@@ -181,21 +181,24 @@ export default async function BookPage({ params }) {
               <AuthorLinks author={book.author} className="hover:underline" />
             </p>
 
-            {blendedRating && (
-              <p className="text-sm text-slate mt-2">
-                ★ {blendedRating.toFixed(1)}
-                {totalRatingCount > 0 ? ` · ${totalRatingCount.toLocaleString()} ratings` : ''}
-              </p>
-            )}
-
-            {book.spice_rating && (
-              <p className="text-sm mt-1">
-                {Array.from({ length: 5 }, (_, i) => (
-                  <span key={i} className={i < book.spice_rating ? '' : 'opacity-20'}>🌶️</span>
-                ))}
-                <span className="text-xs text-slate ml-1.5">
-                  {['', 'Tame', 'Mild', 'Steamy', 'Very Steamy', 'Explicit'][book.spice_rating]}
-                </span>
+            {(blendedRating || book.spice_rating) && (
+              <p className="text-sm text-slate mt-2 flex items-center gap-3 flex-wrap">
+                {blendedRating && (
+                  <span>
+                    ★ {blendedRating.toFixed(1)}
+                    {totalRatingCount > 0 ? ` · ${totalRatingCount.toLocaleString()} ratings` : ''}
+                  </span>
+                )}
+                {book.spice_rating && (
+                  <span className="flex items-center gap-1">
+                    {Array.from({ length: 5 }, (_, i) => (
+                      <span key={i} className={i < book.spice_rating ? '' : 'opacity-20'}>🌶️</span>
+                    ))}
+                    <span className="text-xs ml-0.5">
+                      {['', 'Tame', 'Mild', 'Steamy', 'Very Steamy', 'Explicit'][book.spice_rating]}
+                    </span>
+                  </span>
+                )}
               </p>
             )}
 
