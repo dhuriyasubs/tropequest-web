@@ -4,6 +4,7 @@ import Script from 'next/script'
 import Nav from '@/components/Nav'
 import Toaster from '@/components/Toaster'
 import AuthRedirectHandler from '@/components/AuthRedirectHandler'
+import GAScripts from '@/components/GAScripts'
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -39,13 +40,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${playfair.variable} ${dmSans.variable}`}>
       <head>
-        <Script src="https://www.googletagmanager.com/gtag/js?id=G-BT9KM61B0S" strategy="afterInteractive" />
-        <Script id="ga-init" strategy="afterInteractive">{`
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', 'G-BT9KM61B0S');
-        `}</Script>
+        <GAScripts />
       </head>
       <body className="min-h-screen flex flex-col">
         <Nav />
