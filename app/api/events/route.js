@@ -1,19 +1,24 @@
 import { NextResponse } from 'next/server'
 import { createSupabaseServer, supabaseAdmin } from '@/lib/supabase'
 
+const CLICK_TYPES = new Set(['rec_click', 'buy_click'])
+
 export async function POST(request) {
   try {
     const { type, session_id, device_id, traffic_source, referrer, data } = await request.json()
     if (!type) return NextResponse.json({ ok: false })
 
-    const supabase = createSupabaseServer()
-    const { data: { user } } = await supabase.auth.getUser()
+    let userId = null
+    try {
+      const supabase = createSupabaseServer()
+      const { data: { user } } = await supabase.auth.getUser()
+      userId = user?.id ?? null
+    } catch {}
 
-    const CLICK_TYPES = new Set(['rec_click', 'buy_click'])
     await supabaseAdmin.from('page_events').insert({
       event_type: type,
       event: CLICK_TYPES.has(type) ? 'click' : 'impression',
-      user_id: user?.id ?? null,
+      user_id: userId,
       session_id: session_id ?? null,
       device_id: device_id ?? null,
       traffic_source: traffic_source ?? null,
