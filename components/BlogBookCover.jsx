@@ -1,14 +1,18 @@
+'use client'
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { supabaseAdmin } from '@/lib/supabase'
 import BlogTbrButton from '@/components/BlogTbrButton'
 
-export default async function BookCover({ slug, blogTitle }) {
-  const { data: book } = await supabaseAdmin
-    .from('books')
-    .select('id, title, cover_url')
-    .eq('slug', slug)
-    .single()
+export default function BookCover({ slug, blogTitle }) {
+  const [book, setBook] = useState(undefined)
+
+  useEffect(() => {
+    fetch(`/api/book-cover/${slug}`)
+      .then(r => r.json())
+      .then(d => setBook(d.book ?? null))
+      .catch(() => setBook(null))
+  }, [slug])
 
   if (!book?.cover_url) return null
 
