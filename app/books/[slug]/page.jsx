@@ -203,7 +203,7 @@ export default async function BookPage({ params }) {
             )}
 
             {/* All tags in one row */}
-            {(book.genres?.length > 0 || book.tropes?.length > 0 || book.relationship_type?.length > 0 || book.story_tags?.length > 0 || book.content_warnings?.length > 0) && (
+            {(book.genres?.length > 0 || book.tropes?.length > 0 || book.relationship_type?.length > 0 || book.story_tags?.length > 0) && (
               <div className="flex flex-wrap gap-2 mt-4">
                 {book.genres?.map(g => (
                   <Link key={g} href={`/search?genres=${encodeURIComponent(g)}`} className="chip text-xs bg-petal/30">{toTitleCase(g)}</Link>
@@ -217,8 +217,14 @@ export default async function BookPage({ params }) {
                 {book.story_tags?.map(s => (
                   <Link key={s} href={`/search?subjects=${encodeURIComponent(s)}`} className="chip text-xs bg-lavender/20">{toTitleCase(s)}</Link>
                 ))}
-                {book.content_warnings?.map(w => (
-                  <span key={w} className="chip text-xs bg-slate/10 text-slate/60">{toTitleCase(w)}</span>
+              </div>
+            )}
+
+            {book.content_warnings?.length > 0 && (
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span className="text-xs font-semibold text-amber-700 uppercase tracking-wide shrink-0">Content warnings:</span>
+                {book.content_warnings.map(w => (
+                  <span key={w} className="chip text-xs bg-amber-50 text-amber-800 border border-amber-200">{toTitleCase(w)}</span>
                 ))}
               </div>
             )}
