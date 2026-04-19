@@ -97,7 +97,7 @@ export default async function BookPage({ params }) {
   const [seriesBooks, moreByAuthor, readersAlsoEnjoyed, authorBioRow] = await Promise.all([
     book.series_name ? getSeriesBooks(book.series_name, book.id) : [],
     getMoreByAuthor(book.author, book.id, book.series_name ?? null),
-    getSimilarBooks({ tropes: book.tropes ?? [], excludeId: book.id, limit: 8 }),
+    getSimilarBooks({ tropes: book.tropes ?? [], genres: book.genres ?? [], storyTags: book.story_tags ?? [], excludeId: book.id, limit: 8 }),
     supabaseAdmin.from('author_bios').select('bio').eq('author_name', book.author).maybeSingle(),
   ])
   const authorBio = authorBioRow.data?.bio ?? null
