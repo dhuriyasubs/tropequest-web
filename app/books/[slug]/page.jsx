@@ -224,7 +224,7 @@ export default async function BookPage({ params }) {
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <span className="text-xs text-slate/60 shrink-0">Content warnings:</span>
                 {book.content_warnings.map(w => (
-                  <span key={w} className="chip text-xs bg-rose-50 text-rose-700/80">{toTitleCase(w)}</span>
+                  <span key={w} className="chip text-xs bg-slate/10 text-slate/70">{toTitleCase(w)}</span>
                 ))}
               </div>
             )}
