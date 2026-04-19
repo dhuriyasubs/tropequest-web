@@ -237,6 +237,31 @@ function normaliseBook(b) {
 }
 
 // ── Tag splitter ──────────────────────────────────────────────────────────
+const TAG_ALIASES = {
+  'second chance': 'second chances',
+  'mafia romance': 'mafia',
+  'sports romance': 'sports',
+  'hockey romance': 'hockey',
+  'football romance': 'football',
+  'basketball romance': 'basketball',
+  'baseball romance': 'baseball',
+  'soccer romance': 'soccer',
+  'formula one': 'formula 1',
+  'historical romance': 'historical',
+}
+const STRIP_SUFFIXES = [' romance', ' mystery', ' thriller', ' suspense']
+
+function normalizeToken(lc) {
+  if (TAG_ALIASES[lc]) return TAG_ALIASES[lc]
+  for (const suffix of STRIP_SUFFIXES) {
+    if (lc.endsWith(suffix)) {
+      const stripped = lc.slice(0, -suffix.length)
+      if (stripped.length > 2) return stripped
+    }
+  }
+  return null
+}
+
 const SPLITTER_FIELD_MAP = [
   ['genres',            GENRES],
   ['tropes',            TROPES],
@@ -275,6 +300,20 @@ function TagSplitter({ book, set }) {
           if (!matched[field].includes(canonical)) matched[field].push(canonical)
           found = true
           break
+        }
+      }
+      if (!found) {
+        const alt = normalizeToken(lc)
+        if (alt) {
+          for (const [field, opts] of SPLITTER_FIELD_MAP) {
+            const canonical = opts.find(o => o.toLowerCase() === alt)
+            if (canonical) {
+              if (!matched[field]) matched[field] = []
+              if (!matched[field].includes(canonical)) matched[field].push(canonical)
+              found = true
+              break
+            }
+          }
         }
       }
       if (!found) unmatched.push(token)
