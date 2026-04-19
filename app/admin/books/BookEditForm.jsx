@@ -325,7 +325,9 @@ function TagSplitter({ book, set }) {
     if (!result) return
     for (const [field, tags] of Object.entries(result.matched)) {
       const existing = Array.isArray(book[field]) ? book[field] : []
-      set(field, [...new Set([...existing, ...tags])])
+      const merged = new Map()
+      for (const t of [...existing, ...tags]) merged.set(t.toLowerCase(), t)
+      set(field, [...merged.values()])
     }
     setRaw('')
     setResult(null)
