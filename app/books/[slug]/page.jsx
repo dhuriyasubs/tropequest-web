@@ -222,9 +222,9 @@ export default async function BookPage({ params }) {
 
             {book.content_warnings?.length > 0 && (
               <div className="mt-3 flex flex-wrap items-center gap-2">
-                <span className="text-xs font-semibold text-amber-700 uppercase tracking-wide shrink-0">Content warnings:</span>
+                <span className="text-xs text-slate/60 shrink-0">Content warnings:</span>
                 {book.content_warnings.map(w => (
-                  <span key={w} className="chip text-xs bg-amber-50 text-amber-800 border border-amber-200">{toTitleCase(w)}</span>
+                  <span key={w} className="chip text-xs bg-rose-50 text-rose-700/80">{toTitleCase(w)}</span>
                 ))}
               </div>
             )}
