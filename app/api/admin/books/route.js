@@ -31,6 +31,20 @@ async function uploadCover(coverUrl, bookId) {
   return coverUrl
 }
 
+function normalizeAuthor(raw) {
+  const normalizePart = s => s
+    .replace(/[\u00a0\u200b\u200c\u200d\ufeff]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase()
+    .replace(/(^|[\s\-.])([a-z])/g, (_, sep, ch) => sep + ch.toUpperCase())
+  return (raw ?? '')
+    .split(',')
+    .map(normalizePart)
+    .filter(Boolean)
+    .join(' And ')
+}
+
 function bustCache(slug, author, seriesName) {
   if (slug)       revalidatePath(`/books/${slug}`)
   if (author)     revalidatePath(`/author/${encodeURIComponent(author)}`)
@@ -187,6 +201,8 @@ export async function POST(request) {
   const { id, ...fields } = await request.json()
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
 
+  if (fields.author) fields.author = normalizeAuthor(fields.author)
+
   if (fields.cover_url) {
     fields.cover_url = await uploadCover(fields.cover_url, String(id))
   }
@@ -237,6 +253,7 @@ export async function PUT(request) {
   const fields = await request.json()
   if (!fields.title?.trim()) return NextResponse.json({ error: 'title required' }, { status: 400 })
   if (!fields.author?.trim()) return NextResponse.json({ error: 'author required' }, { status: 400 })
+  fields.author = normalizeAuthor(fields.author)
   if (!fields.slug?.trim())  return NextResponse.json({ error: 'slug required' },  { status: 400 })
 
   // Duplicate check
