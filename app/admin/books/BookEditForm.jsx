@@ -165,12 +165,17 @@ function buildAmazonInUrl(title, author) {
 }
 
 function normalizeAuthor(raw) {
-  return (raw ?? '')
+  const normalizePart = s => s
     .replace(/[\u00a0\u200b\u200c\u200d\ufeff]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
     .toLowerCase()
     .replace(/(^|[\s\-.])([a-z])/g, (_, sep, ch) => sep + ch.toUpperCase())
+  return (raw ?? '')
+    .split(',')
+    .map(normalizePart)
+    .filter(Boolean)
+    .join(' And ')
 }
 
 function buildPayload(book, isNew) {
