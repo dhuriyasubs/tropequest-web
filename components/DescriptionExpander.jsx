@@ -13,7 +13,13 @@ export default function DescriptionExpander({ paragraphs }) {
     <div className="mt-6 text-sm text-ink/80 leading-relaxed">
       <div className={`relative ${shouldClamp && !expanded ? 'max-h-[7.5rem] overflow-hidden' : ''}`}>
         <div className="space-y-3">
-          {paragraphs.map((para, i) => <p key={i}>{para}</p>)}
+          {paragraphs.map((para, i) => (
+            <p key={i}>
+              {para.split('\n').map((line, j, arr) => (
+                <span key={j}>{line}{j < arr.length - 1 && <br />}</span>
+              ))}
+            </p>
+          ))}
         </div>
         {shouldClamp && !expanded && (
           <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-white to-transparent" />

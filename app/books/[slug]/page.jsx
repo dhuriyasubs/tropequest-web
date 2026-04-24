@@ -252,7 +252,7 @@ export default async function BookPage({ params }) {
                   .replace(/\*\*(.*?)\*\*/gs, '$1')
                   .replace(/\*(.*?)\*/gs, '$1')
                   .replace(/_(.*?)_/gs, '$1')
-                  .split(/\n+/)
+                  .split(/\n\n+/)
                   .filter(p => p.trim())
                   .map(p => p.trim())
               } />
