@@ -167,7 +167,10 @@ export default async function BookPage({ params }) {
 
           {/* Details */}
           <div className="flex-1">
-            <h1 className="font-serif text-3xl font-bold leading-tight">{book.title}</h1>
+            <div className="flex items-start justify-between gap-3">
+              <h1 className="font-serif text-3xl font-bold leading-tight">{book.title}</h1>
+              <ShareButton url={`https://tropequest.com/books/${book.slug}`} title={`${book.title} by ${book.author}`} className="shrink-0 mt-1" />
+            </div>
 
             {book.series_name && (
               <p className="text-slate text-sm mt-1">
@@ -202,8 +205,6 @@ export default async function BookPage({ params }) {
                 )}
               </p>
             )}
-
-            <ShareButton url={`https://tropequest.com/books/${book.slug}`} title={`${book.title} by ${book.author}`} className="mt-3" />
 
             {/* All tags in one row */}
             {(book.genres?.length > 0 || book.tropes?.length > 0 || book.relationship_type?.length > 0 || book.story_tags?.length > 0) && (
