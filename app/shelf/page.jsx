@@ -7,6 +7,7 @@ import ShelfSearch from '@/components/ShelfSearch'
 import ShelfFilter from '@/components/ShelfFilter'
 import ShelfInlineSearch from '@/components/ShelfInlineSearch'
 import ShelfStatusSelect from '@/components/ShelfStatusSelect'
+import ShareButton from '@/components/ShareButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -73,6 +74,7 @@ export default async function ShelfPage({ searchParams }) {
             )}
           </div>
           <div className="flex gap-2 items-center shrink-0">
+            <ShareButton />
             <ShelfSearch />
             <ShelfScan />
           </div>

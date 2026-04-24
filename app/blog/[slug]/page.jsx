@@ -9,6 +9,7 @@ import BlogFeedback from '@/components/BlogFeedback'
 import BlogDiscoveryCTA from '@/components/BlogDiscoveryCTA'
 import FeaturePromo from '@/components/FeaturePromo'
 import PageViewTracker from '@/components/PageViewTracker'
+import ShareButton from '@/components/ShareButton'
 
 export const revalidate = 3600
 
@@ -56,13 +57,16 @@ export default function BlogPostPage({ params }) {
         <h1 className="font-serif text-4xl font-bold text-ink mb-3 leading-tight">
           {frontmatter.title}
         </h1>
-        <div className="flex items-center gap-3 text-sm text-slate/60">
-          {frontmatter.date && (
-            <time dateTime={frontmatter.date}>
-              {new Date(frontmatter.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
-            </time>
-          )}
-          {frontmatter.readingTime && <span>· {frontmatter.readingTime} min read</span>}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 text-sm text-slate/60">
+            {frontmatter.date && (
+              <time dateTime={frontmatter.date}>
+                {new Date(frontmatter.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+              </time>
+            )}
+            {frontmatter.readingTime && <span>· {frontmatter.readingTime} min read</span>}
+          </div>
+          <ShareButton url={`https://tropequest.com/blog/${params.slug}`} title={frontmatter.title} />
         </div>
         {frontmatter.tags?.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-4">

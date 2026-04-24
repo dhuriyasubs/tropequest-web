@@ -5,6 +5,7 @@ import TropeBookList from '@/components/TropeBookList'
 import { getFilterOptions, getBooksByTrope } from '@/lib/search'
 import { slugify } from '@/lib/utils'
 import PageViewTracker from '@/components/PageViewTracker'
+import ShareButton from '@/components/ShareButton'
 
 export const revalidate = 3600
 
@@ -154,7 +155,10 @@ export default async function TropeDetailPage({ params }) {
         { label: trope },
       ]} />
 
-      <h1 className="font-serif text-3xl font-bold mb-2">Best {trope} Books</h1>
+      <div className="flex items-center gap-3 mb-2">
+        <h1 className="font-serif text-3xl font-bold">Best {trope} Books</h1>
+        <ShareButton url={`https://tropequest.com/tropes/${params.slug}`} title={`Best ${trope} Books | TropeQuest`} />
+      </div>
 
       {editorial ? (
         <div className="max-w-2xl mb-8">

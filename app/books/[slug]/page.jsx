@@ -14,6 +14,7 @@ import FeaturePromo from '@/components/FeaturePromo'
 import BookViewTracker from '@/components/BookViewTracker'
 import RecLink from '@/components/RecLink'
 import BuyButtons from '@/components/BuyButtons'
+import ShareButton from '@/components/ShareButton'
 
 export const revalidate = 3600
 
@@ -201,6 +202,8 @@ export default async function BookPage({ params }) {
                 )}
               </p>
             )}
+
+            <ShareButton url={`https://tropequest.com/books/${book.slug}`} title={`${book.title} by ${book.author}`} className="mt-3" />
 
             {/* All tags in one row */}
             {(book.genres?.length > 0 || book.tropes?.length > 0 || book.relationship_type?.length > 0 || book.story_tags?.length > 0) && (

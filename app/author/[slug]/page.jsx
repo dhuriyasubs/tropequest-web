@@ -7,6 +7,7 @@ import { getBooksByAuthor, getAuthorBio } from '@/lib/search'
 import { slugify, formatAuthorName } from '@/lib/utils'
 import FeaturePromo from '@/components/FeaturePromo'
 import PageViewTracker from '@/components/PageViewTracker'
+import ShareButton from '@/components/ShareButton'
 
 export const revalidate = 3600
 
@@ -105,7 +106,10 @@ export default async function AuthorPage({ params }) {
         { label: formatAuthorName(author) },
       ]} />
 
-      <h1 className="font-serif text-3xl font-bold mb-1">{formatAuthorName(author)}</h1>
+      <div className="flex items-center gap-3 mb-1">
+        <h1 className="font-serif text-3xl font-bold">{formatAuthorName(author)}</h1>
+        <ShareButton url={`https://tropequest.com/author/${encodeURIComponent(author)}`} title={`Books by ${formatAuthorName(author)} | TropeQuest`} />
+      </div>
       <p className="text-slate mb-8">{books.length} books on TropeQuest</p>
       <AuthorBio bio={bio} />
 
