@@ -166,6 +166,19 @@ function buildAmazonInUrl(title, author) {
   return `https://www.amazon.in/s?k=${q}`
 }
 
+function buildFlipkartUrl(title, author) {
+  if (!title || !author) return ''
+  const q = encodeURIComponent(`${title} ${author}`)
+  return `https://www.flipkart.com/search?q=${q}&otracker=search`
+}
+
+function buildAbeBooksUrl(title, author) {
+  if (!title || !author) return ''
+  const t = encodeURIComponent(title)
+  const a = encodeURIComponent(author)
+  return `https://www.abebooks.com/servlet/SearchResults?title=${t}&author=${a}&sortby=17`
+}
+
 function normalizeAuthor(raw) {
   const normalizePart = s => s
     .replace(/[\u00a0\u200b\u200c\u200d\ufeff]/g, ' ')
@@ -825,6 +838,8 @@ export default function BookEditForm() {
         const a = key === 'author' ? value : b.author
         if (!b._slugEdited) updated.slug = toSlug(t, a)
         updated.buy_url_amazon_in = buildAmazonInUrl(t, a)
+        updated.buy_url_flipkart  = buildFlipkartUrl(t, a)
+        updated.buy_url_abebooks  = buildAbeBooksUrl(t, a)
       }
       if (key === 'slug') updated._slugEdited = true
       if (TRACKED_FIELDS.has(key)) {
@@ -876,6 +891,8 @@ export default function BookEditForm() {
           rating_source:     b.rating_source ?? prev.rating_source,
           buy_url_amazon_us: isAmazonUS ? fetchedUrl : (b.buy_url_amazon_us ?? prev.buy_url_amazon_us),
           buy_url_amazon_in: buildAmazonInUrl(title, author) || prev.buy_url_amazon_in,
+          buy_url_flipkart:  buildFlipkartUrl(title, author) || prev.buy_url_flipkart,
+          buy_url_abebooks:  buildAbeBooksUrl(title, author) || prev.buy_url_abebooks,
           data_source:       ds,
         }
       })
@@ -964,6 +981,8 @@ export default function BookEditForm() {
             rating_source:    book.rating_source || null,
             buy_url_amazon_us: book.buy_url_amazon_us || null,
             buy_url_amazon_in: buildAmazonInUrl(book.title.trim(), normalizeAuthor(book.author)) || null,
+            buy_url_flipkart:  buildFlipkartUrl(book.title.trim(), normalizeAuthor(book.author)) || null,
+            buy_url_abebooks:  buildAbeBooksUrl(book.title.trim(), normalizeAuthor(book.author)) || null,
             genres:           [],
             tropes:           [],
             characters:       [],
@@ -982,8 +1001,13 @@ export default function BookEditForm() {
                    b.author.toLowerCase() === book.author.trim().toLowerCase()
             )
             if (existing) {
-              const ENRICHABLE = ['cover_url', 'rating', 'rating_count', 'rating_source', 'series_name', 'series_number', 'buy_url_amazon_us', 'buy_url_amazon_in']
-              const enrichBook = { ...book, buy_url_amazon_in: book.buy_url_amazon_in || buildAmazonInUrl(book.title.trim(), book.author.trim()) }
+              const ENRICHABLE = ['cover_url', 'rating', 'rating_count', 'rating_source', 'series_name', 'series_number', 'buy_url_amazon_us', 'buy_url_amazon_in', 'buy_url_flipkart', 'buy_url_abebooks']
+              const enrichBook = {
+                ...book,
+                buy_url_amazon_in: book.buy_url_amazon_in || buildAmazonInUrl(book.title.trim(), book.author.trim()),
+                buy_url_flipkart:  book.buy_url_flipkart  || buildFlipkartUrl(book.title.trim(), book.author.trim()),
+                buy_url_abebooks:  book.buy_url_abebooks  || buildAbeBooksUrl(book.title.trim(), book.author.trim()),
+              }
               const patch = { id: existing.id }
               for (const f of ENRICHABLE) {
                 if ((existing[f] == null || existing[f] === '') && enrichBook[f] != null && enrichBook[f] !== '') {
