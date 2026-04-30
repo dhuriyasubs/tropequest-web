@@ -19,7 +19,7 @@ const EMPTY_BOOK = {
   characters: '', description: '',
   release_date: '', release_year: '',
   buy_url_amazon_us: '', buy_url_amazon_in: '', buy_url_flipkart: '',
-  buy_url_abebooks: '', buy_url_wattpad: '', buy_url_stck: '',
+  buy_url_abebooks: '', buy_url_wattpad: '', buy_url_stck: '', buy_url_royal_road: '',
   price_amazon_us: '', price_amazon_in: '',
   spice_rating: '',
 }
@@ -208,9 +208,10 @@ function buildPayload(book, isNew) {
     buy_url_amazon_us: book.buy_url_amazon_us || null,
     buy_url_amazon_in: book.buy_url_amazon_in || null,
     buy_url_flipkart:  book.buy_url_flipkart  || null,
-    buy_url_abebooks:  book.buy_url_abebooks  || null,
-    buy_url_wattpad:   book.buy_url_wattpad   || null,
-    buy_url_stck:      book.buy_url_stck      || null,
+    buy_url_abebooks:   book.buy_url_abebooks   || null,
+    buy_url_wattpad:    book.buy_url_wattpad    || null,
+    buy_url_stck:       book.buy_url_stck       || null,
+    buy_url_royal_road: book.buy_url_royal_road || null,
     price_amazon_in:   book.price_amazon_in  !== '' ? Number(book.price_amazon_in)  : null,
     price_amazon_us:   book.price_amazon_us  !== '' ? Number(book.price_amazon_us)  : null,
     spice_rating:      book.spice_rating     !== '' ? Number(book.spice_rating)     : null,
@@ -244,9 +245,10 @@ function normaliseBook(b) {
     buy_url_amazon_us: b.buy_url_amazon_us ?? '',
     buy_url_amazon_in: b.buy_url_amazon_in ?? '',
     buy_url_flipkart:  b.buy_url_flipkart  ?? '',
-    buy_url_abebooks:  b.buy_url_abebooks  ?? '',
-    buy_url_wattpad:   b.buy_url_wattpad   ?? '',
-    buy_url_stck:      b.buy_url_stck      ?? '',
+    buy_url_abebooks:  b.buy_url_abebooks   ?? '',
+    buy_url_wattpad:   b.buy_url_wattpad    ?? '',
+    buy_url_stck:      b.buy_url_stck       ?? '',
+    buy_url_royal_road: b.buy_url_royal_road ?? '',
     price_amazon_us:   b.price_amazon_us   ?? '',
     price_amazon_in:   b.price_amazon_in   ?? '',
     spice_rating:      b.spice_rating      ?? '',
@@ -673,6 +675,10 @@ function BookFields({ book, set }) {
         <div>
           <label className="block text-xs text-slate mb-1">Stck.me URL</label>
           <input type="text" value={book.buy_url_stck} onChange={e => set('buy_url_stck', e.target.value)} className={inputCls} />
+        </div>
+        <div>
+          <label className="block text-xs text-slate mb-1">Royal Road URL</label>
+          <input type="text" value={book.buy_url_royal_road} onChange={e => set('buy_url_royal_road', e.target.value)} className={inputCls} />
         </div>
       </div>
     </div>

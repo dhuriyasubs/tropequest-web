@@ -8,8 +8,9 @@ const STORES = [
   { key: 'amazon_us', label: 'Amazon US', urlKey: 'buy_url_amazon_us', priceKey: 'price_amazon_us', flag: '🇺🇸' },
   { key: 'flipkart',  label: 'Flipkart',  urlKey: 'buy_url_flipkart',  priceKey: null,              flag: '🛒' },
   { key: 'abebooks',  label: 'AbeBooks',  urlKey: 'buy_url_abebooks',  priceKey: null,              flag: '📦' },
-  { key: 'wattpad',   label: 'Wattpad',   urlKey: 'buy_url_wattpad',   priceKey: null,              flag: '📖', readOnly: true },
-  { key: 'stck',      label: 'Stck.me',   urlKey: 'buy_url_stck',      priceKey: null,              flag: '📚', readOnly: true },
+  { key: 'wattpad',    label: 'Wattpad',    urlKey: 'buy_url_wattpad',    priceKey: null, flag: '📖', readOnly: true },
+  { key: 'stck',       label: 'Stck.me',   urlKey: 'buy_url_stck',       priceKey: null, flag: '📚', readOnly: true },
+  { key: 'royal_road', label: 'Royal Road', urlKey: 'buy_url_royal_road', priceKey: null, flag: '👑', readOnly: true },
 ]
 
 const PRIMARY_KEYS = ['amazon_in', 'amazon_us']
