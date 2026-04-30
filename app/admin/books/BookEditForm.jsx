@@ -19,7 +19,8 @@ const EMPTY_BOOK = {
   characters: '', description: '',
   release_date: '', release_year: '',
   buy_url_amazon_us: '', buy_url_amazon_in: '', buy_url_flipkart: '',
-  buy_url_abebooks: '', buy_url_wattpad: '', buy_url_stck: '', buy_url_royal_road: '',
+  buy_url_abebooks: '', buy_url_wattpad: '', buy_url_stck: '', buy_url_royal_road: '', buy_url_audible: '',
+  is_kindle_unlimited: false,
   price_amazon_us: '', price_amazon_in: '',
   spice_rating: '',
 }
@@ -208,10 +209,12 @@ function buildPayload(book, isNew) {
     buy_url_amazon_us: book.buy_url_amazon_us || null,
     buy_url_amazon_in: book.buy_url_amazon_in || null,
     buy_url_flipkart:  book.buy_url_flipkart  || null,
-    buy_url_abebooks:   book.buy_url_abebooks   || null,
-    buy_url_wattpad:    book.buy_url_wattpad    || null,
-    buy_url_stck:       book.buy_url_stck       || null,
-    buy_url_royal_road: book.buy_url_royal_road || null,
+    buy_url_abebooks:    book.buy_url_abebooks    || null,
+    buy_url_wattpad:     book.buy_url_wattpad     || null,
+    buy_url_stck:        book.buy_url_stck        || null,
+    buy_url_royal_road:  book.buy_url_royal_road  || null,
+    buy_url_audible:     book.buy_url_audible     || null,
+    is_kindle_unlimited: !!book.is_kindle_unlimited,
     price_amazon_in:   book.price_amazon_in  !== '' ? Number(book.price_amazon_in)  : null,
     price_amazon_us:   book.price_amazon_us  !== '' ? Number(book.price_amazon_us)  : null,
     spice_rating:      book.spice_rating     !== '' ? Number(book.spice_rating)     : null,
@@ -245,10 +248,12 @@ function normaliseBook(b) {
     buy_url_amazon_us: b.buy_url_amazon_us ?? '',
     buy_url_amazon_in: b.buy_url_amazon_in ?? '',
     buy_url_flipkart:  b.buy_url_flipkart  ?? '',
-    buy_url_abebooks:  b.buy_url_abebooks   ?? '',
-    buy_url_wattpad:   b.buy_url_wattpad    ?? '',
-    buy_url_stck:      b.buy_url_stck       ?? '',
-    buy_url_royal_road: b.buy_url_royal_road ?? '',
+    buy_url_abebooks:    b.buy_url_abebooks    ?? '',
+    buy_url_wattpad:     b.buy_url_wattpad     ?? '',
+    buy_url_stck:        b.buy_url_stck        ?? '',
+    buy_url_royal_road:  b.buy_url_royal_road  ?? '',
+    buy_url_audible:     b.buy_url_audible     ?? '',
+    is_kindle_unlimited: b.is_kindle_unlimited ?? false,
     price_amazon_us:   b.price_amazon_us   ?? '',
     price_amazon_in:   b.price_amazon_in   ?? '',
     spice_rating:      b.spice_rating      ?? '',
@@ -679,6 +684,14 @@ function BookFields({ book, set }) {
         <div>
           <label className="block text-xs text-slate mb-1">Royal Road URL</label>
           <input type="text" value={book.buy_url_royal_road} onChange={e => set('buy_url_royal_road', e.target.value)} className={inputCls} />
+        </div>
+        <div>
+          <label className="block text-xs text-slate mb-1">Audible URL</label>
+          <input type="text" value={book.buy_url_audible} onChange={e => set('buy_url_audible', e.target.value)} className={inputCls} />
+        </div>
+        <div className="sm:col-span-2 flex items-center gap-2">
+          <input type="checkbox" id="ku_check" checked={!!book.is_kindle_unlimited} onChange={e => set('is_kindle_unlimited', e.target.checked)} className="w-4 h-4 accent-bloom" />
+          <label htmlFor="ku_check" className="text-xs text-slate select-none cursor-pointer">Available on Kindle Unlimited</label>
         </div>
       </div>
     </div>

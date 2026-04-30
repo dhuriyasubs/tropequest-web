@@ -8,6 +8,7 @@ const STORES = [
   { key: 'amazon_us', label: 'Amazon US', urlKey: 'buy_url_amazon_us', priceKey: 'price_amazon_us', flag: '🇺🇸' },
   { key: 'flipkart',  label: 'Flipkart',  urlKey: 'buy_url_flipkart',  priceKey: null,              flag: '🛒' },
   { key: 'abebooks',  label: 'AbeBooks',  urlKey: 'buy_url_abebooks',  priceKey: null,              flag: '📦' },
+  { key: 'audible',    label: 'Audible',    urlKey: 'buy_url_audible',    priceKey: null, flag: '🎧' },
   { key: 'wattpad',    label: 'Wattpad',    urlKey: 'buy_url_wattpad',    priceKey: null, flag: '📖', readOnly: true },
   { key: 'stck',       label: 'Stck.me',   urlKey: 'buy_url_stck',       priceKey: null, flag: '📚', readOnly: true },
   { key: 'royal_road', label: 'Royal Road', urlKey: 'buy_url_royal_road', priceKey: null, flag: '👑', readOnly: true },
@@ -25,11 +26,29 @@ export default function BuyButtons({ book }) {
     return () => document.removeEventListener('mousedown', onOut)
   }, [])
 
-  const available = STORES.filter(s => book[s.urlKey])
-  if (available.length === 0) return null
+  const kuUrl = book.buy_url_amazon_in || book.buy_url_amazon_us
+  const kuEntry = book.is_kindle_unlimited && kuUrl
+    ? { key: 'kindle_unlimited', label: 'Kindle Unlimited', url: kuUrl, flag: '📱', readOnly: true }
+    : null
 
-  const primary = available.find(s => PRIMARY_KEYS.includes(s.key)) ?? available[0]
-  const rest = available.filter(s => s.key !== primary.key)
+  const available = STORES.filter(s => book[s.urlKey])
+  if (available.length === 0 && !kuEntry) return null
+
+  // Normalise all entries to { key, label, href, flag, priceLabel, readOnly }
+  const normalised = [
+    ...available.map(s => ({
+      key: s.key,
+      label: s.label,
+      href: book[s.urlKey],
+      flag: s.flag,
+      priceLabel: s.priceKey && book[s.priceKey] ? `₹${book[s.priceKey]}` : null,
+      readOnly: !!s.readOnly,
+    })),
+    ...(kuEntry ? [{ key: kuEntry.key, label: kuEntry.label, href: kuEntry.url, flag: kuEntry.flag, priceLabel: null, readOnly: true }] : []),
+  ]
+
+  const primary = normalised.find(s => PRIMARY_KEYS.includes(s.key)) ?? normalised[0]
+  const rest = normalised.filter(s => s.key !== primary.key)
 
   const handleClick = (store) => {
     trackEvent('buy_click', { book_id: book.id, store })
@@ -42,7 +61,7 @@ export default function BuyButtons({ book }) {
     <div className="relative flex" ref={ref}>
       {/* Primary button */}
       <a
-        href={book[primary.urlKey]}
+        href={primary.href}
         target="_blank"
         rel="noopener noreferrer sponsored"
         onClick={() => handleClick(primary.key)}
@@ -50,9 +69,7 @@ export default function BuyButtons({ book }) {
       >
         <span>{primary.flag}</span>
         <span>{verb(primary)} {primary.label}</span>
-        {primary.priceKey && book[primary.priceKey] && (
-          <span className="opacity-80 font-normal">₹{book[primary.priceKey]}</span>
-        )}
+        {primary.priceLabel && <span className="opacity-80 font-normal">{primary.priceLabel}</span>}
       </a>
 
       {/* Dropdown toggle */}
@@ -76,7 +93,7 @@ export default function BuyButtons({ book }) {
               {rest.map(s => (
                 <a
                   key={s.key}
-                  href={book[s.urlKey]}
+                  href={s.href}
                   target="_blank"
                   rel="noopener noreferrer sponsored"
                   onClick={() => handleClick(s.key)}
@@ -84,9 +101,7 @@ export default function BuyButtons({ book }) {
                 >
                   <span>{s.flag}</span>
                   <span>{verb(s)} {s.label}</span>
-                  {s.priceKey && book[s.priceKey] && (
-                    <span className="text-gray-400 font-normal">₹{book[s.priceKey]}</span>
-                  )}
+                  {s.priceLabel && <span className="text-gray-400 font-normal">{s.priceLabel}</span>}
                 </a>
               ))}
             </div>
