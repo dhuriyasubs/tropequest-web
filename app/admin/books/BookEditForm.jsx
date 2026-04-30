@@ -19,6 +19,7 @@ const EMPTY_BOOK = {
   characters: '', description: '',
   release_date: '', release_year: '',
   buy_url_amazon_us: '', buy_url_amazon_in: '', buy_url_flipkart: '',
+  buy_url_wattpad: '', buy_url_stck: '',
   price_amazon_us: '', price_amazon_in: '',
   spice_rating: '',
 }
@@ -240,6 +241,8 @@ function normaliseBook(b) {
     buy_url_amazon_us: b.buy_url_amazon_us ?? '',
     buy_url_amazon_in: b.buy_url_amazon_in ?? '',
     buy_url_flipkart:  b.buy_url_flipkart  ?? '',
+    buy_url_wattpad:   b.buy_url_wattpad   ?? '',
+    buy_url_stck:      b.buy_url_stck      ?? '',
     price_amazon_us:   b.price_amazon_us   ?? '',
     price_amazon_in:   b.price_amazon_in   ?? '',
     spice_rating:      b.spice_rating      ?? '',
@@ -654,6 +657,14 @@ function BookFields({ book, set }) {
         <div className="sm:col-span-2">
           <label className="block text-xs text-slate mb-1">Flipkart URL</label>
           <input type="text" value={book.buy_url_flipkart} onChange={e => set('buy_url_flipkart', e.target.value)} className={inputCls} />
+        </div>
+        <div>
+          <label className="block text-xs text-slate mb-1">Wattpad URL</label>
+          <input type="text" value={book.buy_url_wattpad} onChange={e => set('buy_url_wattpad', e.target.value)} className={inputCls} />
+        </div>
+        <div>
+          <label className="block text-xs text-slate mb-1">Stck.me URL</label>
+          <input type="text" value={book.buy_url_stck} onChange={e => set('buy_url_stck', e.target.value)} className={inputCls} />
         </div>
       </div>
     </div>

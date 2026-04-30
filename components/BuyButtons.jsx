@@ -5,6 +5,8 @@ import { trackEvent } from '@/lib/events'
 const STORES = [
   { key: 'amazon_in', label: 'Amazon IN', urlKey: 'buy_url_amazon_in', priceKey: 'price_amazon_in', flag: '🇮🇳' },
   { key: 'flipkart',  label: 'Flipkart',  urlKey: 'buy_url_flipkart',  priceKey: 'price_flipkart',  flag: '🛒' },
+  { key: 'wattpad',   label: 'Wattpad',   urlKey: 'buy_url_wattpad',   priceKey: null,              flag: '📖', readOnly: true },
+  { key: 'stck',      label: 'Stck.me',   urlKey: 'buy_url_stck',      priceKey: null,              flag: '📚', readOnly: true },
 ]
 
 export default function BuyButtons({ book }) {
@@ -27,7 +29,7 @@ export default function BuyButtons({ book }) {
           className="flex items-center gap-2 btn-primary text-sm"
         >
           <span>{s.flag}</span>
-          <span>Buy on {s.label}</span>
+          <span>{s.readOnly ? 'Read on' : 'Buy on'} {s.label}</span>
           {book[s.priceKey] && (
             <span className="opacity-80 font-normal">₹{book[s.priceKey]}</span>
           )}
