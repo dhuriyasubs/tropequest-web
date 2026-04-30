@@ -5,6 +5,7 @@ import { trackEvent } from '@/lib/events'
 const STORES = [
   { key: 'amazon_in', label: 'Amazon IN', urlKey: 'buy_url_amazon_in', priceKey: 'price_amazon_in', flag: '🇮🇳' },
   { key: 'flipkart',  label: 'Flipkart',  urlKey: 'buy_url_flipkart',  priceKey: 'price_flipkart',  flag: '🛒' },
+  { key: 'abebooks',  label: 'AbeBooks',  urlKey: 'buy_url_abebooks',  priceKey: null,              flag: '📦' },
   { key: 'wattpad',   label: 'Wattpad',   urlKey: 'buy_url_wattpad',   priceKey: null,              flag: '📖', readOnly: true },
   { key: 'stck',      label: 'Stck.me',   urlKey: 'buy_url_stck',      priceKey: null,              flag: '📚', readOnly: true },
 ]
