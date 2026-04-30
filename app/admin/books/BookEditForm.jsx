@@ -166,6 +166,12 @@ function buildAmazonInUrl(title, author) {
   return `https://www.amazon.in/s?k=${q}`
 }
 
+function buildAmazonUSUrl(title, author) {
+  if (!title || !author) return ''
+  const q = `${title} ${author}`.replace(/&/g, '%26').replace(/'/g, '%27').replace(/ /g, '+')
+  return `https://www.amazon.com/s?k=${q}`
+}
+
 function buildFlipkartUrl(title, author) {
   if (!title || !author) return ''
   const q = encodeURIComponent(`${title} ${author}`)
@@ -837,6 +843,7 @@ export default function BookEditForm() {
         const t = key === 'title'  ? value : b.title
         const a = key === 'author' ? value : b.author
         if (!b._slugEdited) updated.slug = toSlug(t, a)
+        updated.buy_url_amazon_us = buildAmazonUSUrl(t, a)
         updated.buy_url_amazon_in = buildAmazonInUrl(t, a)
         updated.buy_url_flipkart  = buildFlipkartUrl(t, a)
         updated.buy_url_abebooks  = buildAbeBooksUrl(t, a)
@@ -889,7 +896,7 @@ export default function BookEditForm() {
           rating:            b.rating        ?? prev.rating,
           rating_count:      b.rating_count  ?? prev.rating_count,
           rating_source:     b.rating_source ?? prev.rating_source,
-          buy_url_amazon_us: isAmazonUS ? fetchedUrl : (b.buy_url_amazon_us ?? prev.buy_url_amazon_us),
+          buy_url_amazon_us: isAmazonUS ? fetchedUrl : (buildAmazonUSUrl(title, author) || prev.buy_url_amazon_us),
           buy_url_amazon_in: buildAmazonInUrl(title, author) || prev.buy_url_amazon_in,
           buy_url_flipkart:  buildFlipkartUrl(title, author) || prev.buy_url_flipkart,
           buy_url_abebooks:  buildAbeBooksUrl(title, author) || prev.buy_url_abebooks,
@@ -979,7 +986,7 @@ export default function BookEditForm() {
             rating:           book.rating        ?? null,
             rating_count:     book.rating_count  ?? null,
             rating_source:    book.rating_source || null,
-            buy_url_amazon_us: book.buy_url_amazon_us || null,
+            buy_url_amazon_us: book.buy_url_amazon_us || buildAmazonUSUrl(book.title.trim(), normalizeAuthor(book.author)) || null,
             buy_url_amazon_in: buildAmazonInUrl(book.title.trim(), normalizeAuthor(book.author)) || null,
             buy_url_flipkart:  buildFlipkartUrl(book.title.trim(), normalizeAuthor(book.author)) || null,
             buy_url_abebooks:  buildAbeBooksUrl(book.title.trim(), normalizeAuthor(book.author)) || null,
@@ -1004,6 +1011,7 @@ export default function BookEditForm() {
               const ENRICHABLE = ['cover_url', 'rating', 'rating_count', 'rating_source', 'series_name', 'series_number', 'buy_url_amazon_us', 'buy_url_amazon_in', 'buy_url_flipkart', 'buy_url_abebooks']
               const enrichBook = {
                 ...book,
+                buy_url_amazon_us: book.buy_url_amazon_us || buildAmazonUSUrl(book.title.trim(), book.author.trim()),
                 buy_url_amazon_in: book.buy_url_amazon_in || buildAmazonInUrl(book.title.trim(), book.author.trim()),
                 buy_url_flipkart:  book.buy_url_flipkart  || buildFlipkartUrl(book.title.trim(), book.author.trim()),
                 buy_url_abebooks:  book.buy_url_abebooks  || buildAbeBooksUrl(book.title.trim(), book.author.trim()),
