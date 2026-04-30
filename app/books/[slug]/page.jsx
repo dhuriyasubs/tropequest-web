@@ -18,6 +18,13 @@ import ShareButton from '@/components/ShareButton'
 
 export const revalidate = 3600
 
+const WEB_FICTION_KEYS = ['buy_url_wattpad', 'buy_url_stck', 'buy_url_royal_road']
+const STORE_KEYS = ['buy_url_amazon_in', 'buy_url_amazon_us', 'buy_url_flipkart', 'buy_url_abebooks']
+
+function isWebFictionOnly(book) {
+  return !STORE_KEYS.some(k => book[k]) && WEB_FICTION_KEYS.some(k => book[k])
+}
+
 function splitAuthors(author) {
   return author.split(/\s+and\s+/i).map(a => a.trim()).filter(Boolean)
 }
@@ -242,7 +249,7 @@ export default async function BookPage({ params }) {
             <div className="flex items-center gap-3 mt-4 flex-wrap">
               <BuyButtons book={book} />
               <TbrButton bookId={book.id} initialSaved={isSaved} />
-              <ShelfControls bookId={book.id} initialStatus={shelfStatus} />
+              {!isWebFictionOnly(book) && <ShelfControls bookId={book.id} initialStatus={shelfStatus} />}
             </div>
 
             {/* Description */}
