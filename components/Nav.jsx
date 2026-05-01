@@ -83,7 +83,8 @@ export default function Nav() {
                 <img
                   src={user.user_metadata.avatar_url}
                   alt="avatar"
-                  className="w-8 h-8 rounded-full object-cover ring-2 ring-transparent hover:ring-bloom/40 transition-all"
+                  className="w-8 h-8 rounded-full object-cover ring-2 ring-transparent hover:ring-bloom/40"
+                  style={{ transition: 'ring-color 0.25s cubic-bezier(0.4,0,0.2,1), transform 0.25s cubic-bezier(0.4,0,0.2,1)' }}
                   referrerPolicy="no-referrer"
                 />
               ) : (
@@ -103,7 +104,7 @@ export default function Nav() {
           </button>
 
           {menuOpen && (
-            <div className="absolute right-0 top-11 w-52 bg-white border border-petal/30 rounded-xl shadow-lg py-1.5 z-50">
+            <div className="menu-reveal absolute right-0 top-11 w-52 bg-white border border-petal/30 rounded-xl shadow-lg py-1.5 z-50">
               {browseItems.map(item => (
                 <Link
                   key={item.href}

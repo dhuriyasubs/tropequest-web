@@ -3,6 +3,7 @@ import Link from 'next/link'
 import BookCard from '@/components/BookCard'
 import HeroGrid from '@/components/HeroGrid'
 import DiscoverStrip from '@/components/DiscoverStrip'
+import ScrollReveal from '@/components/ScrollReveal'
 import SeriesCompletionSection from '@/components/SeriesCompletionSection'
 import { getFeaturedBooks, getPopularTropes, getPersonalizedBooks, getSeriesCompletionBooks, getBecauseYouReadBooks } from '@/lib/search'
 import { createSupabaseServer } from '@/lib/supabase'
@@ -114,40 +115,49 @@ export default async function HomePage() {
 
       {latestPosts.length > 0 && (
         <section className="max-w-6xl mx-auto px-4 py-6 md:py-10">
-          <div className="flex items-baseline justify-between mb-5">
-            <h2 className="font-serif text-2xl font-semibold">From the Blog</h2>
-            <Link href="/blog" className="text-sm text-bloom hover:underline">View all →</Link>
-          </div>
+          <ScrollReveal>
+            <div className="flex items-baseline justify-between mb-5">
+              <h2 className="font-serif text-2xl font-semibold">From the Blog</h2>
+              <Link href="/blog" className="text-sm text-bloom hover:underline">View all →</Link>
+            </div>
+          </ScrollReveal>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {latestPosts.map(post => (
-              <Link
-                key={post.slug}
-                href={`/blog/${post.slug}`}
-                className="group block p-5 rounded-xl border border-petal/40 hover:border-bloom/40 hover:bg-petal/10 transition-colors no-underline"
-              >
-                <p className="text-xs text-slate/50 mb-2">
-                  {new Date(post.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
-                  {post.readingTime && ` · ${post.readingTime} min read`}
-                </p>
-                <p className="font-serif font-semibold text-ink group-hover:text-bloom leading-snug mb-2">
-                  {post.title}
-                </p>
-                <p className="text-sm text-slate/70 line-clamp-2 leading-relaxed">
-                  {post.description}
-                </p>
-              </Link>
+            {latestPosts.map((post, i) => (
+              <ScrollReveal key={post.slug} delay={i * 110} className="h-full">
+                <Link
+                  href={`/blog/${post.slug}`}
+                  className="group flex flex-col h-full p-5 rounded-xl border border-petal/40 hover:border-bloom/40 hover:bg-petal/10 no-underline"
+                  style={{ transition: 'background-color 0.25s cubic-bezier(0.4,0,0.2,1), border-color 0.25s cubic-bezier(0.4,0,0.2,1)' }}
+                >
+                  <p className="text-xs text-slate/50 mb-2">
+                    {new Date(post.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    {post.readingTime && ` · ${post.readingTime} min read`}
+                  </p>
+                  <p className="font-serif font-semibold text-ink group-hover:text-bloom leading-snug mb-2"
+                    style={{ transition: 'color 0.25s cubic-bezier(0.4,0,0.2,1)' }}>
+                    {post.title}
+                  </p>
+                  <p className="text-sm text-slate/70 line-clamp-2 leading-relaxed">
+                    {post.description}
+                  </p>
+                </Link>
+              </ScrollReveal>
             ))}
           </div>
         </section>
       )}
 
       <section className="max-w-6xl mx-auto px-4 py-6 pb-12 md:py-10 md:pb-16">
-        <h2 className="font-serif text-2xl font-semibold mb-5">Top Rated</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {books.map(book => (
-            <BookCard key={book.id} book={book} />
-          ))}
-        </div>
+        <ScrollReveal>
+          <h2 className="font-serif text-2xl font-semibold mb-5">Top Rated</h2>
+        </ScrollReveal>
+        <ScrollReveal delay={120}>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {books.map(book => (
+              <BookCard key={book.id} book={book} />
+            ))}
+          </div>
+        </ScrollReveal>
         <div className="mt-8 text-center">
           <Link href="/search" className="btn-primary">
             Browse all books

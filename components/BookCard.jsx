@@ -10,7 +10,16 @@ export default function BookCard({ book, shelfStatus = null, section = null }) {
   return (
     <Link
       href={`/books/${book.slug}`}
-      className="group flex flex-col bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+      className="group flex flex-col bg-white rounded-xl shadow-sm overflow-hidden"
+      style={{ transition: 'transform 0.32s cubic-bezier(0.4,0,0.2,1), box-shadow 0.32s cubic-bezier(0.4,0,0.2,1)' }}
+      onMouseEnter={e => {
+        e.currentTarget.style.transform = 'translateY(-4px)'
+        e.currentTarget.style.boxShadow = '0 12px 32px rgba(192,132,160,0.32), 0 4px 12px rgba(0,0,0,0.08)'
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.transform = ''
+        e.currentTarget.style.boxShadow = ''
+      }}
       onClick={section ? () => trackEvent('rec_click', { section, book_id: book.id, book_slug: book.slug }) : undefined}
     >
       <div className="relative aspect-[2/3] bg-gray-100 overflow-hidden shadow-[0_4px_12px_rgba(0,0,0,0.15)]">
