@@ -48,7 +48,7 @@ export async function generateMetadata({ params }) {
     title: `Books by ${displayAuthor}`,
     description,
     alternates: { canonical: `/author/${encodeURIComponent(author)}` },
-    robots: books.length < 2 ? { index: false, follow: true } : undefined,
+    robots: books.length < 3 ? { index: false, follow: true } : undefined,
     openGraph: {
       title: `Books by ${displayAuthor} | TropeQuest`,
       description,

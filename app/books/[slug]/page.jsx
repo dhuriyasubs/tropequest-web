@@ -48,7 +48,10 @@ function AuthorLinks({ author, className }) {
 export async function generateMetadata({ params }) {
   const book = await getBookBySlug(params.slug)
   if (!book) return {}
-  const description = book.description?.slice(0, 155) || `Find ${book.title} on TropeQuest.`
+  const baseDesc = book.description?.trim()
+  const description = baseDesc
+    ? `${book.title} by ${book.author} — ${baseDesc}`.slice(0, 160)
+    : `${book.title} by ${book.author} — Find tropes, ratings, and more on TropeQuest.`
   return {
     title: `${book.title} by ${book.author}`,
     description,
