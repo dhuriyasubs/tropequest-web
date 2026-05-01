@@ -9,7 +9,8 @@ export const metadata = { title: 'Manage Interests' }
 
 export default async function InterestsPage() {
   const supabase = createSupabaseServer()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { session } } = await supabase.auth.getSession()
+  const user = session?.user
   if (!user) redirect('/login?next=/interests')
 
   const [{ tropes }, allAuthors, allGenres, popularTropes, { data: interestsData }] = await Promise.all([

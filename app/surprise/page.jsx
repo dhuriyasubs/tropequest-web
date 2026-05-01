@@ -7,7 +7,8 @@ export const metadata = { title: 'Surprise Me · TropeQuest' }
 export default async function SurprisePage() {
   // Only auth — no heavy book queries; SwipeStack fetches client-side
   const supabase = createSupabaseServer()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { session } } = await supabase.auth.getSession()
+  const user = session?.user
 
   return (
     <SwipeStack

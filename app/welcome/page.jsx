@@ -8,7 +8,8 @@ export const metadata = { title: 'Welcome to TropeQuest' }
 
 export default async function WelcomePage() {
   const supabase = createSupabaseServer()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { session } } = await supabase.auth.getSession()
+  const user = session?.user
   if (!user) redirect('/login')
 
   // If they've already set interests, skip onboarding

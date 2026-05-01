@@ -96,7 +96,8 @@ export default async function HomePage() {
   ])
 
   const supabase = createSupabaseServer()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { session } } = await supabase.auth.getSession()
+  const user = session?.user
 
   const [books, popularTropes] = await publicPromise
   const latestPosts = getAllPosts().slice(0, 3)

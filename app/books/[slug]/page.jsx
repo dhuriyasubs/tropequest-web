@@ -76,7 +76,8 @@ export default async function BookPage({ params }) {
   if (!book) notFound()
 
   const supabase = createSupabaseServer()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { session } } = await supabase.auth.getSession()
+  const user = session?.user
   let isSaved = false
   let shelfStatus = null
   let userRating = null

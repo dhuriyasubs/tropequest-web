@@ -6,7 +6,8 @@ export const metadata = { title: 'Import from Goodreads' }
 
 export default async function ImportPage() {
   const supabase = createSupabaseServer()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { session } } = await supabase.auth.getSession()
+  const user = session?.user
   if (!user) redirect('/login?next=/shelf/import')
 
   return <GoodreadsImport />

@@ -21,7 +21,8 @@ export default async function SearchPage({ searchParams }) {
   const spice          = searchParams.spice ? Number(searchParams.spice) : null
 
   const supabase = createSupabaseServer()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { session } } = await supabase.auth.getSession()
+  const user = session?.user
 
   const [{ books, total }, allTropes, allGenres, allRelTypes, shelfRes] =
     await Promise.all([

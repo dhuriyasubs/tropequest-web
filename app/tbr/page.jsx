@@ -10,7 +10,8 @@ export const metadata = { title: 'My TBR' }
 
 export default async function TbrPage() {
   const supabase = createSupabaseServer()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { session } } = await supabase.auth.getSession()
+  const user = session?.user
   if (!user) redirect('/login?next=/tbr')
 
   const [{ data }, { data: shelfData }] = await Promise.all([
