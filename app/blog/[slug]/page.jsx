@@ -4,6 +4,7 @@ import { MDXRemote } from 'next-mdx-remote/rsc'
 import { getAllPosts, getPost, getRelatedPosts } from '@/lib/blog'
 import Breadcrumb from '@/components/Breadcrumb'
 import BookCover from '@/components/BlogBookCover'
+import BlogScreenshotGrid from '@/components/BlogScreenshotGrid'
 import RelatedPosts from '@/components/RelatedPosts'
 import BlogFeedback from '@/components/BlogFeedback'
 import BlogDiscoveryCTA from '@/components/BlogDiscoveryCTA'
@@ -84,7 +85,7 @@ export default function BlogPostPage({ params }) {
         prose-a:text-bloom prose-a:no-underline hover:prose-a:underline
         prose-strong:text-ink
         prose-li:text-slate prose-p:text-slate prose-p:leading-relaxed">
-        <MDXRemote source={content} components={{ BookCover: BoundBookCover }} />
+        <MDXRemote source={content} components={{ BookCover: BoundBookCover, BlogScreenshotGrid }} />
       </article>
 
       <BlogDiscoveryCTA
