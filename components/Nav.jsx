@@ -24,6 +24,7 @@ const menuItems = [
 export default function Nav() {
   const path    = usePathname()
   const router  = useRouter()
+  const prefetchedRef = useRef(false)
   const [user, setUser]         = useState(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef(null)
@@ -32,6 +33,10 @@ export default function Nav() {
     const supabase = createSupabaseBrowser()
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
+      if (session?.user && !prefetchedRef.current) {
+        prefetchedRef.current = true
+        menuItems.forEach(item => router.prefetch(item.href))
+      }
     })
     return () => subscription.unsubscribe()
   }, [])
