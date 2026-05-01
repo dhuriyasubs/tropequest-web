@@ -19,7 +19,7 @@ const EMPTY_BOOK = {
   characters: '', description: '',
   release_date: '', release_year: '',
   buy_url_amazon_us: '', buy_url_amazon_in: '', buy_url_flipkart: '',
-  buy_url_abebooks: '', buy_url_wattpad: '', buy_url_stck: '', buy_url_royal_road: '', buy_url_audible: '',
+  buy_url_abebooks: '', buy_url_bookscape: '', buy_url_wattpad: '', buy_url_stck: '', buy_url_royal_road: '', buy_url_audible: '',
   is_kindle_unlimited: false,
   price_amazon_us: '', price_amazon_in: '',
   spice_rating: '',
@@ -184,6 +184,11 @@ function buildAbeBooksUrl(title, author) {
   return `https://www.abebooks.com/servlet/SearchResults?ds=20&kn=${q}`
 }
 
+function buildBookscapeUrl(title) {
+  if (!title) return ''
+  return `https://bookscape.com/search/${encodeURIComponent(title)}`
+}
+
 function normalizeAuthor(raw) {
   const normalizePart = s => s
     .replace(/[\u00a0\u200b\u200c\u200d\ufeff]/g, ' ')
@@ -228,6 +233,7 @@ function buildPayload(book, isNew) {
     buy_url_amazon_in: book.buy_url_amazon_in || null,
     buy_url_flipkart:  book.buy_url_flipkart  || null,
     buy_url_abebooks:    book.buy_url_abebooks    || null,
+    buy_url_bookscape:   book.buy_url_bookscape   || null,
     buy_url_wattpad:     book.buy_url_wattpad     || null,
     buy_url_stck:        book.buy_url_stck        || null,
     buy_url_royal_road:  book.buy_url_royal_road  || null,
@@ -267,6 +273,7 @@ function normaliseBook(b) {
     buy_url_amazon_in: b.buy_url_amazon_in || buildAmazonInUrl(b.title, b.author) || '',
     buy_url_flipkart:  b.buy_url_flipkart  || buildFlipkartUrl(b.title, b.author) || '',
     buy_url_abebooks:  b.buy_url_abebooks  || buildAbeBooksUrl(b.title, b.author) || '',
+    buy_url_bookscape: b.buy_url_bookscape || buildBookscapeUrl(b.title) || '',
     buy_url_wattpad:     b.buy_url_wattpad     ?? '',
     buy_url_stck:        b.buy_url_stck        ?? '',
     buy_url_royal_road:  b.buy_url_royal_road  ?? '',
@@ -692,6 +699,10 @@ function BookFields({ book, set }) {
           <input type="text" value={book.buy_url_abebooks} onChange={e => set('buy_url_abebooks', e.target.value)} className={inputCls} />
         </div>
         <div>
+          <label className="block text-xs text-slate mb-1">Bookscape URL</label>
+          <input type="text" value={book.buy_url_bookscape} onChange={e => set('buy_url_bookscape', e.target.value)} className={inputCls} />
+        </div>
+        <div>
           <label className="block text-xs text-slate mb-1">Wattpad URL</label>
           <input type="text" value={book.buy_url_wattpad} onChange={e => set('buy_url_wattpad', e.target.value)} className={inputCls} />
         </div>
@@ -846,6 +857,7 @@ export default function BookEditForm() {
         updated.buy_url_amazon_in = buildAmazonInUrl(t, a)
         updated.buy_url_flipkart  = buildFlipkartUrl(t, a)
         updated.buy_url_abebooks  = buildAbeBooksUrl(t, a)
+        updated.buy_url_bookscape = buildBookscapeUrl(t)
       }
       if (key === 'slug') updated._slugEdited = true
       if (TRACKED_FIELDS.has(key)) {
@@ -899,6 +911,7 @@ export default function BookEditForm() {
           buy_url_amazon_in: buildAmazonInUrl(title, author) || prev.buy_url_amazon_in,
           buy_url_flipkart:  buildFlipkartUrl(title, author) || prev.buy_url_flipkart,
           buy_url_abebooks:  buildAbeBooksUrl(title, author) || prev.buy_url_abebooks,
+          buy_url_bookscape: buildBookscapeUrl(title) || prev.buy_url_bookscape,
           data_source:       ds,
         }
       })
@@ -989,6 +1002,7 @@ export default function BookEditForm() {
             buy_url_amazon_in: buildAmazonInUrl(book.title.trim(), normalizeAuthor(book.author)) || null,
             buy_url_flipkart:  buildFlipkartUrl(book.title.trim(), normalizeAuthor(book.author)) || null,
             buy_url_abebooks:  buildAbeBooksUrl(book.title.trim(), normalizeAuthor(book.author)) || null,
+            buy_url_bookscape: buildBookscapeUrl(book.title.trim()) || null,
             genres:           [],
             tropes:           [],
             characters:       [],
@@ -1007,13 +1021,14 @@ export default function BookEditForm() {
                    b.author.toLowerCase() === book.author.trim().toLowerCase()
             )
             if (existing) {
-              const ENRICHABLE = ['cover_url', 'rating', 'rating_count', 'rating_source', 'series_name', 'series_number', 'buy_url_amazon_us', 'buy_url_amazon_in', 'buy_url_flipkart', 'buy_url_abebooks']
+              const ENRICHABLE = ['cover_url', 'rating', 'rating_count', 'rating_source', 'series_name', 'series_number', 'buy_url_amazon_us', 'buy_url_amazon_in', 'buy_url_flipkart', 'buy_url_abebooks', 'buy_url_bookscape']
               const enrichBook = {
                 ...book,
                 buy_url_amazon_us: book.buy_url_amazon_us || buildAmazonUSUrl(book.title.trim(), book.author.trim()),
                 buy_url_amazon_in: book.buy_url_amazon_in || buildAmazonInUrl(book.title.trim(), book.author.trim()),
                 buy_url_flipkart:  book.buy_url_flipkart  || buildFlipkartUrl(book.title.trim(), book.author.trim()),
                 buy_url_abebooks:  book.buy_url_abebooks  || buildAbeBooksUrl(book.title.trim(), book.author.trim()),
+                buy_url_bookscape: book.buy_url_bookscape || buildBookscapeUrl(book.title.trim()),
               }
               const patch = { id: existing.id }
               for (const f of ENRICHABLE) {
