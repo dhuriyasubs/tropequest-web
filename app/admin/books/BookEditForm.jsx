@@ -180,9 +180,8 @@ function buildFlipkartUrl(title, author) {
 
 function buildAbeBooksUrl(title, author) {
   if (!title || !author) return ''
-  const t = encodeURIComponent(title)
-  const a = encodeURIComponent(author)
-  return `https://www.abebooks.com/servlet/SearchResults?title=${t}&author=${a}&sortby=17`
+  const q = encodeURIComponent(`${title} ${author}`)
+  return `https://www.abebooks.com/servlet/SearchResults?ds=20&kn=${q}`
 }
 
 function normalizeAuthor(raw) {
