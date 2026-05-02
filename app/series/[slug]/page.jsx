@@ -53,11 +53,18 @@ export default async function SeriesDetailPage({ params }) {
         const db = entry.title ? (bookByTitle[entry.title.toLowerCase()] ?? null) : null
         return { _bioEntry: entry, _pos: i + 1, ...(db ?? { title: entry.title, author: null, cover_url: null, slug: null, rating: null, tropes: [], description: null }) }
       })
-    : seriesBooks.map((b, i) => {
-        const num = b.series_number ?? (i + 1)
-        const entry = bio?.reading_order?.find(e => e.number == num) ?? null
-        return { _bioEntry: entry, _pos: num, ...b }
-      })
+    : [...seriesBooks]
+        .sort((a, b) => {
+          if (a.series_number == null && b.series_number == null) return 0
+          if (a.series_number == null) return 1
+          if (b.series_number == null) return -1
+          return Number(a.series_number) - Number(b.series_number)
+        })
+        .map(b => {
+          const num = b.series_number ?? null
+          const entry = num != null ? (bio?.reading_order?.find(e => e.number == num) ?? null) : null
+          return { _bioEntry: entry, _pos: num, ...b }
+        })
 
   // Common tropes across all books (top 6)
   const books = useBioOrder ? [...seriesBooks, ...crossBooks] : seriesBooks
@@ -81,7 +88,7 @@ export default async function SeriesDetailPage({ params }) {
       '@type': 'Book',
       name: b.title,
       author: { '@type': 'Person', name: b.author ?? match.author },
-      position: b._pos ?? (i + 1),
+      position: b._pos ?? (orderedBooks.length + i),
       ...(b.slug ? { url: `https://tropequest.com/books/${b.slug}` } : {}),
       ...(b.rating ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: b.rating, ratingCount: b.rating_count ?? 1, bestRating: 5 } } : {}),
     })),
@@ -144,12 +151,12 @@ export default async function SeriesDetailPage({ params }) {
         <ol className="space-y-3 mb-10">
           {orderedBooks.map((b, i) => {
             const entry          = b._bioEntry ?? null
-            const num            = b._pos ?? (i + 1)
-            const numLabel       = `${num}`
+            const num            = b._pos
+            const numLabel       = num != null ? `${num}` : null
             const hasFormatFocus = entry?.format || entry?.focus
             const bookInner = (
               <>
-                <span className="text-sm font-bold text-bloom/70 w-6 shrink-0 pt-0.5">{numLabel}</span>
+                <span className="text-sm font-bold text-bloom/70 w-6 shrink-0 pt-0.5">{numLabel ?? ''}</span>
                 <div className="relative shrink-0 w-16 h-24 rounded overflow-hidden bg-gray-100">
                   {b.cover_url
                     ? <Image src={b.cover_url} alt={b.title} fill sizes="64px" className="object-contain" />
@@ -226,7 +233,7 @@ export default async function SeriesDetailPage({ params }) {
                 ) : (
                   b.slug ? (
                     <Link href={`/books/${b.slug}`} className="hidden sm:flex group items-center gap-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow px-4 py-3">
-                      <span className="text-sm font-bold text-bloom/70 w-6 shrink-0">{numLabel}</span>
+                      <span className="text-sm font-bold text-bloom/70 w-6 shrink-0">{numLabel ?? ''}</span>
                       <div className="relative shrink-0 w-14 h-20 rounded overflow-hidden bg-gray-100">
                         {b.cover_url
                           ? <Image src={b.cover_url} alt={b.title} fill sizes="56px" className="object-contain" />
@@ -244,7 +251,7 @@ export default async function SeriesDetailPage({ params }) {
                     </Link>
                   ) : (
                     <div className="hidden sm:flex items-center gap-4 bg-white rounded-xl shadow-sm px-4 py-3">
-                      <span className="text-sm font-bold text-bloom/70 w-6 shrink-0">{numLabel}</span>
+                      <span className="text-sm font-bold text-bloom/70 w-6 shrink-0">{numLabel ?? ''}</span>
                       <div className="w-14 h-20 rounded overflow-hidden bg-gray-100 flex items-center justify-center text-base shrink-0">📚</div>
                       <p className="font-serif font-semibold text-sm">{b.title}</p>
                     </div>
