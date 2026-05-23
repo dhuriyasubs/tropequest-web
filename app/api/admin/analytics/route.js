@@ -13,13 +13,21 @@ export async function GET(request) {
   const from = searchParams.get('from') ?? (() => { const d = new Date(); d.setDate(d.getDate() - 30); return d.toISOString(); })()
   const to   = searchParams.get('to')   ?? new Date().toISOString()
 
-  const { data, error } = await supabaseAdmin
+  const BOT_AGENTS = ['googlebot', 'googleother', 'bingbot', 'ahrefsbot', 'semrushbot', 'petalbot', 'yandexbot']
+
+  let query = supabaseAdmin
     .from('page_events')
     .select('event_type, user_agent, traffic_source, data, created_at')
     .gte('created_at', from)
     .lte('created_at', to)
     .order('created_at', { ascending: true })
-    .limit(10000)
+    .limit(50000)
+
+  for (const bot of BOT_AGENTS) {
+    query = query.not('user_agent', 'ilike', `%${bot}%`)
+  }
+
+  const { data, error } = await query
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ rows: data })
