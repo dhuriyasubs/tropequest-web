@@ -10,15 +10,16 @@ export async function GET(request) {
   if (!user || !isAdmin(user)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { searchParams } = new URL(request.url)
-  const days = Math.min(parseInt(searchParams.get('days') ?? '30', 10), 90)
-  const since = new Date()
-  since.setDate(since.getDate() - days)
+  const from = searchParams.get('from') ?? (() => { const d = new Date(); d.setDate(d.getDate() - 30); return d.toISOString(); })()
+  const to   = searchParams.get('to')   ?? new Date().toISOString()
 
   const { data, error } = await supabaseAdmin
     .from('page_events')
     .select('event_type, user_agent, traffic_source, data, created_at')
-    .gte('created_at', since.toISOString())
+    .gte('created_at', from)
+    .lte('created_at', to)
     .order('created_at', { ascending: true })
+    .limit(10000)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ rows: data })

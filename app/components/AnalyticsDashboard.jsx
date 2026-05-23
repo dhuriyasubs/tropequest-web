@@ -87,16 +87,67 @@ function CustomTooltip({ active, payload, label }) {
   );
 }
 
+const toLocalDateStr = (d) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+
+const PRESETS = [
+  { label: 'Today',     key: 'today' },
+  { label: 'Yesterday', key: 'yesterday' },
+  { label: 'Last 7d',  key: '7d' },
+  { label: 'Last 30d', key: '30d' },
+];
+
+function getPresetRange(key) {
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  switch (key) {
+    case 'today':
+      return { from: startOfToday.toISOString(), to: now.toISOString() };
+    case 'yesterday': {
+      const start = new Date(startOfToday); start.setDate(start.getDate() - 1);
+      return { from: start.toISOString(), to: startOfToday.toISOString() };
+    }
+    case '7d':
+      return { from: getDaysAgo(7), to: now.toISOString() };
+    case '30d':
+    default:
+      return { from: getDaysAgo(30), to: now.toISOString() };
+  }
+}
+
 export default function AnalyticsDashboard() {
-  const [range, setRange] = useState(30);
+  const [activePreset, setActivePreset] = useState('30d');
+  const [dateRange, setDateRange] = useState(getPresetRange('30d'));
+  const [customFrom, setCustomFrom] = useState('');
+  const [customTo, setCustomTo] = useState('');
+  const [showCustom, setShowCustom] = useState(false);
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  function applyPreset(key) {
+    setActivePreset(key);
+    setShowCustom(false);
+    setDateRange(getPresetRange(key));
+  }
+
+  function applyCustom() {
+    if (!customFrom || !customTo) return;
+    setActivePreset(null);
+    setDateRange({
+      from: new Date(customFrom).toISOString(),
+      to: new Date(customTo + 'T23:59:59').toISOString(),
+    });
+  }
+
   useEffect(() => {
     setLoading(true);
     setError(null);
-    fetch(`/api/admin/analytics?days=${range}`)
+    fetch(`/api/admin/analytics?from=${encodeURIComponent(dateRange.from)}&to=${encodeURIComponent(dateRange.to)}`)
       .then((r) => r.json())
       .then(({ rows, error: err }) => {
         if (err) { setError(err); setLoading(false); return; }
@@ -104,7 +155,7 @@ export default function AnalyticsDashboard() {
         setLoading(false);
       })
       .catch((e) => { setError(e.message); setLoading(false); });
-  }, [range]);
+  }, [dateRange]);
 
   const { human, bots, metrics } = useMemo(() => {
     const human = rows.filter((r) => !isBot(r.user_agent ?? ""));
@@ -196,16 +247,38 @@ export default function AnalyticsDashboard() {
           <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0 }}>Analytics</h1>
           <p style={{ fontSize: 13, color: "#6B7280", margin: "2px 0 0" }}>Human traffic only · bots excluded</p>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          {[7, 30, 90].map((d) => (
-            <button key={d} onClick={() => setRange(d)} style={{
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          {PRESETS.map((p) => (
+            <button key={p.key} onClick={() => applyPreset(p.key)} style={{
               padding: "6px 14px", fontSize: 13, borderRadius: 8, border: "1px solid",
-              borderColor: range === d ? COLORS.purple : "#E5E7EB",
-              background: range === d ? COLORS.purple : "#fff",
-              color: range === d ? "#fff" : "#374151",
-              cursor: "pointer", fontWeight: range === d ? 600 : 400,
-            }}>{d}d</button>
+              borderColor: activePreset === p.key ? COLORS.purple : "#E5E7EB",
+              background: activePreset === p.key ? COLORS.purple : "#fff",
+              color: activePreset === p.key ? "#fff" : "#374151",
+              cursor: "pointer", fontWeight: activePreset === p.key ? 600 : 400,
+            }}>{p.label}</button>
           ))}
+          <button onClick={() => setShowCustom((v) => !v)} style={{
+            padding: "6px 14px", fontSize: 13, borderRadius: 8, border: "1px solid",
+            borderColor: activePreset === null ? COLORS.purple : "#E5E7EB",
+            background: activePreset === null ? COLORS.purple : "#fff",
+            color: activePreset === null ? "#fff" : "#374151",
+            cursor: "pointer",
+          }}>Custom</button>
+          {showCustom && (
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
+              <input type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)}
+                max={toLocalDateStr(new Date())}
+                style={{ fontSize: 12, padding: "5px 8px", border: "1px solid #E5E7EB", borderRadius: 6 }} />
+              <span style={{ fontSize: 12, color: "#6B7280" }}>→</span>
+              <input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)}
+                max={toLocalDateStr(new Date())}
+                style={{ fontSize: 12, padding: "5px 8px", border: "1px solid #E5E7EB", borderRadius: 6 }} />
+              <button onClick={applyCustom} style={{
+                padding: "5px 12px", fontSize: 12, borderRadius: 6,
+                background: COLORS.purple, color: "#fff", border: "none", cursor: "pointer",
+              }}>Apply</button>
+            </div>
+          )}
         </div>
       </div>
 
