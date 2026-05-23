@@ -31,8 +31,10 @@ const STORE_COLORS = [COLORS.purple, COLORS.teal, COLORS.coral, COLORS.amber, CO
 
 const isBot = (ua = "") => BOT_PATTERNS.some((p) => ua.toLowerCase().includes(p));
 
-const safeJson = (str) => {
-  try { return JSON.parse(str); } catch { return {}; }
+const safeJson = (val) => {
+  if (!val) return {};
+  if (typeof val === 'object') return val;
+  try { return JSON.parse(val); } catch { return {}; }
 };
 
 const fmt = (n) => n?.toLocaleString() ?? "0";
