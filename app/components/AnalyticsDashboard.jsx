@@ -5,9 +5,6 @@ import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
-import { createSupabaseBrowser } from "@/lib/supabase-browser";
-
-const TABLE_NAME = "page_events";
 const BOT_PATTERNS = ["googlebot", "googleother", "bingbot", "ahrefsbot", "semrushbot"];
 
 const COLORS = {
@@ -97,17 +94,14 @@ export default function AnalyticsDashboard() {
   useEffect(() => {
     setLoading(true);
     setError(null);
-    const supabase = createSupabaseBrowser();
-    supabase
-      .from(TABLE_NAME)
-      .select("*")
-      .gte("created_at", getDaysAgo(range))
-      .order("created_at", { ascending: true })
-      .then(({ data, error: err }) => {
-        if (err) { setError(err.message); setLoading(false); return; }
-        setRows(data ?? []);
+    fetch(`/api/admin/analytics?days=${range}`)
+      .then((r) => r.json())
+      .then(({ rows, error: err }) => {
+        if (err) { setError(err); setLoading(false); return; }
+        setRows(rows ?? []);
         setLoading(false);
-      });
+      })
+      .catch((e) => { setError(e.message); setLoading(false); });
   }, [range]);
 
   const { human, bots, metrics } = useMemo(() => {
