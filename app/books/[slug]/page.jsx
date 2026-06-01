@@ -260,6 +260,32 @@ export default async function BookPage({ params }) {
               </div>
             )}
 
+            {/* Adaptation badges */}
+            {book.adaptations?.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-3">
+                {book.adaptations.map((a, i) => (
+                  a.watch_url ? (
+                    <a
+                      key={i}
+                      href={a.watch_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100 transition-colors"
+                    >
+                      {a.type === 'series' ? '📺' : '🎬'} Watch {a.type === 'series' ? 'Series' : 'Movie'}{a.title ? `: ${a.title}` : ''}{a.year ? ` (${a.year})` : ''}
+                    </a>
+                  ) : (
+                    <span
+                      key={i}
+                      className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-violet-50 text-violet-700 border border-violet-200"
+                    >
+                      {a.type === 'series' ? '📺' : '🎬'} {a.type === 'series' ? 'Series' : 'Movie'}{a.title ? `: ${a.title}` : ''}{a.year ? ` (${a.year})` : ''}
+                    </span>
+                  )
+                ))}
+              </div>
+            )}
+
             {/* User rating */}
             <div className="mt-4">
               <StarRating bookId={book.id} initialRating={userRating} />

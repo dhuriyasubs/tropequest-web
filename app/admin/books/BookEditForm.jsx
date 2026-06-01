@@ -23,6 +23,7 @@ const EMPTY_BOOK = {
   is_kindle_unlimited: false,
   price_amazon_us: '', price_amazon_in: '',
   spice_rating: '',
+  adaptations: [],
 }
 
 const SPICE_LABELS = { 1: 'Closed Door', 2: 'Fade to Black', 3: 'Some Steam', 4: 'Steamy', 5: 'Explicit' }
@@ -242,6 +243,7 @@ function buildPayload(book, isNew) {
     price_amazon_in:   book.price_amazon_in  !== '' ? Number(book.price_amazon_in)  : null,
     price_amazon_us:   book.price_amazon_us  !== '' ? Number(book.price_amazon_us)  : null,
     spice_rating:      book.spice_rating     !== '' ? Number(book.spice_rating)     : null,
+    adaptations:       Array.isArray(book.adaptations) ? book.adaptations : [],
     data_source:       book.data_source      ?? {},
   }
 }
@@ -282,6 +284,7 @@ function normaliseBook(b) {
     price_amazon_us:   b.price_amazon_us   ?? '',
     price_amazon_in:   b.price_amazon_in   ?? '',
     spice_rating:      b.spice_rating      ?? '',
+    adaptations:       Array.isArray(b.adaptations) ? b.adaptations : [],
     data_source:       b.data_source       ?? {},
   }
 }
@@ -664,6 +667,74 @@ function BookFields({ book, set }) {
       <div>
         <label className="block text-xs text-slate mb-1">Characters (comma-separated)</label>
         <input type="text" value={book.characters} onChange={e => set('characters', e.target.value)} className={inputCls} />
+      </div>
+
+      {/* Adaptations */}
+      <div>
+        <label className="block text-xs text-slate mb-2">Adaptations (movie / series)</label>
+        <div className="space-y-2">
+          {(book.adaptations ?? []).map((a, i) => (
+            <div key={i} className="grid grid-cols-12 gap-2 items-start border border-gray-200 rounded-lg p-2">
+              <select
+                value={a.type ?? 'movie'}
+                onChange={e => {
+                  const next = [...book.adaptations]
+                  next[i] = { ...next[i], type: e.target.value }
+                  set('adaptations', next)
+                }}
+                className="col-span-2 border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-bloom/40"
+              >
+                <option value="movie">🎬 Movie</option>
+                <option value="series">📺 Series</option>
+              </select>
+              <input
+                type="text"
+                placeholder="Title"
+                value={a.title ?? ''}
+                onChange={e => {
+                  const next = [...book.adaptations]
+                  next[i] = { ...next[i], title: e.target.value }
+                  set('adaptations', next)
+                }}
+                className="col-span-4 border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-bloom/40"
+              />
+              <input
+                type="number"
+                placeholder="Year"
+                value={a.year ?? ''}
+                onChange={e => {
+                  const next = [...book.adaptations]
+                  next[i] = { ...next[i], year: e.target.value ? Number(e.target.value) : null }
+                  set('adaptations', next)
+                }}
+                className="col-span-2 border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-bloom/40"
+              />
+              <input
+                type="url"
+                placeholder="Watch URL"
+                value={a.watch_url ?? ''}
+                onChange={e => {
+                  const next = [...book.adaptations]
+                  next[i] = { ...next[i], watch_url: e.target.value }
+                  set('adaptations', next)
+                }}
+                className="col-span-3 border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-bloom/40"
+              />
+              <button
+                type="button"
+                onClick={() => set('adaptations', book.adaptations.filter((_, j) => j !== i))}
+                className="col-span-1 text-red-400 hover:text-red-600 text-lg leading-none text-center"
+              >×</button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => set('adaptations', [...(book.adaptations ?? []), { type: 'movie', title: '', year: null, watch_url: '' }])}
+            className="text-xs text-bloom font-medium hover:underline"
+          >
+            + Add adaptation
+          </button>
+        </div>
       </div>
 
       <div>
