@@ -270,14 +270,14 @@ export default async function BookPage({ params }) {
                       href={a.watch_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100 transition-colors"
+                      className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-bloom/10 text-bloom border border-bloom/30 hover:bg-bloom/20 transition-colors"
                     >
                       {a.type === 'series' ? '📺' : '🎬'} Watch {a.type === 'series' ? 'Series' : 'Movie'}{a.title ? `: ${a.title}` : ''}{a.year ? ` (${a.year})` : ''}
                     </a>
                   ) : (
                     <span
                       key={i}
-                      className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-violet-50 text-violet-700 border border-violet-200"
+                      className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-bloom/10 text-bloom border border-bloom/30"
                     >
                       {a.type === 'series' ? '📺' : '🎬'} {a.type === 'series' ? 'Series' : 'Movie'}{a.title ? `: ${a.title}` : ''}{a.year ? ` (${a.year})` : ''}
                     </span>
