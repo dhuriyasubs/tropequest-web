@@ -68,7 +68,10 @@ export async function POST(request) {
   const prompt = (type === 'author' ? AUTHOR_PROMPT : SERIES_PROMPT) + '\n\n' + content.trim()
 
   try {
-    const model  = gemini.getGenerativeModel({ model: 'gemini-2.5-flash' })
+    const model  = gemini.getGenerativeModel({
+      model: 'gemini-2.5-flash',
+      generationConfig: { responseMimeType: 'application/json' },
+    })
     const result = await model.generateContent(prompt)
     const text   = result.response.text().trim()
 
