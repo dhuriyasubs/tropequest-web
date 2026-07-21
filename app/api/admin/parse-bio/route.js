@@ -126,6 +126,13 @@ export async function POST(request) {
       model: 'gemini-2.5-flash',
       generationConfig: {
         responseMimeType: 'application/json',
+        // Extended thinking on this model measurably increases the odds of a
+        // degenerate repetition loop (seen repeating a paragraph until it got cut
+        // off mid-string) or a RECITATION block when the input is a real,
+        // detailed bibliography -- disabling it plus a low temperature made both
+        // failure modes disappear in testing. Not needed for an extraction task anyway.
+        thinkingConfig: { thinkingBudget: 0 },
+        temperature: 0.1,
         ...(type === 'author' ? { responseSchema: AUTHOR_SCHEMA } : {}),
       },
     })
