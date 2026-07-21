@@ -141,8 +141,12 @@ export async function POST(request) {
       book.description = null
     }
     // Prefer the real Amazon URL from the page's ASIN over Gemini's guess — it has no
-    // reliable way to know the actual product URL from a Goodreads page alone.
-    if (asin) book.buy_url_amazon_us = `https://www.amazon.com/dp/${asin}`
+    // reliable way to know the actual product URL from a Goodreads page alone. Same ASIN
+    // works for both marketplaces — the .com/.in domain is the only difference.
+    if (asin) {
+      book.buy_url_amazon_us = `https://www.amazon.com/dp/${asin}`
+      book.buy_url_amazon_in = `https://www.amazon.in/dp/${asin}`
+    }
     return NextResponse.json({ book })
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 })
