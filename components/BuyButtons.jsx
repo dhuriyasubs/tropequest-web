@@ -17,6 +17,12 @@ const STORES = [
 
 const PRIMARY_KEYS = ['amazon_in', 'amazon_us']
 
+// Books sourced from a web-fiction site (Royal Road, Wattpad, Stck) aren't sold through
+// retail stores — hide those links even if the DB still has stale auto-generated search
+// URLs from before the pipeline stopped creating them.
+const WEB_FICTION_KEYS = ['wattpad', 'stck', 'royal_road']
+const RETAIL_KEYS = ['amazon_in', 'amazon_us', 'flipkart', 'abebooks', 'bookscape']
+
 export default function BuyButtons({ book }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
@@ -27,12 +33,16 @@ export default function BuyButtons({ book }) {
     return () => document.removeEventListener('mousedown', onOut)
   }, [])
 
+  const isWebFiction = WEB_FICTION_KEYS.some(k => book[STORES.find(s => s.key === k).urlKey])
+
   const kuUrl = book.buy_url_amazon_in || book.buy_url_amazon_us
-  const kuEntry = book.is_kindle_unlimited && kuUrl
+  const kuEntry = book.is_kindle_unlimited && kuUrl && !isWebFiction
     ? { key: 'kindle_unlimited', label: 'Kindle Unlimited', url: kuUrl, flag: '📱', readOnly: true }
     : null
 
-  const available = STORES.filter(s => book[s.urlKey])
+  const available = STORES
+    .filter(s => book[s.urlKey])
+    .filter(s => !isWebFiction || !RETAIL_KEYS.includes(s.key))
   if (available.length === 0 && !kuEntry) return null
 
   // Normalise all entries to { key, label, href, flag, priceLabel, readOnly }
