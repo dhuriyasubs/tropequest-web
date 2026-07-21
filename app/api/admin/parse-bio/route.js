@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai'
 import { createSupabaseServer } from '@/lib/supabase'
 import { isAdmin } from '@/lib/admin'
 
@@ -16,13 +16,67 @@ const AUTHOR_PROMPT = `Extract structured information from the following author 
     "Key Achievement": "one notable achievement"
   },
   "writing_style": "paragraph about writing style and impact",
+  "works_heading": "heading for the works/bibliography section, e.g. 'Major Works' or 'Major Bibliography' — use empty string for default",
   "series": [
-    { "name": "Series Name", "years": "year or range e.g. 2021 or 2021 to Present", "description": "one or two sentence description" }
+    {
+      "name": "Series Name",
+      "years": "year or range e.g. 2021 or 2021 to Present",
+      "description": "one or two sentence description",
+      "books": [
+        { "title": "Book Title", "year": "2015", "format": "Novel, Novella, Short Story, or empty string if unspecified" }
+      ]
+    }
   ],
-  "reader_tip": "optional reading tip for new readers"
+  "reader_tip": "optional reading tip for new readers",
+  "extras": "any additional content that doesn't fit the fields above (e.g. universe/crossover notes) — use <b>text</b> for headings, \\n\\n between sections, empty string if none"
 }
 
-If a field has no matching content, use an empty string or empty array. Text:`
+If the text includes a chronological bibliography or list of individual book titles under a series, extract every book into that series' "books" array in order — do not summarize it away. If a field has no matching content, use an empty string or empty array. Text:`
+
+const AUTHOR_SCHEMA = {
+  type: SchemaType.OBJECT,
+  properties: {
+    intro: { type: SchemaType.STRING },
+    profile: {
+      type: SchemaType.OBJECT,
+      properties: {
+        'Primary Genres':   { type: SchemaType.STRING },
+        'Notable Works':    { type: SchemaType.STRING },
+        'Defining Tropes':  { type: SchemaType.STRING },
+        'Key Achievement':  { type: SchemaType.STRING },
+      },
+    },
+    writing_style:  { type: SchemaType.STRING },
+    works_heading:  { type: SchemaType.STRING },
+    series: {
+      type: SchemaType.ARRAY,
+      items: {
+        type: SchemaType.OBJECT,
+        properties: {
+          name:        { type: SchemaType.STRING },
+          years:       { type: SchemaType.STRING },
+          description: { type: SchemaType.STRING },
+          books: {
+            type: SchemaType.ARRAY,
+            items: {
+              type: SchemaType.OBJECT,
+              properties: {
+                title:  { type: SchemaType.STRING },
+                year:   { type: SchemaType.STRING },
+                format: { type: SchemaType.STRING },
+              },
+              required: ['title'],
+            },
+          },
+        },
+        required: ['name'],
+      },
+    },
+    reader_tip: { type: SchemaType.STRING },
+    extras:     { type: SchemaType.STRING },
+  },
+  required: ['intro', 'series'],
+}
 
 const SERIES_PROMPT = `Extract structured information from the following series description text and return ONLY a valid JSON object with exactly these fields. No markdown, no explanation.
 
@@ -70,7 +124,10 @@ export async function POST(request) {
   try {
     const model  = gemini.getGenerativeModel({
       model: 'gemini-2.5-flash',
-      generationConfig: { responseMimeType: 'application/json' },
+      generationConfig: {
+        responseMimeType: 'application/json',
+        ...(type === 'author' ? { responseSchema: AUTHOR_SCHEMA } : {}),
+      },
     })
     const result = await model.generateContent(prompt)
     const text   = result.response.text().trim()

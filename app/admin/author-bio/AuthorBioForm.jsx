@@ -1,7 +1,8 @@
 'use client'
 import { useState, useEffect } from 'react'
 
-const EMPTY_SERIES = { name: '', years: '', description: '' }
+const EMPTY_BOOK   = { title: '', year: '', format: '' }
+const EMPTY_SERIES = { name: '', years: '', description: '', books: [] }
 
 const EMPTY_BIO = {
   intro: '',
@@ -78,11 +79,35 @@ export default function AuthorBioForm({ authors }) {
   }
 
   function addSeries() {
-    setBio(b => ({ ...b, series: [...b.series, { ...EMPTY_SERIES }] }))
+    setBio(b => ({ ...b, series: [...b.series, { ...EMPTY_SERIES, books: [] }] }))
   }
 
   function removeSeries(index) {
     setBio(b => ({ ...b, series: b.series.filter((_, i) => i !== index) }))
+  }
+
+  function setBook(seriesIndex, bookIndex, key, value) {
+    setBio(b => ({
+      ...b,
+      series: b.series.map((s, i) => i !== seriesIndex ? s : {
+        ...s,
+        books: (s.books ?? []).map((bk, bi) => bi === bookIndex ? { ...bk, [key]: value } : bk),
+      }),
+    }))
+  }
+
+  function addBook(seriesIndex) {
+    setBio(b => ({
+      ...b,
+      series: b.series.map((s, i) => i !== seriesIndex ? s : { ...s, books: [...(s.books ?? []), { ...EMPTY_BOOK }] }),
+    }))
+  }
+
+  function removeBook(seriesIndex, bookIndex) {
+    setBio(b => ({
+      ...b,
+      series: b.series.map((s, i) => i !== seriesIndex ? s : { ...s, books: (s.books ?? []).filter((_, bi) => bi !== bookIndex) }),
+    }))
   }
 
   async function loadExisting() {
@@ -132,10 +157,12 @@ export default function AuthorBioForm({ authors }) {
     setStatus('saving')
     setErrorMsg('')
 
-    // Strip empty series rows
+    // Strip empty series rows and empty book rows
     const cleanBio = {
       ...bio,
-      series: bio.series.filter(s => s.name.trim()),
+      series: bio.series
+        .filter(s => s.name.trim())
+        .map(s => ({ ...s, books: (s.books ?? []).filter(bk => bk.title.trim()) })),
     }
 
     try {
@@ -309,6 +336,38 @@ export default function AuthorBioForm({ authors }) {
                   placeholder="Brief description of this series..."
                   className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bloom/40 resize-none"
                 />
+              </div>
+              <div>
+                <label className="block text-xs text-slate mb-1">Books (optional — chronological bibliography)</label>
+                <div className="space-y-2">
+                  {(s.books ?? []).map((bk, bi) => (
+                    <div key={bi} className="flex gap-2 items-center">
+                      <input
+                        type="text"
+                        value={bk.title}
+                        onChange={e => setBook(i, bi, 'title', e.target.value)}
+                        placeholder="Book title"
+                        className="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-bloom/40"
+                      />
+                      <input
+                        type="text"
+                        value={bk.year}
+                        onChange={e => setBook(i, bi, 'year', e.target.value)}
+                        placeholder="Year"
+                        className="w-20 border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-bloom/40"
+                      />
+                      <input
+                        type="text"
+                        value={bk.format}
+                        onChange={e => setBook(i, bi, 'format', e.target.value)}
+                        placeholder="Format"
+                        className="w-28 border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-bloom/40"
+                      />
+                      <button type="button" onClick={() => removeBook(i, bi)} className="text-xs text-red-400 hover:text-red-600 shrink-0">×</button>
+                    </div>
+                  ))}
+                  <button type="button" onClick={() => addBook(i)} className="text-xs text-bloom hover:underline">+ Add book</button>
+                </div>
               </div>
             </div>
           ))}

@@ -63,6 +63,21 @@ export default function AuthorBio({ bio }) {
                   {s.description && (
                     <p className="text-sm text-slate mt-0.5">{s.description}</p>
                   )}
+                  {s.books?.length > 0 && (
+                    <p className="text-xs text-slate/70 mt-1 leading-relaxed">
+                      {s.books.map((b, bi) => (
+                        <span key={bi}>
+                          {bi > 0 && ' · '}
+                          {b.title}
+                          {(b.format || b.year) && (
+                            <span className="text-slate/50">
+                              {' '}({[b.format, b.year].filter(Boolean).join(', ')})
+                            </span>
+                          )}
+                        </span>
+                      ))}
+                    </p>
+                  )}
                 </div>
               </div>
             ))}
