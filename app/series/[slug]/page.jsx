@@ -48,11 +48,21 @@ export default async function SeriesDetailPage({ params }) {
 
   // If bio has titled entries, use bio order (cross-series); else fall back to DB series_number order
   const useBioOrder = bioTitles.length > 0
+  const bioTitleSet = new Set(bioTitles.map(t => t.toLowerCase()))
   const orderedBooks = useBioOrder
-    ? bio.reading_order.map((entry, i) => {
-        const db = entry.title ? (bookByTitle[entry.title.toLowerCase()] ?? null) : null
-        return { _bioEntry: entry, _pos: i + 1, ...(db ?? { title: entry.title, author: null, cover_url: null, slug: null, rating: null, tropes: [], description: null }) }
-      })
+    ? [
+        ...bio.reading_order.map((entry, i) => {
+          const db = entry.title ? (bookByTitle[entry.title.toLowerCase()] ?? null) : null
+          const num = entry.number ?? (db?.series_number != null ? Number(db.series_number) : null)
+          return { _bioEntry: entry, _pos: num ?? (i + 1), _num: num ?? (i + 1), ...(db ?? { title: entry.title, author: null, cover_url: null, slug: null, rating: null, tropes: [], description: null }) }
+        }),
+        // Books actually catalogued in this series but missing from the bio's reading
+        // order (bios can lag behind newly added entries, e.g. novellas) still get shown
+        // instead of being silently dropped.
+        ...seriesBooks
+          .filter(b => !bioTitleSet.has(b.title.toLowerCase()))
+          .map(b => ({ _bioEntry: null, _pos: b.series_number ?? null, _num: b.series_number != null ? Number(b.series_number) : Infinity, ...b })),
+      ].sort((a, b) => (a._num ?? Infinity) - (b._num ?? Infinity))
     : [...seriesBooks]
         .sort((a, b) => {
           if (a.series_number == null && b.series_number == null) return 0
