@@ -92,8 +92,8 @@ export default async function BookPage({ params }) {
     userRating = ratingRes.data?.rating ?? null
   }
 
-  // Community ratings for this book (all users — needs public SELECT policy)
-  const { data: communityRatings } = await supabase
+  // Community ratings for this book (public data, no need for the cookie-bound client)
+  const { data: communityRatings } = await supabaseAdmin
     .from('ratings')
     .select('rating')
     .eq('book_id', book.id)
