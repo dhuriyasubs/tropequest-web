@@ -50,12 +50,14 @@ export async function GET(request) {
   const series_name = searchParams.get('series')
   if (!series_name) return NextResponse.json({ bio: null })
 
-  const { data } = await supabaseAdmin
-    .from('series_bios')
-    .select('bio')
-    .eq('series_name', series_name)
-    .single()
+  const [{ data }, { data: bookRows }] = await Promise.all([
+    supabaseAdmin.from('series_bios').select('bio').eq('series_name', series_name).single(),
+    supabaseAdmin.from('books').select('title, series_number').eq('series_name', series_name),
+  ])
 
   const bio = data?.bio ?? null
-  return NextResponse.json({ bio: typeof bio === 'string' ? JSON.parse(bio) : bio })
+  return NextResponse.json({
+    bio: typeof bio === 'string' ? JSON.parse(bio) : bio,
+    books: bookRows ?? [],
+  })
 }

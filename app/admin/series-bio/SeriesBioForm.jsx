@@ -112,19 +112,36 @@ export default function SeriesBioForm({ seriesList }) {
     setBio(b => { const arr = [...b.comparison_tables]; arr[ti] = { ...arr[ti], rows: arr[ti].rows.filter((_, i) => i !== ri) }; return { ...b, comparison_tables: arr } })
   }
 
+  // Fill in reading_order with any catalogued books the bio doesn't mention yet
+  // (e.g. novellas added after the bio was written) as blank entries ready to edit,
+  // so nothing catalogued is silently missing from this form.
+  function mergeMissingBooks(readingOrder, books) {
+    const covered = new Set(readingOrder.map(e => (e.title ?? '').trim().toLowerCase()).filter(Boolean))
+    const missing = (books ?? [])
+      .filter(b => !covered.has(b.title.trim().toLowerCase()))
+      .map(b => ({ number: b.series_number ?? '', title: b.title, format: '', focus: '' }))
+    if (!missing.length) return readingOrder
+    return [...readingOrder, ...missing].sort((a, b) => {
+      const na = a.number === '' || a.number == null ? Infinity : Number(a.number)
+      const nb = b.number === '' || b.number == null ? Infinity : Number(b.number)
+      return na - nb
+    })
+  }
+
   async function loadExisting() {
     if (!seriesName.trim()) return
     setLoading(true)
     try {
       const res  = await fetch(`/api/admin/series-bio?series=${encodeURIComponent(seriesName.trim())}`)
-      const { bio: existing } = await res.json()
+      const { bio: existing, books } = await res.json()
       if (existing) {
+        const readingOrder = mergeMissingBooks(existing.reading_order ?? [], books)
         setBio({
           intro:               existing.intro ?? '',
           reading_order_note:  existing.reading_order_note ?? '',
           format_header:       existing.format_header ?? '',
           focus_header:        existing.focus_header ?? '',
-          reading_order:       existing.reading_order?.length ? existing.reading_order : [{ ...EMPTY_ENTRY }],
+          reading_order:       readingOrder.length ? readingOrder : [{ ...EMPTY_ENTRY }],
           what_to_expect:      existing.what_to_expect?.length ? existing.what_to_expect : [{ ...EMPTY_EXPECT }],
           comparison_tables:   existing.comparison_tables ?? [],
           reading_tip:         existing.reading_tip ?? '',
@@ -140,17 +157,18 @@ export default function SeriesBioForm({ seriesList }) {
     setLoading(true)
     try {
       const res = await fetch(`/api/admin/series-bio?series=${encodeURIComponent(name.trim())}`)
-      const { bio: existing } = await res.json()
+      const { bio: existing, books } = await res.json()
+      const readingOrder = mergeMissingBooks(existing?.reading_order ?? [], books)
       setBio(existing ? {
         intro:               existing.intro ?? '',
         reading_order_note:  existing.reading_order_note ?? '',
         format_header:       existing.format_header ?? '',
         focus_header:        existing.focus_header ?? '',
-        reading_order:       existing.reading_order?.length ? existing.reading_order : [{ ...EMPTY_ENTRY }],
+        reading_order:       readingOrder.length ? readingOrder : [{ ...EMPTY_ENTRY }],
         what_to_expect:      existing.what_to_expect?.length ? existing.what_to_expect : [{ ...EMPTY_EXPECT }],
         comparison_tables:   existing.comparison_tables ?? [],
         reading_tip:         existing.reading_tip ?? '',
-      } : EMPTY_BIO)
+      } : { ...EMPTY_BIO, reading_order: readingOrder.length ? readingOrder : [{ ...EMPTY_ENTRY }] })
     } finally {
       setLoading(false)
     }
