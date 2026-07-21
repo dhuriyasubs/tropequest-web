@@ -248,9 +248,20 @@ export default async function BookPage({ params }) {
             {(book.is_kindle_unlimited || book.buy_url_audible) && (
               <div className="flex flex-wrap gap-2 mt-3">
                 {book.is_kindle_unlimited && (
-                  <span className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-                    📱 Kindle Unlimited
-                  </span>
+                  (book.buy_url_amazon_in || book.buy_url_amazon_us) ? (
+                    <a
+                      href={book.buy_url_amazon_in || book.buy_url_amazon_us}
+                      target="_blank"
+                      rel="noopener noreferrer sponsored"
+                      className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-colors"
+                    >
+                      📱 Kindle Unlimited
+                    </a>
+                  ) : (
+                    <span className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                      📱 Kindle Unlimited
+                    </span>
+                  )
                 )}
                 {book.buy_url_audible && (
                   <span className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-orange-50 text-orange-700 border border-orange-200">

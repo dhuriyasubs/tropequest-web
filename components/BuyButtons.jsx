@@ -4,8 +4,8 @@ import { useState, useRef, useEffect } from 'react'
 import { trackEvent } from '@/lib/events'
 
 const STORES = [
-  { key: 'amazon_in', label: 'Amazon IN', urlKey: 'buy_url_amazon_in', priceKey: 'price_amazon_in', flag: '🇮🇳' },
-  { key: 'amazon_us', label: 'Amazon US', urlKey: 'buy_url_amazon_us', priceKey: 'price_amazon_us', flag: '🇺🇸' },
+  { key: 'amazon_in', label: 'Amazon IN', urlKey: 'buy_url_amazon_in', priceKey: 'price_amazon_in', flag: '🇮🇳', currency: '₹' },
+  { key: 'amazon_us', label: 'Amazon US', urlKey: 'buy_url_amazon_us', priceKey: 'price_amazon_us', flag: '🇺🇸', currency: '$' },
   { key: 'flipkart',  label: 'Flipkart',  urlKey: 'buy_url_flipkart',  priceKey: null,              flag: '🛒' },
   { key: 'abebooks',   label: 'AbeBooks',   urlKey: 'buy_url_abebooks',   priceKey: null, flag: '📦' },
   { key: 'bookscape',  label: 'Bookscape',  urlKey: 'buy_url_bookscape',  priceKey: null, flag: '🏪' },
@@ -42,7 +42,7 @@ export default function BuyButtons({ book }) {
       label: s.label,
       href: book[s.urlKey],
       flag: s.flag,
-      priceLabel: s.priceKey && book[s.priceKey] ? `₹${book[s.priceKey]}` : null,
+      priceLabel: s.priceKey && book[s.priceKey] ? `${s.currency}${Number(book[s.priceKey]).toLocaleString('en-US')}` : null,
       readOnly: !!s.readOnly,
     })),
     ...(kuEntry ? [{ key: kuEntry.key, label: kuEntry.label, href: kuEntry.url, flag: kuEntry.flag, priceLabel: null, readOnly: true }] : []),
