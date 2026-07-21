@@ -4,7 +4,7 @@ import Image from 'next/image'
 import Breadcrumb from '@/components/Breadcrumb'
 import AuthorBio from '@/components/AuthorBio'
 import { getBooksByAuthor, getAuthorBio } from '@/lib/search'
-import { slugify, formatAuthorName } from '@/lib/utils'
+import { slugify, formatAuthorName, normalizeSeriesName } from '@/lib/utils'
 import FeaturePromo from '@/components/FeaturePromo'
 import PageViewTracker from '@/components/PageViewTracker'
 import ShareButton from '@/components/ShareButton'
@@ -62,16 +62,30 @@ export async function generateMetadata({ params }) {
   }
 }
 
-// Author-specific series display order (series names must match DB exactly)
+// Manual override for authors without a bio (or whose bio order shouldn't be used).
+// series names must match DB exactly.
 const AUTHOR_SERIES_ORDER = {
   'Catharina Maura': ['Stolen Moments', 'Serendipity', 'Off-Limits', 'The Windsors'],
 }
 
-function sortedSeries(author, seriesMap) {
+function sortedSeries(author, seriesMap, bio) {
+  const seriesNames = Object.keys(seriesMap)
+
+  // Prefer the order already established by the author's bibliography in their bio —
+  // it reflects the intended reading/chronological order, not alphabetical.
+  const bioOrder = bio?.series?.length ? bio.series.map(s => normalizeSeriesName(s.name)) : null
+  if (bioOrder) {
+    return [...seriesNames].sort((a, b) => {
+      const ia = bioOrder.indexOf(normalizeSeriesName(a))
+      const ib = bioOrder.indexOf(normalizeSeriesName(b))
+      return (ia === -1 ? Infinity : ia) - (ib === -1 ? Infinity : ib)
+    })
+  }
+
   const order = AUTHOR_SERIES_ORDER[author]
-  if (!order) return Object.keys(seriesMap)
+  if (!order) return seriesNames
   const known = order.filter(s => seriesMap[s])
-  const rest  = Object.keys(seriesMap).filter(s => !order.includes(s))
+  const rest  = seriesNames.filter(s => !order.includes(s))
   return [...known, ...rest]
 }
 
@@ -95,7 +109,7 @@ export default async function AuthorPage({ params }) {
     }
   }
 
-  const orderedSeries = sortedSeries(author, seriesMap)
+  const orderedSeries = sortedSeries(author, seriesMap, bio)
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">

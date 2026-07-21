@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { slugify } from '@/lib/utils'
+import { slugify, normalizeSeriesName } from '@/lib/utils'
 
 function renderExtras(text) {
   // Allow only <b> tags; strip everything else
@@ -11,12 +11,6 @@ function renderExtras(text) {
     .replace(/&lt;b&gt;/g, '<b>')
     .replace(/&lt;\/b&gt;/g, '</b>')
   return safe
-}
-
-// Bio series names carry extra text ("Off-Campus Series", "Him (co-authored with
-// Sarina Bowen)") that a raw DB series_name won't match — strip it before comparing.
-function normalizeSeriesName(name) {
-  return name.replace(/\s+series$/i, '').replace(/\s*\([^)]*\)\s*$/, '').trim().toLowerCase()
 }
 
 export default function AuthorBio({ bio, books = [] }) {
