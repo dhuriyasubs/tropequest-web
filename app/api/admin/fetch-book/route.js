@@ -25,10 +25,18 @@ const PROMPT = `Extract book metadata from the following web page data and retur
   "rating": number or null (out of 5),
   "rating_count": integer or null,
   "rating_source": "source of rating e.g. Goodreads, Amazon, or null",
-  "buy_url_amazon_us": "amazon.com product URL or null"
+  "buy_url_amazon_us": "amazon.com product URL if one is directly present in the page data, otherwise null — do not guess or construct one"
 }
 
 If a field has no matching content, use null. Data:`
+
+// Goodreads embeds the Amazon ASIN for the edition being viewed (either in the page's
+// embedded JSON state as "asin":"..." or in an amazon.com/gp/product/{ASIN} affiliate
+// link) — a real ASIN gives a far more reliable Amazon URL than asking an LLM to guess one.
+function extractAsin(html) {
+  const m = html.match(/"asin":"([A-Z0-9]{10})"/) || html.match(/amazon\.[a-z.]+\/gp\/product\/([A-Z0-9]{10})/i)
+  return m?.[1] ?? null
+}
 
 function extractPageData(html) {
   // Meta tags
@@ -76,6 +84,7 @@ export async function POST(request) {
 
   // Fetch the page; fall back to Google Books if Goodreads blocks us
   let context
+  let asin = null
   try {
     const res = await fetch(url, {
       headers: {
@@ -88,6 +97,7 @@ export async function POST(request) {
     if (!res.ok) throw new Error(`Page returned ${res.status}`)
     const html = await res.text()
     context = JSON.stringify(extractPageData(html), null, 2)
+    if (isGoodreads) asin = extractAsin(html)
   } catch {
     if (!isGoodreads) {
       return NextResponse.json({ error: 'Could not fetch page' }, { status: 502 })
@@ -130,6 +140,9 @@ export async function POST(request) {
     if (book.description && !isCompleteDescription(book.description)) {
       book.description = null
     }
+    // Prefer the real Amazon URL from the page's ASIN over Gemini's guess — it has no
+    // reliable way to know the actual product URL from a Goodreads page alone.
+    if (asin) book.buy_url_amazon_us = `https://www.amazon.com/dp/${asin}`
     return NextResponse.json({ book })
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 })

@@ -978,7 +978,7 @@ export default function BookEditForm() {
           rating:            b.rating        ?? prev.rating,
           rating_count:      b.rating_count  ?? prev.rating_count,
           rating_source:     b.rating_source ?? prev.rating_source,
-          buy_url_amazon_us: isAmazonUS ? fetchedUrl : (buildAmazonUSUrl(title, author) || prev.buy_url_amazon_us),
+          buy_url_amazon_us: isAmazonUS ? fetchedUrl : (b.buy_url_amazon_us || buildAmazonUSUrl(title, author) || prev.buy_url_amazon_us),
           buy_url_amazon_in: buildAmazonInUrl(title, author) || prev.buy_url_amazon_in,
           buy_url_flipkart:  buildFlipkartUrl(title, author) || prev.buy_url_flipkart,
           buy_url_abebooks:  buildAbeBooksUrl(title, author) || prev.buy_url_abebooks,
