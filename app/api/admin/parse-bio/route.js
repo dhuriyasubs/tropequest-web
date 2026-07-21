@@ -28,7 +28,7 @@ const AUTHOR_PROMPT = `Extract structured information from the following author 
     }
   ],
   "reader_tip": "optional reading tip for new readers",
-  "extras": "any additional content that doesn't fit the fields above (e.g. universe/crossover notes) — use <b>text</b> for headings, \\n\\n between sections, empty string if none"
+  "extras": "any additional content that doesn't fit the fields above (e.g. universe/crossover notes) — include ALL of it faithfully, including every sub-bullet or sub-section under that content (do not stop after the first sentence or paragraph); use <b>text</b> for headings, \\n\\n between sections, empty string if none"
 }
 
 If the text includes a chronological bibliography or list of individual book titles under a series, extract every book into that series' "books" array in order — do not summarize it away. If a field has no matching content, use an empty string or empty array. Text:`

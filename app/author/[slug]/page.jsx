@@ -111,7 +111,7 @@ export default async function AuthorPage({ params }) {
         <ShareButton url={`https://tropequest.com/author/${encodeURIComponent(author)}`} title={`Books by ${formatAuthorName(author)} | TropeQuest`} />
       </div>
       <p className="text-slate mb-8">{books.length} books on TropeQuest</p>
-      <AuthorBio bio={bio} />
+      <AuthorBio bio={bio} books={books} />
 
       {orderedSeries.map(series => (
         <section key={series} className="mb-10">
