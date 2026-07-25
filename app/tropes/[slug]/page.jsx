@@ -91,6 +91,42 @@ const TROPE_EDITORIAL = {
     whyLove: 'Readers come to romantasy for the combination of escapism. The immersive world-building of high fantasy with the emotional intensity of romance. The best romantasy books deliver both without shortchanging either: worlds that feel fully realised and relationships that feel genuinely earned. When the two elements work together, the result is nearly impossible to put down.',
     related: ['Fantasy', 'Enemies To Lovers', 'Fae', 'Forbidden Love'],
   },
+  'secret-identity': {
+    description: 'The best secret identity romance books: hidden pasts, double lives, and the moment the truth finally comes out. Ranked by reader rating.',
+    intro: 'She doesn’t know he’s a bodyguard. He doesn’t know she’s the heiress. Secret identity romance runs on one delicious tension: someone the reader trusts is lying to the person they love, and every scene carries the weight of a confession that hasn’t happened yet. It’s a trope built entirely on dramatic irony, and readers can’t look away.',
+    whyLove: 'The appeal is the slow-motion collision between who a character pretends to be and who they actually are. Readers get to know both versions before the love interest does, which makes every close call, every near-discovery, almost unbearable. When the truth finally lands, it rewrites everything that came before — and that’s the payoff secret identity delivers better than almost any other trope.',
+    related: ['Cold Case', 'Mistaken Identity', 'Fake Relationship', 'Secret Relationship'],
+  },
+  'stalker-romance': {
+    description: 'The best stalker romance books: possessive, obsessive, and unapologetically intense. Ranked by reader rating.',
+    intro: 'He noticed her before she ever noticed him. Stalker romance leans all the way into obsession, following a love interest whose devotion crosses from intense into unsettling, and asks readers to sit with that discomfort as part of the fantasy. It’s dark romance at its most concentrated: possessive, watchful, and never subtle about what he wants.',
+    whyLove: 'Readers come to stalker romance for the same reason they come to any villain love interest: the thrill of being wanted that completely, without the real-world consequences. The genre works because it’s explicit fantasy, not aspiration — a safe way to explore obsession, control, and devotion pushed to its most extreme edge.',
+    related: ['Anti Hero', 'Bad Boy', 'Forced Proximity', 'Secret Relationship'],
+  },
+  'chosen-one': {
+    description: 'The best chosen one fantasy books: prophecies, destinies, and heroes who never asked for any of it. Ranked by reader rating.',
+    intro: 'A prophecy nobody can quite agree on the meaning of. A hero who would rather not. Chosen one stories hand a single character the weight of an entire world’s fate, then spend hundreds of pages watching them decide whether to carry it. It’s one of fantasy’s oldest structures because it still works: the stakes are automatically enormous, and the character’s arc is built right into the premise.',
+    whyLove: 'What makes chosen one endure is the tension between destiny and choice. The best versions of this trope let the hero push back against the role they’ve been handed, making the eventual acceptance feel earned rather than inevitable. Readers get an underdog and an epic at the same time.',
+    related: ['Prophecy', 'Magic Academy', 'Quest', 'Mentor & Student'],
+  },
+  'bad-boy': {
+    description: 'The best bad boy romance books: rough edges, zero interest in being tamed, and a soft spot only she can find. Ranked by reader rating.',
+    intro: 'He’s not looking for redemption. Bad boy romance centers a love interest who breaks rules, doesn’t apologize for it, and has no interest in becoming a better man for anyone — until he does, quietly, for her. It’s one of romance’s most durable archetypes because the contrast does all the work: the harder the exterior, the more it means when it cracks.',
+    whyLove: 'Readers love the bad boy for the same reason they love enemies to lovers: the payoff is proportional to the resistance. Watching someone genuinely unbothered by anyone’s opinion get thrown off balance by one specific person is deeply satisfying, and the built-in danger keeps the tension high without needing a bigger plot to sustain it.',
+    related: ['Enemies To Lovers', 'Anti Hero', 'Stalker Romance', 'Billionaire'],
+  },
+  'caretaking': {
+    description: 'The best caretaking romance books: quiet devotion, careful hands, and love shown through the smallest gestures. Ranked by reader rating.',
+    intro: 'Someone gets hurt. Someone else shows up, every day, without being asked twice. Caretaking romance is built on small, repeated acts of devotion — the tea made without asking, the ride to every appointment, the patience that never runs out — and it turns ordinary kindness into the most romantic gesture in the book.',
+    whyLove: 'This trope resonates because it shows love as action rather than declaration. There’s no grand gesture required when someone consistently shows up in the unglamorous moments, and readers respond to that quiet reliability more than almost any dramatic confession. It’s slow burn’s gentler cousin, built on trust instead of tension.',
+    related: ['Hurt/Comfort', 'Forced Proximity', 'Grumpy & Sunshine', 'Slow Burn'],
+  },
+  'bodyguard': {
+    description: 'The best bodyguard romance books: professional distance, constant proximity, and a job that gets complicated fast. Ranked by reader rating.',
+    intro: 'He’s paid to protect her. He is not paid to fall in love with her. Bodyguard romance puts two people in each other’s space around the clock, one of them bound by professional rules the other keeps quietly testing, and lets the tension build in every hallway, every car ride, every night shift. The job title guarantees the proximity; the chemistry does the rest.',
+    whyLove: 'Readers love bodyguard romance for the built-in power dynamic and constant closeness that other tropes have to work harder to justify. It’s forced proximity with real stakes attached, since the hero’s job depends on keeping his distance, and every rule he breaks for her means something. The tension between duty and desire practically writes itself.',
+    related: ['Forced Proximity', 'Celebrity/Fame', 'Fake Relationship', 'Billionaire'],
+  },
 }
 
 export async function generateMetadata({ params }) {
