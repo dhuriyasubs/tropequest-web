@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getFilterOptions } from '@/lib/search'
 import { slugify } from '@/lib/utils'
+import { TAG_SYNONYMS } from '@/lib/taxonomy'
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url)
@@ -61,9 +62,14 @@ export async function GET(request) {
     href: `/author/${encodeURIComponent(a)}`,
   }))
 
-  // Tropes from cached filter options
+  // Tropes from cached filter options — also matches reader-facing synonyms
+  // (e.g. typing "fake dating" surfaces the "Fake Relationship" trope)
   const tropes = (filterOpts.tropes ?? [])
-    .filter(t => t.toLowerCase().includes(lq))
+    .filter(t => {
+      if (t.toLowerCase().includes(lq)) return true
+      const syns = TAG_SYNONYMS[t.toLowerCase()] ?? []
+      return syns.some(s => s.includes(lq))
+    })
     .slice(0, 2)
     .map(t => ({
       label: t,

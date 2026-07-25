@@ -1,13 +1,27 @@
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
 import TropeBookList from '@/components/TropeBookList'
 import { getFilterOptions, getBooksByTrope } from '@/lib/search'
 import { slugify } from '@/lib/utils'
+import { resolveSynonym } from '@/lib/taxonomy'
 import PageViewTracker from '@/components/PageViewTracker'
 import ShareButton from '@/components/ShareButton'
 
 export const revalidate = 3600
+
+// If `slug` isn't a real trope but is a known synonym (e.g. "fake-dating"), resolve
+// it to the canonical trope's slug (e.g. "fake-relationship") so both the alias URL
+// and the canonical URL serve the same page — alias redirects instead of 404ing.
+function resolveTropeSlug(tropes, slug) {
+  const direct = tropes.find(t => slugify(t) === slug)
+  if (direct) return { trope: direct, canonicalSlug: slug }
+  const canonical = resolveSynonym(slug.replace(/-/g, ' '))
+  const canonicalSlug = slugify(canonical)
+  if (canonicalSlug === slug) return { trope: null, canonicalSlug: null }
+  const match = tropes.find(t => slugify(t) === canonicalSlug)
+  return match ? { trope: match, canonicalSlug } : { trope: null, canonicalSlug: null }
+}
 
 // ── Editorial content for Tier 1 tropes ──────────────────────────────────────
 const TROPE_EDITORIAL = {
@@ -15,7 +29,7 @@ const TROPE_EDITORIAL = {
     description: 'The best enemies-to-lovers books, ranked by reader rating. From slow-burn rivals to forced alliances: find your next obsession.',
     intro: 'Two people who can\'t stand each other. Tension that crackles off the page. And then something shifts. Enemies to lovers is one of the most beloved tropes in romance because the emotional payoff is unmatched. The harder the fight, the sweeter the fall.',
     whyLove: 'Readers love this trope for the push-pull dynamic, the sharp banter, and the moment the wall finally comes down. It works in every setting: high fantasy courts, rival college teams, workplace power struggles. The core tension is universal.',
-    related: ['Slow Burn', 'Forced Proximity', 'Fake Dating', 'Rivals to Lovers'],
+    related: ['Slow Burn', 'Forced Proximity', 'Fake Relationship', 'Rivals to Lovers'],
   },
   'slow-burn': {
     description: 'The best slow burn romance books: stories where the tension builds for hundreds of pages before the payoff. Ranked by reader rating.',
@@ -33,7 +47,7 @@ const TROPE_EDITORIAL = {
     description: 'The best forced proximity romance books: stuck together, nowhere to run. Ranked by reader rating.',
     intro: 'Snowstorm. One bed. A cabin with no signal. Forced proximity throws two people together with no escape route and lets the tension do the rest. It\'s a trope that fast-tracks emotional intimacy by removing the option to walk away.',
     whyLove: 'What makes forced proximity so satisfying is the removal of choice. Neither character can avoid the other, which means all the feelings they\'ve been suppressing have nowhere to go. The setting becomes a pressure cooker for the relationship.',
-    related: ['Enemies to Lovers', 'Slow Burn', 'Roommates', 'Fake Dating'],
+    related: ['Enemies to Lovers', 'Slow Burn', 'Roommates', 'Fake Relationship'],
   },
   'morally-grey-hero': {
     description: 'The best books with morally grey heroes: complex, flawed, and impossible to look away from. Ranked by reader rating.',
@@ -63,7 +77,7 @@ const TROPE_EDITORIAL = {
     description: 'The best marriage of convenience romance books: contractual unions, unexpected feelings, and the slow unravelling of every sensible rule. Ranked by reader rating.',
     intro: 'It starts as a transaction. Two people agree to marry for reasons that have nothing to do with love: money, protection, reputation, political alliance. They set rules. They keep their distance. And then, gradually, the rules stop holding.',
     whyLove: 'Marriage of convenience works because forced proximity is built in. Two people sharing a life while pretending not to feel anything creates an unbearable slow burn. Every accidental touch, every moment of unexpected kindness, every rule broken just a little, compounds until the emotional dam gives way. Readers love the inevitability of it.',
-    related: ['Fake Dating', 'Slow Burn', 'Forced Proximity', 'Arranged Marriage'],
+    related: ['Fake Relationship', 'Slow Burn', 'Forced Proximity', 'Arranged Marriage'],
   },
   'cozy-fantasy': {
     description: 'The best cozy fantasy books: low-stakes magic, warm world-building, and stories that feel like a cup of tea in a soft chair. Ranked by reader rating.',
@@ -81,21 +95,21 @@ const TROPE_EDITORIAL = {
 
 export async function generateMetadata({ params }) {
   const { tropes } = await getFilterOptions()
-  const trope = tropes.find(t => slugify(t) === params.slug)
+  const { trope, canonicalSlug } = resolveTropeSlug(tropes, params.slug)
   if (!trope) return {}
-  const editorial = TROPE_EDITORIAL[params.slug]
+  const editorial = TROPE_EDITORIAL[canonicalSlug]
   const description = editorial?.description
     ?? `Find the best ${trope} books on TropeQuest, sorted by rating, with covers, series info, and buy links.`
   const books = await getBooksByTrope(trope)
   return {
     title: `Best ${trope} Books`,
     description,
-    alternates: { canonical: `/tropes/${params.slug}` },
+    alternates: { canonical: `/tropes/${canonicalSlug}` },
     robots: books.length < 8 ? { index: false, follow: true } : undefined,
     openGraph: {
       title: `Best ${trope} Books | TropeQuest`,
       description,
-      url: `/tropes/${params.slug}`,
+      url: `/tropes/${canonicalSlug}`,
     },
     twitter: {
       card: 'summary_large_image',
@@ -107,11 +121,12 @@ export async function generateMetadata({ params }) {
 
 export default async function TropeDetailPage({ params }) {
   const { tropes } = await getFilterOptions()
-  const trope = tropes.find(t => slugify(t) === params.slug)
+  const { trope, canonicalSlug } = resolveTropeSlug(tropes, params.slug)
   if (!trope) notFound()
+  if (canonicalSlug !== params.slug) redirect(`/tropes/${canonicalSlug}`)
 
   const books = await getBooksByTrope(trope)
-  const editorial = TROPE_EDITORIAL[params.slug]
+  const editorial = TROPE_EDITORIAL[canonicalSlug]
 
   // Resolve related trope slugs
   const relatedTropes = (editorial?.related ?? [])

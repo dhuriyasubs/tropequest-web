@@ -287,6 +287,7 @@ function normaliseBook(b) {
 
 // ── Tag splitter ──────────────────────────────────────────────────────────
 const TAG_ALIASES = {
+  'fake dating': 'fake relationship',
   'second chance': 'second chances',
   'mafia romance': 'mafia',
   'sports romance': 'sports',
