@@ -8,8 +8,9 @@ import { trackEvent } from '@/lib/events'
 const SPICE_LABELS = { 1: 'Tame', 2: 'Mild', 3: 'Steamy', 4: 'Very Steamy', 5: 'Explicit' }
 
 export default function SearchClient({
-  initialBooks, initialTotal, tropes, genres = [], relationshipTypes = [],
-  initialQuery = '', initialSelTropes = [], initialSelGenres = [], initialSelRelTypes = [], initialSpice = null,
+  initialBooks, initialTotal, tropes, genres = [], relationshipTypes = [], representationOptions = [],
+  initialQuery = '', initialSelTropes = [], initialSelGenres = [], initialSelRelTypes = [], initialSelRepresentation = [],
+  initialExcludeTropes = [], initialExcludeGenres = [], initialExcludeRepresentation = [], initialSpice = null,
   initialPage = 1, shelfMap = {}, autoFocus = false,
 }) {
   const router      = useRouter()
@@ -24,6 +25,10 @@ export default function SearchClient({
   const [selTropes,   setSelTropes]   = useState(initialSelTropes)
   const [selGenres,   setSelGenres]   = useState(initialSelGenres)
   const [selRelTypes, setSelRelTypes] = useState(initialSelRelTypes)
+  const [selRepresentation, setSelRepresentation] = useState(initialSelRepresentation)
+  const [exclTropes,         setExclTropes]         = useState(initialExcludeTropes)
+  const [exclGenres,         setExclGenres]         = useState(initialExcludeGenres)
+  const [exclRepresentation, setExclRepresentation] = useState(initialExcludeRepresentation)
   const [spice,    setSpice]    = useState(initialSpice)
   const [page,      setPage]      = useState(initialPage)
 
@@ -34,7 +39,8 @@ export default function SearchClient({
 
   const [debouncedQuery] = useDebounce(query, 350)
 
-  const activeFilterCount = selTropes.length + selGenres.length + selRelTypes.length + (spice ? 1 : 0)
+  const activeFilterCount = selTropes.length + selGenres.length + selRelTypes.length + selRepresentation.length
+    + exclTropes.length + exclGenres.length + exclRepresentation.length + (spice ? 1 : 0)
 
   // Lock body scroll when drawer is open
   useEffect(() => {
@@ -42,12 +48,16 @@ export default function SearchClient({
     return () => { document.body.style.overflow = '' }
   }, [drawerOpen])
 
-  const syncUrl = useCallback((q, tropes, genres, relTypes, spice, p) => {
+  const syncUrl = useCallback((q, tropes, genres, relTypes, representation, exclTropes, exclGenres, exclRepresentation, spice, p) => {
     const sp = new URLSearchParams()
     if (q) sp.set('q', q)
     tropes.forEach(t => sp.append('tropes', t))
     genres.forEach(g => sp.append('genres', g))
     relTypes.forEach(r => sp.append('relTypes', r))
+    representation.forEach(r => sp.append('representation', r))
+    exclTropes.forEach(t => sp.append('excludeTropes', t))
+    exclGenres.forEach(g => sp.append('excludeGenres', g))
+    exclRepresentation.forEach(r => sp.append('excludeRepresentation', r))
     if (spice) sp.set('spice', spice)
     if (p > 1) sp.set('page', p)
     startTransition(() => {
@@ -66,6 +76,10 @@ export default function SearchClient({
     selTropes.forEach(t => sp.append('tropes', t))
     selGenres.forEach(g => sp.append('genres', g))
     selRelTypes.forEach(r => sp.append('relTypes', r))
+    selRepresentation.forEach(r => sp.append('representation', r))
+    exclTropes.forEach(t => sp.append('excludeTropes', t))
+    exclGenres.forEach(g => sp.append('excludeGenres', g))
+    exclRepresentation.forEach(r => sp.append('excludeRepresentation', r))
     if (spice) sp.set('spice', spice)
     sp.set('page', page)
 
@@ -75,14 +89,18 @@ export default function SearchClient({
       .then(({ books, total }) => {
         setBooks(books ?? [])
         setTotal(total ?? 0)
-        trackEvent('search', { query: debouncedQuery, genres: selGenres, tropes: selTropes, rel_types: selRelTypes, spice: spice, result_count: total ?? 0 })
+        trackEvent('search', {
+          query: debouncedQuery, genres: selGenres, tropes: selTropes, rel_types: selRelTypes,
+          representation: selRepresentation, exclude_tropes: exclTropes, exclude_genres: exclGenres,
+          exclude_representation: exclRepresentation, spice: spice, result_count: total ?? 0,
+        })
       })
       .finally(() => setLoading(false))
 
-    syncUrl(debouncedQuery, selTropes, selGenres, selRelTypes, spice, page)
-  }, [debouncedQuery, selTropes, selGenres, selRelTypes, spice, page, syncUrl])
+    syncUrl(debouncedQuery, selTropes, selGenres, selRelTypes, selRepresentation, exclTropes, exclGenres, exclRepresentation, spice, page)
+  }, [debouncedQuery, selTropes, selGenres, selRelTypes, selRepresentation, exclTropes, exclGenres, exclRepresentation, spice, page, syncUrl])
 
-  useEffect(() => { setPage(1) }, [debouncedQuery, selTropes, selGenres, selRelTypes, spice])
+  useEffect(() => { setPage(1) }, [debouncedQuery, selTropes, selGenres, selRelTypes, selRepresentation, exclTropes, exclGenres, exclRepresentation, spice])
 
   useEffect(() => {
     if (autoFocus && searchRef.current) {
@@ -95,17 +113,25 @@ export default function SearchClient({
     }
   }, [autoFocus])
 
-  const toggleTrope = t => {
-    const adding = !selTropes.includes(t)
-    setSelTropes(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t])
-    if (adding) trackEvent('filter_apply', { filter_type: 'trope', value: t, query: debouncedQuery })
+  // Generic 3-state cycle: unselected → included → excluded → unselected.
+  function makeCycler(filterType, selected, setSelected, excluded, setExcluded) {
+    return item => {
+      if (selected.includes(item)) {
+        setSelected(prev => prev.filter(x => x !== item))
+        setExcluded(prev => [...prev, item])
+        trackEvent('filter_apply', { filter_type: filterType, value: item, mode: 'exclude', query: debouncedQuery })
+      } else if (excluded.includes(item)) {
+        setExcluded(prev => prev.filter(x => x !== item))
+      } else {
+        setSelected(prev => [...prev, item])
+        trackEvent('filter_apply', { filter_type: filterType, value: item, mode: 'include', query: debouncedQuery })
+      }
+    }
   }
 
-  const toggleGenre = g => {
-    const adding = !selGenres.includes(g)
-    setSelGenres(prev => prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g])
-    if (adding) trackEvent('filter_apply', { filter_type: 'genre', value: g, query: debouncedQuery })
-  }
+  const toggleTrope          = makeCycler('trope', selTropes, setSelTropes, exclTropes, setExclTropes)
+  const toggleGenre          = makeCycler('genre', selGenres, setSelGenres, exclGenres, setExclGenres)
+  const toggleRepresentation = makeCycler('representation', selRepresentation, setSelRepresentation, exclRepresentation, setExclRepresentation)
 
   const handleSpiceChange = v => {
     setSpice(v)
@@ -118,7 +144,11 @@ export default function SearchClient({
     if (adding) trackEvent('filter_apply', { filter_type: 'relationship_type', value: r, query: debouncedQuery })
   }
 
-  const clearAll = () => { setSelTropes([]); setSelGenres([]); setSelRelTypes([]); setSpice(null) }
+  const clearAll = () => {
+    setSelTropes([]); setSelGenres([]); setSelRelTypes([]); setSelRepresentation([])
+    setExclTropes([]); setExclGenres([]); setExclRepresentation([])
+    setSpice(null)
+  }
 
   const closeDrawer = () => {
     setDrawerOpen(false)
@@ -144,11 +174,17 @@ export default function SearchClient({
         </div>
         <SpiceFilter value={spice} onChange={handleSpiceChange} />
         {genres.length > 0 && (
-          <FilterSection title="Genres" items={genres} selected={selGenres} onToggle={toggleGenre} />
+          <FilterSection title="Genres" items={genres} selected={selGenres} excluded={exclGenres} onToggle={toggleGenre} />
         )}
-        <FilterSection title="Tropes" items={tropes} selected={selTropes} onToggle={toggleTrope} />
+        <FilterSection title="Tropes" items={tropes} selected={selTropes} excluded={exclTropes} onToggle={toggleTrope} />
         {relationshipTypes.length > 0 && (
           <FilterSection title="Who Falls in Love" items={relationshipTypes} selected={selRelTypes} onToggle={toggleRelType} />
+        )}
+        {representationOptions.length > 0 && (
+          <FilterSection title="Representation" items={representationOptions} selected={selRepresentation} excluded={exclRepresentation} onToggle={toggleRepresentation} />
+        )}
+        {activeFilterCount > 0 && (
+          <p className="text-xs text-slate/50 mt-1">Click a filter again to exclude it, once more to clear.</p>
         )}
       </aside>
 
@@ -184,18 +220,38 @@ export default function SearchClient({
         {activeFilterCount > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-2 lg:hidden">
             {selGenres.map(g => (
-              <button key={g} onClick={() => toggleGenre(g)} className="chip chip-active text-xs flex items-center gap-1">
+              <button key={`g-${g}`} onClick={() => setSelGenres(prev => prev.filter(x => x !== g))} className="chip chip-active text-xs flex items-center gap-1">
                 {g} <span className="opacity-60">×</span>
               </button>
             ))}
             {selTropes.map(t => (
-              <button key={t} onClick={() => toggleTrope(t)} className="chip chip-active text-xs flex items-center gap-1">
+              <button key={`t-${t}`} onClick={() => setSelTropes(prev => prev.filter(x => x !== t))} className="chip chip-active text-xs flex items-center gap-1">
                 {t} <span className="opacity-60">×</span>
               </button>
             ))}
             {selRelTypes.map(r => (
-              <button key={r} onClick={() => toggleRelType(r)} className="chip chip-active text-xs flex items-center gap-1">
+              <button key={`rt-${r}`} onClick={() => toggleRelType(r)} className="chip chip-active text-xs flex items-center gap-1">
                 {r} <span className="opacity-60">×</span>
+              </button>
+            ))}
+            {selRepresentation.map(r => (
+              <button key={`rep-${r}`} onClick={() => setSelRepresentation(prev => prev.filter(x => x !== r))} className="chip chip-active text-xs flex items-center gap-1">
+                {r} <span className="opacity-60">×</span>
+              </button>
+            ))}
+            {exclGenres.map(g => (
+              <button key={`xg-${g}`} onClick={() => setExclGenres(prev => prev.filter(x => x !== g))} className="chip chip-excluded text-xs flex items-center gap-1">
+                no {g} <span className="opacity-60">×</span>
+              </button>
+            ))}
+            {exclTropes.map(t => (
+              <button key={`xt-${t}`} onClick={() => setExclTropes(prev => prev.filter(x => x !== t))} className="chip chip-excluded text-xs flex items-center gap-1">
+                no {t} <span className="opacity-60">×</span>
+              </button>
+            ))}
+            {exclRepresentation.map(r => (
+              <button key={`xrep-${r}`} onClick={() => setExclRepresentation(prev => prev.filter(x => x !== r))} className="chip chip-excluded text-xs flex items-center gap-1">
+                no {r} <span className="opacity-60">×</span>
               </button>
             ))}
             <button onClick={clearAll} className="text-xs text-bloom hover:underline ml-1">
@@ -270,11 +326,17 @@ export default function SearchClient({
             <div className="overflow-y-auto flex-1 px-4 py-4">
               <SpiceFilter value={spice} onChange={handleSpiceChange} />
               {genres.length > 0 && (
-                <FilterSection title="Genres" items={genres} selected={selGenres} onToggle={toggleGenre} />
+                <FilterSection title="Genres" items={genres} selected={selGenres} excluded={exclGenres} onToggle={toggleGenre} />
               )}
-              <FilterSection title="Tropes" items={tropes} selected={selTropes} onToggle={toggleTrope} />
+              <FilterSection title="Tropes" items={tropes} selected={selTropes} excluded={exclTropes} onToggle={toggleTrope} />
               {relationshipTypes.length > 0 && (
                 <FilterSection title="Who Falls in Love" items={relationshipTypes} selected={selRelTypes} onToggle={toggleRelType} />
+              )}
+              {representationOptions.length > 0 && (
+                <FilterSection title="Representation" items={representationOptions} selected={selRepresentation} excluded={exclRepresentation} onToggle={toggleRepresentation} />
+              )}
+              {activeFilterCount > 0 && (
+                <p className="text-xs text-slate/50 -mt-4">Tap a filter again to exclude it, once more to clear.</p>
               )}
             </div>
 
@@ -295,14 +357,14 @@ export default function SearchClient({
   )
 }
 
-function FilterSection({ title, items, selected, onToggle }) {
+function FilterSection({ title, items, selected, excluded = [], onToggle }) {
   const [expanded, setExpanded] = useState(false)
 
-  const selectedSet = new Set(selected)
-  const unselected  = items.filter(i => !selectedSet.has(i))
+  const pinned      = new Set([...selected, ...excluded])
+  const unselected  = items.filter(i => !pinned.has(i))
   const visible     = expanded
     ? items
-    : [...selected, ...unselected.slice(0, Math.max(0, 10 - selected.length))]
+    : [...selected, ...excluded, ...unselected.slice(0, Math.max(0, 10 - pinned.size))]
 
   return (
     <div className="mb-6">
@@ -312,9 +374,9 @@ function FilterSection({ title, items, selected, onToggle }) {
           <button
             key={item}
             onClick={() => onToggle(item)}
-            className={`chip text-xs ${selected.includes(item) ? 'chip-active' : ''}`}
+            className={`chip text-xs ${selected.includes(item) ? 'chip-active' : ''} ${excluded.includes(item) ? 'chip-excluded' : ''}`}
           >
-            {item}
+            {excluded.includes(item) ? `no ${item}` : item}
           </button>
         ))}
       </div>

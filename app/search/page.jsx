@@ -1,4 +1,4 @@
-import { searchBooks, getPopularTropes, getPopularGenres, getPopularRelationshipTypes } from '@/lib/search'
+import { searchBooks, getPopularTropes, getPopularGenres, getPopularRelationshipTypes, getPopularRepresentation } from '@/lib/search'
 import { createSupabaseServer } from '@/lib/supabase'
 import SearchClient from '@/components/SearchClient'
 
@@ -16,7 +16,11 @@ export default async function SearchPage({ searchParams }) {
   const tropes            = [searchParams.tropes].flat().filter(Boolean)
   const subjects          = [searchParams.subjects].flat().filter(Boolean)
   const genres            = [searchParams.genres].flat().filter(Boolean)
+  const representation    = [searchParams.representation].flat().filter(Boolean)
   const relationshipTypes = [searchParams.relTypes].flat().filter(Boolean)
+  const excludeTropes         = [searchParams.excludeTropes].flat().filter(Boolean)
+  const excludeGenres         = [searchParams.excludeGenres].flat().filter(Boolean)
+  const excludeRepresentation = [searchParams.excludeRepresentation].flat().filter(Boolean)
   const page              = Number(searchParams.page || 1)
   const spice          = searchParams.spice ? Number(searchParams.spice) : null
 
@@ -24,12 +28,16 @@ export default async function SearchPage({ searchParams }) {
   const { data: { session } } = await supabase.auth.getSession()
   const user = session?.user
 
-  const [{ books, total }, allTropes, allGenres, allRelTypes, shelfRes] =
+  const [{ books, total }, allTropes, allGenres, allRelTypes, allRepresentation, shelfRes] =
     await Promise.all([
-      searchBooks({ query: query || null, tropes, subjects, genres, spice, relationshipTypes, page }),
+      searchBooks({
+        query: query || null, tropes, subjects, genres, representation, spice, relationshipTypes,
+        excludeTropes, excludeGenres, excludeRepresentation, page,
+      }),
       getPopularTropes(50),
       getPopularGenres(50),
       getPopularRelationshipTypes(),
+      getPopularRepresentation(),
       user
         ? supabase.from('shelf').select('book_id, status').eq('user_id', user.id)
         : Promise.resolve({ data: [] }),
@@ -48,11 +56,16 @@ export default async function SearchPage({ searchParams }) {
         tropes={allTropes}
         genres={allGenres}
         relationshipTypes={allRelTypes}
+        representationOptions={allRepresentation}
         initialQuery={query}
         initialSelTropes={tropes}
         initialSelSubjects={subjects}
         initialSelGenres={genres}
         initialSelRelTypes={relationshipTypes}
+        initialSelRepresentation={representation}
+        initialExcludeTropes={excludeTropes}
+        initialExcludeGenres={excludeGenres}
+        initialExcludeRepresentation={excludeRepresentation}
         initialSpice={spice}
         initialPage={page}
         shelfMap={shelfMap}

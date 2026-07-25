@@ -21,6 +21,9 @@
   .chip-active {
     @apply bg-bloom text-white border-bloom;
   }
+  .chip-excluded {
+    @apply bg-gray-600 text-white border-gray-600 line-through;
+  }
 }
 
 @keyframes searchSlideIn {
