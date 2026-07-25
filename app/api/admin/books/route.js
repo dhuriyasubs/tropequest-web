@@ -162,6 +162,13 @@ export async function GET(request) {
     return NextResponse.json({ books: map })
   }
 
+  // Single book by id (deep-link from Bulk Import "edit" icon)
+  const id = searchParams.get('id')
+  if (id) {
+    const { data } = await supabaseAdmin.from('books').select(FIELDS).eq('id', id).maybeSingle()
+    return NextResponse.json({ books: data ? [data] : [] })
+  }
+
   // Pending enrichment list
   if (searchParams.get('pending') === '1') {
     const { data } = await supabaseAdmin

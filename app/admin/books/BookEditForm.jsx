@@ -845,6 +845,14 @@ export default function BookEditForm() {
       .then(r => r.json())
       .then(d => setStats(d))
       .finally(() => setStatsLoading(false))
+
+    // Deep link from Bulk Import's edit icon: /admin/books?edit=<id>
+    const editId = new URLSearchParams(window.location.search).get('edit')
+    if (editId) {
+      fetch(`/api/admin/books?id=${editId}`)
+        .then(r => r.json())
+        .then(d => { if (d.books?.[0]) selectBook(d.books[0]) })
+    }
   }, [])
 
   async function loadMissing(field) {
@@ -1128,7 +1136,10 @@ export default function BookEditForm() {
         }
         const data = await res.json()
         if (!res.ok) throw new Error(data.error)
-        setBulkBooks(bs => bs.map(b => b.slug === book.slug ? { ...b, status: book._dbStatus === 'enrich' ? 'enriched' : 'added' } : b))
+        const newId = book._dbStatus === 'enrich' ? book._dbId : data.id
+        setBulkBooks(bs => bs.map(b => b.slug === book.slug
+          ? { ...b, status: book._dbStatus === 'enrich' ? 'enriched' : 'added', _dbId: newId }
+          : b))
       } catch (err) {
         setBulkBooks(bs => bs.map(b => b.slug === book.slug ? { ...b, status: 'error', error: err.message } : b))
       }
@@ -1378,6 +1389,19 @@ export default function BookEditForm() {
                        book.status === 'error'    ? '✗ Error' :
                        book._dbStatus === 'exists' ? 'Exists' : ''}
                     </span>
+                    {book._dbId && (
+                      <a
+                        href={`/admin/books?edit=${book._dbId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Edit this book"
+                        className="shrink-0 text-slate hover:text-bloom transition-colors"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                          <path d="M13.586 3.586a2 2 0 1 1 2.828 2.828l-.793.793-2.828-2.828.793-.793ZM11.379 5.793 3 14.172V17h2.828l8.38-8.379-2.83-2.828Z" />
+                        </svg>
+                      </a>
+                    )}
                   </div>
                 ))}
               </div>
