@@ -1001,8 +1001,9 @@ export default function BookEditForm() {
     setBulkError('')
     setBulkBooks([])
     try {
-      const isSeries = /goodreads\.com\/series\//.test(bulkUrl)
-      const endpoint = isSeries ? '/api/admin/fetch-series' : '/api/admin/fetch-author'
+      const isSeries  = /goodreads\.com\/series\//.test(bulkUrl)
+      const isSimilar = /goodreads\.com\/book\/similar\//.test(bulkUrl)
+      const endpoint  = isSimilar ? '/api/admin/fetch-similar' : isSeries ? '/api/admin/fetch-series' : '/api/admin/fetch-author'
       const res  = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1304,14 +1305,14 @@ export default function BookEditForm() {
       {mode === 'bulk' && (
         <div className="space-y-6">
           <div className="bg-petal/10 rounded-xl p-4 space-y-3">
-            <label className="block text-sm font-semibold">Goodreads Author or Series URL</label>
-            <p className="text-xs text-slate">Paste a Goodreads author list URL or series page URL to extract all books at once.</p>
+            <label className="block text-sm font-semibold">Goodreads Author, Series, or Similar Books URL</label>
+            <p className="text-xs text-slate">Paste a Goodreads author list, series page, or &quot;readers also enjoyed&quot; similar-books page URL to extract all books at once.</p>
             <div className="flex gap-2">
               <input
                 type="url"
                 value={bulkUrl}
                 onChange={e => setBulkUrl(e.target.value)}
-                placeholder="https://www.goodreads.com/author/list/... or /series/..."
+                placeholder="https://www.goodreads.com/author/list/... or /series/... or /book/similar/..."
                 className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bloom/40 bg-white"
               />
               <button type="button" onClick={handleFetchAuthor} disabled={bulkFetching || !bulkUrl.trim()}
@@ -1354,7 +1355,8 @@ export default function BookEditForm() {
                     }
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{book.title}</p>
-                      <p className="text-xs text-slate">
+                      <p className="text-xs text-slate truncate">
+                        {book.author ? `${book.author} · ` : ''}
                         {book.series_name ? `${book.series_name}${book.series_number != null ? ` #${book.series_number}` : ''} · ` : ''}
                         {book.rating ? `★ ${book.rating}` : ''}
                       </p>
