@@ -37,6 +37,10 @@ export default function SearchClient({
   const [loading,  setLoading]  = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
 
+  const [smartText,    setSmartText]    = useState('')
+  const [smartLoading, setSmartLoading] = useState(false)
+  const [smartNote,    setSmartNote]    = useState(null)
+
   const [debouncedQuery] = useDebounce(query, 350)
 
   const activeFilterCount = selTropes.length + selGenres.length + selRelTypes.length + selRepresentation.length
@@ -155,9 +159,73 @@ export default function SearchClient({
     resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
+  const handleSmartSearch = async e => {
+    e.preventDefault()
+    const text = smartText.trim()
+    if (!text || smartLoading) return
+
+    setSmartLoading(true)
+    setSmartNote(null)
+    try {
+      const res = await fetch('/api/search/interpret', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Something went wrong')
+
+      const f = data.filters
+      const matchedAny = f.tropes.length || f.excludeTropes.length || f.genres.length || f.excludeGenres.length
+        || f.representation.length || f.excludeRepresentation.length || f.relationshipTypes.length || f.spice
+
+      setSelTropes(f.tropes)
+      setExclTropes(f.excludeTropes)
+      setSelGenres(f.genres)
+      setExclGenres(f.excludeGenres)
+      setSelRepresentation(f.representation)
+      setExclRepresentation(f.excludeRepresentation)
+      setSelRelTypes(f.relationshipTypes)
+      setSpice(f.spice)
+      setQuery(matchedAny ? (f.query || '') : text)
+
+      trackEvent('smart_search', { text, ...f, matched: !!matchedAny })
+      setSmartNote(matchedAny ? null : "Couldn't match specific filters — searching by keyword instead.")
+    } catch (err) {
+      setSmartNote(err.message)
+    } finally {
+      setSmartLoading(false)
+    }
+  }
+
   const totalPages = Math.ceil(total / 20)
 
   return (
+    <div>
+      <form onSubmit={handleSmartSearch} className="mb-6 rounded-xl border border-petal/40 bg-pink-50/40 p-3 sm:p-4">
+        <label htmlFor="smart-search" className="block text-sm font-semibold mb-1.5">
+          Describe what you&apos;re looking for
+        </label>
+        <div className="flex gap-2">
+          <input
+            id="smart-search"
+            type="text"
+            value={smartText}
+            onChange={e => setSmartText(e.target.value)}
+            placeholder="e.g. enemies to lovers, but the heroine isn&apos;t a virgin"
+            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-bloom"
+          />
+          <button
+            type="submit"
+            disabled={smartLoading || !smartText.trim()}
+            className="px-4 py-2 rounded-lg bg-bloom text-white text-sm font-medium shrink-0 disabled:opacity-50"
+          >
+            {smartLoading ? 'Thinking…' : 'Find books'}
+          </button>
+        </div>
+        {smartNote && <p className="text-xs text-slate/70 mt-2">{smartNote}</p>}
+      </form>
+
     <div className="flex flex-col lg:flex-row gap-8">
 
       {/* ── Desktop sidebar ── */}
@@ -353,6 +421,7 @@ export default function SearchClient({
         </>
       )}
 
+    </div>
     </div>
   )
 }
