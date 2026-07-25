@@ -173,12 +173,6 @@ function buildAmazonUSUrl(title, author) {
   return `https://www.amazon.com/s?k=${q}`
 }
 
-function buildFlipkartUrl(title, author) {
-  if (!title || !author) return ''
-  const q = encodeURIComponent(`${title} ${author}`)
-  return `https://www.flipkart.com/search?q=${q}&otracker=search`
-}
-
 function buildAbeBooksUrl(title, author) {
   if (!title || !author) return ''
   const q = encodeURIComponent(`${title} ${author}`)
@@ -273,7 +267,7 @@ function normaliseBook(b) {
     release_year:    b.release_year    ?? '',
     buy_url_amazon_us: b.buy_url_amazon_us || buildAmazonUSUrl(b.title, b.author) || '',
     buy_url_amazon_in: b.buy_url_amazon_in || buildAmazonInUrl(b.title, b.author) || '',
-    buy_url_flipkart:  b.buy_url_flipkart  || buildFlipkartUrl(b.title, b.author) || '',
+    buy_url_flipkart:  b.buy_url_flipkart  || '',
     buy_url_abebooks:  b.buy_url_abebooks  || buildAbeBooksUrl(b.title, b.author) || '',
     buy_url_bookscape: b.buy_url_bookscape || buildBookscapeUrl(b.title) || '',
     buy_url_wattpad:     b.buy_url_wattpad     ?? '',
@@ -934,7 +928,6 @@ export default function BookEditForm() {
         if (!b._slugEdited) updated.slug = toSlug(t, a)
         updated.buy_url_amazon_us = buildAmazonUSUrl(t, a)
         updated.buy_url_amazon_in = buildAmazonInUrl(t, a)
-        updated.buy_url_flipkart  = buildFlipkartUrl(t, a)
         updated.buy_url_abebooks  = buildAbeBooksUrl(t, a)
         updated.buy_url_bookscape = buildBookscapeUrl(t)
       }
@@ -988,7 +981,7 @@ export default function BookEditForm() {
           rating_source:     b.rating_source ?? prev.rating_source,
           buy_url_amazon_us: isAmazonUS ? fetchedUrl : (b.buy_url_amazon_us || buildAmazonUSUrl(title, author) || prev.buy_url_amazon_us),
           buy_url_amazon_in: b.buy_url_amazon_in || buildAmazonInUrl(title, author) || prev.buy_url_amazon_in,
-          buy_url_flipkart:  buildFlipkartUrl(title, author) || prev.buy_url_flipkart,
+          buy_url_flipkart:  b.buy_url_flipkart || prev.buy_url_flipkart,
           buy_url_abebooks:  buildAbeBooksUrl(title, author) || prev.buy_url_abebooks,
           buy_url_bookscape: buildBookscapeUrl(title) || prev.buy_url_bookscape,
           data_source:       ds,
@@ -1078,9 +1071,9 @@ export default function BookEditForm() {
             rating:           book.rating        ?? null,
             rating_count:     book.rating_count  ?? null,
             rating_source:    book.rating_source || null,
-            buy_url_amazon_us: book.buy_url_amazon_us || buildAmazonUSUrl(book.title.trim(), normalizeAuthor(book.author)) || null,
-            buy_url_amazon_in: buildAmazonInUrl(book.title.trim(), normalizeAuthor(book.author)) || null,
-            buy_url_flipkart:  buildFlipkartUrl(book.title.trim(), normalizeAuthor(book.author)) || null,
+            buy_url_amazon_us: book.buy_url_amazon_us || null,
+            buy_url_amazon_in: book.buy_url_amazon_in || null,
+            buy_url_flipkart:  book.buy_url_flipkart  || null,
             buy_url_abebooks:  buildAbeBooksUrl(book.title.trim(), normalizeAuthor(book.author)) || null,
             buy_url_bookscape: buildBookscapeUrl(book.title.trim()) || null,
             genres:           [],
@@ -1104,9 +1097,9 @@ export default function BookEditForm() {
               const ENRICHABLE = ['cover_url', 'rating', 'rating_count', 'rating_source', 'series_name', 'series_number', 'buy_url_amazon_us', 'buy_url_amazon_in', 'buy_url_flipkart', 'buy_url_abebooks', 'buy_url_bookscape']
               const enrichBook = {
                 ...book,
-                buy_url_amazon_us: book.buy_url_amazon_us || buildAmazonUSUrl(book.title.trim(), book.author.trim()),
-                buy_url_amazon_in: book.buy_url_amazon_in || buildAmazonInUrl(book.title.trim(), book.author.trim()),
-                buy_url_flipkart:  book.buy_url_flipkart  || buildFlipkartUrl(book.title.trim(), book.author.trim()),
+                buy_url_amazon_us: book.buy_url_amazon_us || null,
+                buy_url_amazon_in: book.buy_url_amazon_in || null,
+                buy_url_flipkart:  book.buy_url_flipkart  || null,
                 buy_url_abebooks:  book.buy_url_abebooks  || buildAbeBooksUrl(book.title.trim(), book.author.trim()),
                 buy_url_bookscape: book.buy_url_bookscape || buildBookscapeUrl(book.title.trim()),
               }
