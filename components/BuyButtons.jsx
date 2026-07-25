@@ -7,7 +7,7 @@ const STORES = [
   { key: 'amazon_in', label: 'Amazon IN', urlKey: 'buy_url_amazon_in', priceKey: 'price_amazon_in', flag: '🇮🇳', currency: '₹' },
   { key: 'amazon_us', label: 'Amazon US', urlKey: 'buy_url_amazon_us', priceKey: 'price_amazon_us', flag: '🇺🇸', currency: '$' },
   { key: 'flipkart',  label: 'Flipkart',  urlKey: 'buy_url_flipkart',  priceKey: null,              flag: '🛒' },
-  { key: 'abebooks',   label: 'AbeBooks',   urlKey: 'buy_url_abebooks',   priceKey: null, flag: '📦' },
+  { key: 'abebooks',   label: 'AbeBooks',   urlKey: 'buy_url_abebooks',   priceKey: 'price_abebooks', flag: '📦', currency: '$' },
   { key: 'bookscape',  label: 'Bookscape',  urlKey: 'buy_url_bookscape',  priceKey: null, flag: '🏪' },
   { key: 'audible',    label: 'Audible',    urlKey: 'buy_url_audible',    priceKey: null, flag: '🎧' },
   { key: 'wattpad',    label: 'Wattpad',    urlKey: 'buy_url_wattpad',    priceKey: null, flag: '📖', readOnly: true },

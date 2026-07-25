@@ -21,7 +21,7 @@ const EMPTY_BOOK = {
   buy_url_amazon_us: '', buy_url_amazon_in: '', buy_url_flipkart: '',
   buy_url_abebooks: '', buy_url_bookscape: '', buy_url_wattpad: '', buy_url_stck: '', buy_url_royal_road: '', buy_url_audible: '',
   is_kindle_unlimited: false,
-  price_amazon_us: '', price_amazon_in: '',
+  price_amazon_us: '', price_amazon_in: '', price_abebooks: '',
   spice_rating: '',
   adaptations: [],
 }
@@ -236,6 +236,7 @@ function buildPayload(book, isNew) {
     is_kindle_unlimited: !!book.is_kindle_unlimited,
     price_amazon_in:   book.price_amazon_in  !== '' ? Number(book.price_amazon_in)  : null,
     price_amazon_us:   book.price_amazon_us  !== '' ? Number(book.price_amazon_us)  : null,
+    price_abebooks:    book.price_abebooks   !== '' ? Number(book.price_abebooks)   : null,
     spice_rating:      book.spice_rating     !== '' ? Number(book.spice_rating)     : null,
     adaptations:       Array.isArray(book.adaptations) ? book.adaptations : [],
     data_source:       book.data_source      ?? {},
@@ -277,6 +278,7 @@ function normaliseBook(b) {
     is_kindle_unlimited: b.is_kindle_unlimited ?? false,
     price_amazon_us:   b.price_amazon_us   ?? '',
     price_amazon_in:   b.price_amazon_in   ?? '',
+    price_abebooks:    b.price_abebooks    ?? '',
     spice_rating:      b.spice_rating      ?? '',
     adaptations:       Array.isArray(b.adaptations) ? b.adaptations : [],
     data_source:       b.data_source       ?? {},
@@ -762,6 +764,10 @@ function BookFields({ book, set }) {
         <div>
           <label className="block text-xs text-slate mb-1">AbeBooks URL</label>
           <input type="text" value={book.buy_url_abebooks} onChange={e => set('buy_url_abebooks', e.target.value)} className={inputCls} />
+        </div>
+        <div>
+          <label className="block text-xs text-slate mb-1">Price AbeBooks ($)</label>
+          <input type="number" step="0.01" value={book.price_abebooks} onChange={e => set('price_abebooks', e.target.value)} className={inputCls} />
         </div>
         <div>
           <label className="block text-xs text-slate mb-1">Bookscape URL</label>
