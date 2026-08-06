@@ -15,20 +15,29 @@ export async function GET(request) {
 
   const BOT_AGENTS = ['googlebot', 'googleother', 'bingbot', 'ahrefsbot', 'semrushbot', 'petalbot', 'yandexbot']
 
-  let query = supabaseAdmin
-    .from('page_events')
-    .select('event_type, user_agent, traffic_source, data, created_at')
-    .gte('created_at', from)
-    .lte('created_at', to)
-    .order('created_at', { ascending: true })
-    .limit(50000)
+  // PostgREST caps rows per request at its own db-max-rows setting (default 1000)
+  // regardless of .limit(), so page through with .range() to get everything.
+  const PAGE_SIZE = 1000
+  const rows = []
+  for (let page = 0; ; page++) {
+    let query = supabaseAdmin
+      .from('page_events')
+      .select('event_type, user_agent, traffic_source, data, created_at')
+      .gte('created_at', from)
+      .lte('created_at', to)
+      .order('created_at', { ascending: true })
+      .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1)
 
-  for (const bot of BOT_AGENTS) {
-    query = query.not('user_agent', 'ilike', `%${bot}%`)
+    for (const bot of BOT_AGENTS) {
+      query = query.not('user_agent', 'ilike', `%${bot}%`)
+    }
+
+    const { data, error } = await query
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+    rows.push(...data)
+    if (data.length < PAGE_SIZE) break
   }
 
-  const { data, error } = await query
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ rows: data })
+  return NextResponse.json({ rows })
 }
