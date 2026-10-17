@@ -80,16 +80,23 @@ export default async function BookPage({ params }) {
   const user = session?.user
   let isSaved = false
   let shelfStatus = null
+  let shelfFormat = 'physical'
+  let shelfMember = null
   let userRating = null
+  let knownMembers = []
   if (user) {
-    const [tbrRes, shelfRes, ratingRes] = await Promise.all([
+    const [tbrRes, shelfRes, ratingRes, membersRes] = await Promise.all([
       supabase.from('tbr').select('id').eq('user_id', user.id).eq('book_id', book.id).single(),
-      supabase.from('shelf').select('status').eq('user_id', user.id).eq('book_id', book.id).single(),
+      supabase.from('shelf').select('status, format, member_label').eq('user_id', user.id).eq('book_id', book.id).single(),
       supabase.from('ratings').select('rating').eq('user_id', user.id).eq('book_id', book.id).single(),
+      supabase.from('shelf').select('member_label').eq('user_id', user.id).not('member_label', 'is', null),
     ])
     isSaved = !!tbrRes.data
     shelfStatus = shelfRes.data?.status ?? null
+    shelfFormat = shelfRes.data?.format ?? 'physical'
+    shelfMember = shelfRes.data?.member_label ?? null
     userRating = ratingRes.data?.rating ?? null
+    knownMembers = [...new Set((membersRes.data ?? []).map(r => r.member_label))].sort()
   }
 
   // Community ratings for this book (public data, no need for the cookie-bound client)
@@ -306,7 +313,15 @@ export default async function BookPage({ params }) {
             <div className="flex items-center gap-3 mt-4 flex-wrap">
               <BuyButtons book={book} />
               <TbrButton bookId={book.id} initialSaved={isSaved} />
-              {!isWebFictionOnly(book) && <ShelfControls bookId={book.id} initialStatus={shelfStatus} />}
+              {!isWebFictionOnly(book) && (
+                <ShelfControls
+                  bookId={book.id}
+                  initialStatus={shelfStatus}
+                  initialFormat={shelfFormat}
+                  initialMember={shelfMember}
+                  knownMembers={knownMembers}
+                />
+              )}
             </div>
 
             {/* Description */}
