@@ -53,12 +53,43 @@ export default function ShelfContent({ entries }) {
   }, [entries, query, activeStatus])
 
   const { genreMap, sortedGenres } = useMemo(() => {
+    // Classify by series, not by individual book — otherwise books in the
+    // same series with slightly different genre tags (e.g. Fourth Wing
+    // tagged more "fantasy", Iron Flame tagged more "romance") can split
+    // across sections. Pool every entry's genres under a series first, vote once.
+    const seriesGenrePool = new Map()
+    for (const entry of filtered) {
+      const sn = entry.books.series_name
+      if (!sn) continue
+      if (!seriesGenrePool.has(sn)) seriesGenrePool.set(sn, [])
+      seriesGenrePool.get(sn).push(...(entry.books.genres ?? []))
+    }
+    const seriesGroup = new Map(
+      [...seriesGenrePool].map(([sn, genres]) => [sn, classifyGenreGroup(genres) || UNCATEGORISED_LABEL])
+    )
+
     const map = new Map()
     for (const entry of filtered) {
-      const genre = classifyGenreGroup(entry.books.genres) || UNCATEGORISED_LABEL
+      const sn = entry.books.series_name
+      const genre = sn ? seriesGroup.get(sn) : (classifyGenreGroup(entry.books.genres) || UNCATEGORISED_LABEL)
       if (!map.has(genre)) map.set(genre, [])
       map.get(genre).push(entry)
     }
+
+    // Within a section, cluster series together and order by series_number
+    // (stored as text in the DB — must compare numerically, not lexicographically)
+    for (const group of map.values()) {
+      group.sort((a, b) => {
+        const an = a.books.series_name?.toLowerCase() ?? ''
+        const bn = b.books.series_name?.toLowerCase() ?? ''
+        if (an !== bn) return an.localeCompare(bn)
+        const aSeq = parseFloat(a.books.series_number) || 999
+        const bSeq = parseFloat(b.books.series_number) || 999
+        if (aSeq !== bSeq) return aSeq - bSeq
+        return a.books.title.localeCompare(b.books.title)
+      })
+    }
+
     const sorted = [...map.keys()].sort((a, b) => {
       if (a === UNCATEGORISED_LABEL) return 1
       if (b === UNCATEGORISED_LABEL) return -1
@@ -184,7 +215,9 @@ export default function ShelfContent({ entries }) {
                       </div>
                       <p className="text-sm text-slate mt-0.5">{book.author}</p>
                       {book.series_name && (
-                        <p className="text-xs text-slate/60 mt-0.5 line-clamp-1">{book.series_name}</p>
+                        <p className="text-xs text-slate/60 mt-0.5 line-clamp-1">
+                          {book.series_name}{book.series_number ? ` · Book ${book.series_number}` : ''}
+                        </p>
                       )}
                       {book.tropes?.length > 0 && (
                         <p className="text-xs text-slate/70 mt-1.5 line-clamp-1">
