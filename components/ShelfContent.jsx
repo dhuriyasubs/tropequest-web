@@ -21,15 +21,29 @@ export default function ShelfContent({ entries }) {
   const [query, setQuery]           = useState('')
   const [activeStatus, setStatus]   = useState('')
   const [view, setView]             = useState('list')
+  const [collapsed, setCollapsed]   = useState(new Set())
 
   useEffect(() => {
     const saved = localStorage.getItem('shelfViewMode')
     if (saved === 'list' || saved === 'shelf') setView(saved)
+    try {
+      const savedCollapsed = JSON.parse(localStorage.getItem('shelfCollapsedSections') ?? '[]')
+      setCollapsed(new Set(savedCollapsed))
+    } catch { /* ignore malformed storage */ }
   }, [])
 
   function changeView(mode) {
     setView(mode)
     localStorage.setItem('shelfViewMode', mode)
+  }
+
+  function toggleSection(genre) {
+    setCollapsed(prev => {
+      const next = new Set(prev)
+      next.has(genre) ? next.delete(genre) : next.add(genre)
+      localStorage.setItem('shelfCollapsedSections', JSON.stringify([...next]))
+      return next
+    })
   }
 
   const statusCounts = useMemo(() => {
@@ -182,13 +196,24 @@ export default function ShelfContent({ entries }) {
         </p>
       ) : (
         <div className="space-y-8">
-          {sortedGenres.map(genre => (
+          {sortedGenres.map(genre => {
+            const isCollapsed = collapsed.has(genre)
+            return (
             <section key={genre}>
-              <h2 className="font-serif text-lg font-semibold text-ink mb-3 flex items-center gap-2">
+              <button
+                onClick={() => toggleSection(genre)}
+                className="w-full font-serif text-lg font-semibold text-ink mb-3 flex items-center gap-2 text-left"
+              >
+                <svg
+                  className={`w-4 h-4 text-slate shrink-0 transition-transform ${isCollapsed ? '-rotate-90' : ''}`}
+                  viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                >
+                  <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
                 {genre}
                 <span className="text-sm font-normal text-slate">({genreMap.get(genre).length})</span>
-              </h2>
-              {view === 'shelf' ? (
+              </button>
+              {!isCollapsed && (view === 'shelf' ? (
                 <ShelfSpines entries={genreMap.get(genre)} />
               ) : (
               <div className="grid gap-3">
@@ -235,9 +260,9 @@ export default function ShelfContent({ entries }) {
                   </div>
                 ))}
               </div>
-              )}
+              ))}
             </section>
-          ))}
+          )})}
         </div>
       )}
     </>
