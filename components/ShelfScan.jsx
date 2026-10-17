@@ -1,5 +1,5 @@
 'use client'
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import ReactCrop from 'react-image-crop'
 import 'react-image-crop/dist/ReactCrop.css'
@@ -131,12 +131,13 @@ function mergeBooks(existing, incoming) {
   ]
 }
 
-export default function ShelfScan({ showLabel = false, mode = 'shelf', knownMembers = [] }) {
+export default function ShelfScan({ showLabel = false, mode = 'shelf', knownMembers = [], existingBookIds = [] }) {
   const fileRef    = useRef(null)
   const galleryRef = useRef(null)
   const pickerRef  = useRef(null)
   const imgRef     = useRef(null)
   const router     = useRouter()
+  const existingSet = useMemo(() => new Set(existingBookIds), [existingBookIds])
 
   // phases: idle | picking | crop | scanning | results
   const [phase,     setPhase]     = useState('idle')
@@ -204,7 +205,10 @@ export default function ShelfScan({ showLabel = false, mode = 'shelf', knownMemb
       if (failed.length) console.error('[ShelfScan] insert failures:', failed.map(b => `${b.title}: ${b.insertError}`))
       setBooks(prev => {
         const merged = mergeBooks(prev, incoming)
-        setSelected(new Set(merged.map((_, i) => i)))
+        const alreadyShelved = id => mode !== 'tbr' && id && existingSet.has(id)
+        setSelected(new Set(
+          merged.map((_, i) => i).filter(i => !alreadyShelved(merged[i]?.dbBook?.id))
+        ))
         return merged
       })
       setPhase('results')
@@ -237,7 +241,10 @@ export default function ShelfScan({ showLabel = false, mode = 'shelf', knownMemb
 
   async function addBooks() {
     setAdding(true)
-    const toAdd = [...selected].map(i => books[i]?.dbBook?.id).filter(Boolean)
+    const selectedIds = [...selected].map(i => books[i]?.dbBook?.id).filter(Boolean)
+    const alreadyShelved = mode !== 'tbr' ? selectedIds.filter(id => existingSet.has(id)) : []
+    const toAdd = selectedIds.filter(id => !alreadyShelved.includes(id))
+
     if (mode === 'tbr') {
       await fetch('/api/tbr', {
         method:  'POST',
@@ -255,9 +262,10 @@ export default function ShelfScan({ showLabel = false, mode = 'shelf', knownMemb
     }
     setAdding(false)
     const dest = mode === 'tbr' ? 'TBR' : 'shelf'
-    window.dispatchEvent(new CustomEvent('toast', {
-      detail: { message: `${toAdd.length} book${toAdd.length !== 1 ? 's' : ''} added to ${dest}!` },
-    }))
+    const message = alreadyShelved.length > 0
+      ? `${toAdd.length} book${toAdd.length !== 1 ? 's' : ''} added to ${dest} · ${alreadyShelved.length} already on shelf`
+      : `${toAdd.length} book${toAdd.length !== 1 ? 's' : ''} added to ${dest}!`
+    window.dispatchEvent(new CustomEvent('toast', { detail: { message } }))
     closeAll()
     router.refresh()
   }
@@ -442,6 +450,7 @@ export default function ShelfScan({ showLabel = false, mode = 'shelf', knownMemb
               {books.map((b, i) => {
                 const showFeedback = feedback.has(i)
                 const isSelected = selected.has(i)
+                const alreadyShelved = mode !== 'tbr' && b.dbBook?.id && existingSet.has(b.dbBook.id)
                 return (
                   <div
                     key={i}
@@ -467,6 +476,9 @@ export default function ShelfScan({ showLabel = false, mode = 'shelf', knownMemb
                           {b.dbBook?.title ?? b.title}
                           {userEmail === 'dhuriya.subs@gmail.com' && b.isNew && (
                             <span className="text-[10px] font-semibold bg-bloom/10 text-bloom px-1.5 py-0.5 rounded-full shrink-0">New</span>
+                          )}
+                          {alreadyShelved && (
+                            <span className="text-[10px] font-medium bg-petal/15 text-plum px-1.5 py-0.5 rounded-full shrink-0">Already on shelf</span>
                           )}
                         </p>
                         <p className="text-xs text-slate">{b.dbBook?.author ?? b.author}</p>

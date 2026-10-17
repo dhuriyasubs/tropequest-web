@@ -39,7 +39,7 @@ export default async function ShelfPage() {
           <div className="flex gap-1.5 sm:gap-2 items-center shrink-0">
             <ShareButton className="[&_span]:hidden sm:[&_span]:inline" />
             <ShelfSearch existingBookIds={entries.map(e => e.books.id)} knownMembers={knownMembers} />
-            <ShelfScan knownMembers={knownMembers} />
+            <ShelfScan knownMembers={knownMembers} existingBookIds={entries.map(e => e.books.id)} />
           </div>
         </div>
       </div>
