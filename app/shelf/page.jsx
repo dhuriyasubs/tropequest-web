@@ -22,6 +22,7 @@ export default async function ShelfPage() {
     .order('created_at', { ascending: false })
 
   const entries = (allData ?? []).filter(e => e.books)
+  const knownMembers = [...new Set(entries.map(e => e.member_label).filter(Boolean))].sort()
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 sm:py-10">
@@ -37,8 +38,8 @@ export default async function ShelfPage() {
           </div>
           <div className="flex gap-1.5 sm:gap-2 items-center shrink-0">
             <ShareButton className="[&_span]:hidden sm:[&_span]:inline" />
-            <ShelfSearch existingBookIds={entries.map(e => e.books.id)} />
-            <ShelfScan />
+            <ShelfSearch existingBookIds={entries.map(e => e.books.id)} knownMembers={knownMembers} />
+            <ShelfScan knownMembers={knownMembers} />
           </div>
         </div>
       </div>

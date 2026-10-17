@@ -1,14 +1,16 @@
 'use client'
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
+import ShelfAddDefaults from '@/components/ShelfAddDefaults'
 
-export default function ShelfSearch({ existingBookIds = [] }) {
+export default function ShelfSearch({ existingBookIds = [], knownMembers = [] }) {
   const [open,    setOpen]    = useState(false)
   const [query,   setQuery]   = useState('')
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(false)
   const [added,   setAdded]   = useState(new Set())  // bookIds added this session
   const [adding,  setAdding]  = useState(null)        // bookId being added
+  const [defaults, setDefaults] = useState({ status: 'unread', format: 'physical', member: null })
   const existingSet = useMemo(() => new Set(existingBookIds), [existingBookIds])
 
   const [manualOpen,   setManualOpen]   = useState(false)
@@ -61,7 +63,7 @@ export default function ShelfSearch({ existingBookIds = [] }) {
     const res = await fetch('/api/shelf', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ bookId: book.id, status: 'unread' }),
+      body:    JSON.stringify({ bookId: book.id, status: defaults.status, format: defaults.format, member: defaults.member }),
     })
     if (res.ok) {
       const { status } = await res.json()
@@ -92,7 +94,10 @@ export default function ShelfSearch({ existingBookIds = [] }) {
       const res  = await fetch('/api/shelf/manual-add', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ title, author: manualAuthor.trim() || null }),
+        body:    JSON.stringify({
+          title, author: manualAuthor.trim() || null,
+          status: defaults.status, format: defaults.format, member: defaults.member,
+        }),
       })
       const data = await res.json()
       if (res.ok) {
@@ -139,6 +144,14 @@ export default function ShelfSearch({ existingBookIds = [] }) {
               className="w-full text-sm px-3 py-2 rounded-lg border border-petal/30 focus:outline-none focus:ring-2 focus:ring-bloom/30"
             />
           </div>
+
+          <ShelfAddDefaults
+            status={defaults.status}
+            format={defaults.format}
+            member={defaults.member}
+            knownMembers={knownMembers}
+            onChange={patch => setDefaults(d => ({ ...d, ...patch }))}
+          />
 
           <div className="max-h-72 overflow-y-auto">
             {loading && (

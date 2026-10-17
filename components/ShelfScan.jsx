@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import ReactCrop from 'react-image-crop'
 import 'react-image-crop/dist/ReactCrop.css'
 import { createSupabaseBrowser } from '@/lib/supabase-browser'
+import ShelfAddDefaults from '@/components/ShelfAddDefaults'
 
 function FeedbackForm({ book, onDone, onCorrect }) {
   const [correctTitle,  setCorrectTitle]  = useState(book.dbBook?.title  ?? book.title)
@@ -130,7 +131,7 @@ function mergeBooks(existing, incoming) {
   ]
 }
 
-export default function ShelfScan({ showLabel = false, mode = 'shelf' }) {
+export default function ShelfScan({ showLabel = false, mode = 'shelf', knownMembers = [] }) {
   const fileRef    = useRef(null)
   const galleryRef = useRef(null)
   const pickerRef  = useRef(null)
@@ -147,6 +148,7 @@ export default function ShelfScan({ showLabel = false, mode = 'shelf' }) {
   const [error,     setError]     = useState(null)
   const [feedback,  setFeedback]  = useState(new Set())
   const [userEmail, setUserEmail] = useState(null)
+  const [defaults,  setDefaults]  = useState({ status: 'unread', format: 'physical', member: null })
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -247,7 +249,7 @@ export default function ShelfScan({ showLabel = false, mode = 'shelf' }) {
         fetch('/api/shelf', {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ bookId, status: 'unread' }),
+          body:    JSON.stringify({ bookId, status: defaults.status, format: defaults.format, member: defaults.member }),
         })
       ))
     }
@@ -422,6 +424,16 @@ export default function ShelfScan({ showLabel = false, mode = 'shelf' }) {
                 </button>
               </div>
             </div>
+
+            {mode !== 'tbr' && (
+              <ShelfAddDefaults
+                status={defaults.status}
+                format={defaults.format}
+                member={defaults.member}
+                knownMembers={knownMembers}
+                onChange={patch => setDefaults(d => ({ ...d, ...patch }))}
+              />
+            )}
 
             <div className="overflow-y-auto flex-1 p-4 space-y-2">
               {books.length === 0 && (
