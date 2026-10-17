@@ -7,12 +7,14 @@ const OPTIONS = [
   { value: 'unread',  label: 'Unread'  },
   { value: 'reading', label: 'Reading' },
   { value: 'read',    label: 'Read'    },
+  { value: 'dnf',     label: 'DNF'     },
 ]
 
 const COLORS = {
   unread:  'bg-petal/30 text-plum',
   reading: 'bg-bloom/20 text-bloom',
   read:    'bg-green-100 text-green-700',
+  dnf:     'bg-gray-200 text-slate',
 }
 
 export default function ShelfStatusSelect({ bookId, currentStatus, onStatusChange }) {

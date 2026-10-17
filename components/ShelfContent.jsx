@@ -4,6 +4,7 @@ import Link from 'next/link'
 import ShelfButton from '@/components/ShelfButton'
 import ShelfStatusSelect from '@/components/ShelfStatusSelect'
 import ShelfSpines from '@/components/ShelfSpines'
+import ShelfFormatToggle from '@/components/ShelfFormatToggle'
 import { GENRE_GROUPS, classifyGenreGroup } from '@/lib/taxonomy'
 
 const GROUP_ORDER = Object.keys(GENRE_GROUPS)
@@ -13,6 +14,7 @@ const STATUSES = [
   { value: 'unread',  label: 'Unread'  },
   { value: 'reading', label: 'Reading' },
   { value: 'read',    label: 'Read'    },
+  { value: 'dnf',     label: 'DNF'     },
 ]
 
 const UNCATEGORISED_LABEL = 'Off the Map'
@@ -47,7 +49,7 @@ export default function ShelfContent({ entries }) {
   }
 
   const statusCounts = useMemo(() => {
-    const c = { unread: 0, reading: 0, read: 0 }
+    const c = { unread: 0, reading: 0, read: 0, dnf: 0 }
     for (const e of entries) c[e.status] = (c[e.status] ?? 0) + 1
     return c
   }, [entries])
@@ -217,7 +219,7 @@ export default function ShelfContent({ entries }) {
                 <ShelfSpines entries={genreMap.get(genre)} />
               ) : (
               <div className="grid gap-3">
-                {genreMap.get(genre).map(({ status, books: book }) => (
+                {genreMap.get(genre).map(({ status, format, books: book }) => (
                   <div key={book.id} className="flex gap-4 p-4 rounded-xl border border-petal/30 bg-white">
                     <Link
                       href={`/books/${book.slug}`}
@@ -252,6 +254,7 @@ export default function ShelfContent({ entries }) {
                       <div className="flex items-center gap-3 mt-3">
                         <ShelfButton bookId={book.id} initialStatus={status} />
                         <span className="text-xs text-slate">Remove from shelf</span>
+                        <ShelfFormatToggle bookId={book.id} currentFormat={format} />
                         {book.rating && (
                           <span className="text-xs text-slate ml-auto">★ {book.rating.toFixed(1)}</span>
                         )}
