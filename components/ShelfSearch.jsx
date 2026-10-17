@@ -28,22 +28,35 @@ export default function ShelfSearch({ existingBookIds = [] }) {
     }
   }, [open])
 
-  // Debounced search
+  // Debounced search — guarded against out-of-order responses, since a
+  // multi-word query (e.g. author full names) can take longer to resolve
+  // than a later, shorter one and would otherwise overwrite it on arrival.
   useEffect(() => {
     if (!query.trim()) { setResults([]); return }
+    const controller = new AbortController()
     const t = setTimeout(async () => {
       setLoading(true)
       try {
-        const res  = await fetch(`/api/search?q=${encodeURIComponent(query.trim())}&page=1&coreOnly=false`)
+        const res  = await fetch(`/api/search?q=${encodeURIComponent(query.trim())}&page=1&coreOnly=false`, {
+          signal: controller.signal,
+        })
         const data = await res.json()
         setResults(data.books ?? [])
-      } catch { setResults([]) }
+      } catch (err) {
+        if (err.name !== 'AbortError') setResults([])
+      }
       setLoading(false)
     }, 300)
-    return () => clearTimeout(t)
+    return () => { clearTimeout(t); controller.abort() }
   }, [query])
 
   async function addToShelf(book) {
+    if (existingSet.has(book.id)) {
+      window.dispatchEvent(new CustomEvent('toast', {
+        detail: { message: `"${book.title}" is already on your shelf` },
+      }))
+      return
+    }
     setAdding(book.id)
     const res = await fetch('/api/shelf', {
       method:  'POST',
@@ -157,26 +170,17 @@ export default function ShelfSearch({ existingBookIds = [] }) {
                   <p className="text-sm font-medium line-clamp-1">{book.title}</p>
                   <p className="text-xs text-slate">{book.author}</p>
                 </div>
-                {existingSet.has(book.id) ? (
-                  <span
-                    className="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg bg-gray-100 text-slate cursor-default"
-                    title="Already on your shelf"
-                  >
-                    Already in shelf
-                  </span>
-                ) : (
-                  <button
-                    onClick={() => addToShelf(book)}
-                    disabled={adding === book.id || added.has(book.id)}
-                    className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${
-                      added.has(book.id)
-                        ? 'bg-green-100 text-green-700 cursor-default'
-                        : 'bg-bloom/10 text-bloom hover:bg-bloom hover:text-white disabled:opacity-50'
-                    }`}
-                  >
-                    {adding === book.id ? '…' : added.has(book.id) ? 'Added ✓' : '+ Add'}
-                  </button>
-                )}
+                <button
+                  onClick={() => addToShelf(book)}
+                  disabled={adding === book.id || added.has(book.id)}
+                  className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${
+                    added.has(book.id)
+                      ? 'bg-green-100 text-green-700 cursor-default'
+                      : 'bg-bloom/10 text-bloom hover:bg-bloom hover:text-white disabled:opacity-50'
+                  }`}
+                >
+                  {adding === book.id ? '…' : added.has(book.id) ? 'Added ✓' : '+ Add'}
+                </button>
               </div>
             ))}
 
