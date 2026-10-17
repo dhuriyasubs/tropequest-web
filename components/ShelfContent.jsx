@@ -4,6 +4,9 @@ import Link from 'next/link'
 import ShelfButton from '@/components/ShelfButton'
 import ShelfStatusSelect from '@/components/ShelfStatusSelect'
 import ShelfSpines from '@/components/ShelfSpines'
+import { GENRE_GROUPS, classifyGenreGroup } from '@/lib/taxonomy'
+
+const GROUP_ORDER = Object.keys(GENRE_GROUPS)
 
 const STATUSES = [
   { value: '',        label: 'All'     },
@@ -52,14 +55,14 @@ export default function ShelfContent({ entries }) {
   const { genreMap, sortedGenres } = useMemo(() => {
     const map = new Map()
     for (const entry of filtered) {
-      const genre = entry.books.genres?.[0] || UNCATEGORISED_LABEL
+      const genre = classifyGenreGroup(entry.books.genres) || UNCATEGORISED_LABEL
       if (!map.has(genre)) map.set(genre, [])
       map.get(genre).push(entry)
     }
     const sorted = [...map.keys()].sort((a, b) => {
       if (a === UNCATEGORISED_LABEL) return 1
       if (b === UNCATEGORISED_LABEL) return -1
-      return a.localeCompare(b)
+      return GROUP_ORDER.indexOf(a) - GROUP_ORDER.indexOf(b)
     })
     return { genreMap: map, sortedGenres: sorted }
   }, [filtered])
