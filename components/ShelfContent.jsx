@@ -208,7 +208,7 @@ export default function ShelfContent({ entries }) {
                     </Link>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <Link href={`/books/${book.slug}`} className="font-semibold text-ink hover:text-bloom line-clamp-1">
+                        <Link href={`/books/${book.slug}`} className="font-semibold text-ink hover:text-bloom line-clamp-2">
                           {book.title}
                         </Link>
                         <ShelfStatusSelect bookId={book.id} currentStatus={status} />
