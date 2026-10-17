@@ -56,9 +56,26 @@ export default function ShelfContent({ entries }) {
     })
   }
 
+  // Member is the primary filter — status counts are scoped to whichever
+  // member is active, so picking "Mine" then looking at "Read" shows read
+  // counts for your own books only, not everyone's.
+  const memberScopedEntries = useMemo(() => {
+    if (!activeMember) return entries
+    return entries.filter(e => activeMember === MINE ? !e.member_label : e.member_label === activeMember)
+  }, [entries, activeMember])
+
   const statusCounts = useMemo(() => {
     const c = { unread: 0, reading: 0, read: 0, dnf: 0 }
-    for (const e of entries) c[e.status] = (c[e.status] ?? 0) + 1
+    for (const e of memberScopedEntries) c[e.status] = (c[e.status] ?? 0) + 1
+    return c
+  }, [memberScopedEntries])
+
+  const memberCounts = useMemo(() => {
+    const c = {}
+    for (const e of entries) {
+      const key = e.member_label || MINE
+      c[key] = (c[key] ?? 0) + 1
+    }
     return c
   }, [entries])
 
@@ -127,14 +144,39 @@ export default function ShelfContent({ entries }) {
   }, [filtered])
 
   function getCount(value) {
-    if (!value) return entries.length
+    if (!value) return memberScopedEntries.length
     return statusCounts[value] ?? 0
   }
 
   return (
     <>
+      {/* Member filter — primary filter, drives the status counts below.
+          Click the active chip again to clear it. Only shown once at least
+          one book has been tagged — with nothing to distinguish, it'd be a
+          no-op filter. */}
+      {knownMembers.length > 0 && (
+        <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden mb-2">
+          <div className="flex gap-1.5 w-max">
+            {[MINE, ...knownMembers].map(value => (
+              <button
+                key={value}
+                onClick={() => setActiveMember(prev => prev === value ? '' : value)}
+                className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors whitespace-nowrap ${
+                  activeMember === value
+                    ? 'bg-bloom text-white'
+                    : 'bg-petal/15 text-plum hover:bg-petal/30'
+                }`}
+              >
+                {value} · {memberCounts[value] ?? 0}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Status filter tabs — horizontal scroll instead of wrap, so this never
-          eats more than one line on mobile regardless of chip count */}
+          eats more than one line on mobile regardless of chip count. Counts
+          are scoped to the active member filter, if any. */}
       {entries.length > 0 && (
         <div className="flex items-center gap-2 mb-2">
           <div className="flex-1 min-w-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -174,27 +216,6 @@ export default function ShelfContent({ entries }) {
                 <path d="M4 19V5M4 19h16M4 19l2-14M20 19l-2-14M9 19V8M15 19V8" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
-          </div>
-        </div>
-      )}
-
-      {/* Member filter — only shown once at least one book has been tagged */}
-      {knownMembers.length > 0 && (
-        <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden mb-2">
-          <div className="flex gap-1.5 w-max">
-            {[['', 'Everyone'], [MINE, MINE], ...knownMembers.map(m => [m, m])].map(([value, label]) => (
-              <button
-                key={value || 'everyone'}
-                onClick={() => setActiveMember(value)}
-                className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors whitespace-nowrap ${
-                  activeMember === value
-                    ? 'bg-bloom text-white'
-                    : 'bg-petal/15 text-plum hover:bg-petal/30'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
           </div>
         </div>
       )}
