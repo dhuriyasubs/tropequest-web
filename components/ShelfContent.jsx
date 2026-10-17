@@ -19,6 +19,7 @@ const STATUSES = [
 ]
 
 const UNCATEGORISED_LABEL = 'Off the Map'
+const MINE = 'Mine' // sentinel UI value for member_label === null (your own, untagged copy)
 
 export default function ShelfContent({ entries }) {
   const [query, setQuery]           = useState('')
@@ -65,7 +66,10 @@ export default function ShelfContent({ entries }) {
     const q = query.trim().toLowerCase()
     return entries.filter(e => {
       if (activeStatus && e.status !== activeStatus) return false
-      if (activeMember && e.member_label !== activeMember) return false
+      if (activeMember) {
+        const isMine = !e.member_label
+        if (activeMember === MINE ? !isMine : e.member_label !== activeMember) return false
+      }
       if (!q) return true
       const b = e.books
       return (
@@ -174,23 +178,17 @@ export default function ShelfContent({ entries }) {
       {/* Member filter — only shown once at least one book has been tagged */}
       {knownMembers.length > 0 && (
         <div className="flex gap-1.5 flex-wrap mb-3">
-          <button
-            onClick={() => setActiveMember('')}
-            className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
-              !activeMember ? 'bg-purple-600 text-white' : 'bg-purple-50 text-purple-700 hover:bg-purple-100'
-            }`}
-          >
-            Everyone
-          </button>
-          {knownMembers.map(m => (
+          {[['', 'Everyone'], [MINE, MINE], ...knownMembers.map(m => [m, m])].map(([value, label]) => (
             <button
-              key={m}
-              onClick={() => setActiveMember(m)}
+              key={value || 'everyone'}
+              onClick={() => setActiveMember(value)}
               className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
-                activeMember === m ? 'bg-purple-600 text-white' : 'bg-purple-50 text-purple-700 hover:bg-purple-100'
+                activeMember === value
+                  ? 'bg-bloom text-white'
+                  : 'bg-petal/15 text-plum hover:bg-petal/30'
               }`}
             >
-              {m}
+              {label}
             </button>
           ))}
         </div>
