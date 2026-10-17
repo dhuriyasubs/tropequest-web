@@ -251,12 +251,12 @@ export default function ShelfContent({ entries }) {
                           {book.tropes.slice(0, 3).join(' · ')}
                         </p>
                       )}
-                      <div className="flex items-center gap-3 mt-3">
+                      <div className="flex items-center gap-2 sm:gap-3 mt-3">
                         <ShelfButton bookId={book.id} initialStatus={status} />
-                        <span className="text-xs text-slate">Remove from shelf</span>
+                        <span className="text-xs text-slate hidden sm:inline">Remove from shelf</span>
                         <ShelfFormatToggle bookId={book.id} currentFormat={format} />
                         {book.rating && (
-                          <span className="text-xs text-slate ml-auto">★ {book.rating.toFixed(1)}</span>
+                          <span className="text-xs text-slate ml-auto shrink-0">★ {book.rating.toFixed(1)}</span>
                         )}
                       </div>
                     </div>
