@@ -163,7 +163,8 @@ export default function ShelfScan({ showLabel = false, mode = 'shelf' }) {
     if (!file) return
 
     const supabase = createSupabaseBrowser()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
     if (!user) {
       sessionStorage.setItem('authRedirect', '/shelf')
       router.push('/login')
