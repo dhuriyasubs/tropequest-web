@@ -17,7 +17,7 @@ export default async function ShelfPage() {
 
   const { data: allData } = await supabase
     .from('shelf')
-    .select('status, format, created_at, books(id, title, author, cover_url, slug, rating, tropes, series_name, series_number, genres)')
+    .select('status, format, member_label, created_at, books(id, title, author, cover_url, slug, rating, tropes, series_name, series_number, genres)')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 

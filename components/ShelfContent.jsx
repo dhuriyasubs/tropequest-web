@@ -5,6 +5,7 @@ import ShelfButton from '@/components/ShelfButton'
 import ShelfStatusSelect from '@/components/ShelfStatusSelect'
 import ShelfSpines from '@/components/ShelfSpines'
 import ShelfFormatToggle from '@/components/ShelfFormatToggle'
+import ShelfMemberTag from '@/components/ShelfMemberTag'
 import { GENRE_GROUPS, classifyGenreGroup } from '@/lib/taxonomy'
 
 const GROUP_ORDER = Object.keys(GENRE_GROUPS)
@@ -22,8 +23,14 @@ const UNCATEGORISED_LABEL = 'Off the Map'
 export default function ShelfContent({ entries }) {
   const [query, setQuery]           = useState('')
   const [activeStatus, setStatus]   = useState('')
+  const [activeMember, setActiveMember] = useState('')
   const [view, setView]             = useState('list')
   const [collapsed, setCollapsed]   = useState(new Set())
+
+  const knownMembers = useMemo(
+    () => [...new Set(entries.map(e => e.member_label).filter(Boolean))].sort(),
+    [entries]
+  )
 
   useEffect(() => {
     const saved = localStorage.getItem('shelfViewMode')
@@ -58,6 +65,7 @@ export default function ShelfContent({ entries }) {
     const q = query.trim().toLowerCase()
     return entries.filter(e => {
       if (activeStatus && e.status !== activeStatus) return false
+      if (activeMember && e.member_label !== activeMember) return false
       if (!q) return true
       const b = e.books
       return (
@@ -66,7 +74,7 @@ export default function ShelfContent({ entries }) {
         b.series_name?.toLowerCase().includes(q)
       )
     })
-  }, [entries, query, activeStatus])
+  }, [entries, query, activeStatus, activeMember])
 
   const { genreMap, sortedGenres } = useMemo(() => {
     // Classify by series, not by individual book — otherwise books in the
@@ -163,6 +171,31 @@ export default function ShelfContent({ entries }) {
         </div>
       )}
 
+      {/* Member filter — only shown once at least one book has been tagged */}
+      {knownMembers.length > 0 && (
+        <div className="flex gap-1.5 flex-wrap mb-3">
+          <button
+            onClick={() => setActiveMember('')}
+            className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
+              !activeMember ? 'bg-purple-600 text-white' : 'bg-purple-50 text-purple-700 hover:bg-purple-100'
+            }`}
+          >
+            Everyone
+          </button>
+          {knownMembers.map(m => (
+            <button
+              key={m}
+              onClick={() => setActiveMember(m)}
+              className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
+                activeMember === m ? 'bg-purple-600 text-white' : 'bg-purple-50 text-purple-700 hover:bg-purple-100'
+              }`}
+            >
+              {m}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Inline search */}
       {entries.length > 0 && (
         <div className="relative mt-3 mb-8">
@@ -219,7 +252,7 @@ export default function ShelfContent({ entries }) {
                 <ShelfSpines entries={genreMap.get(genre)} />
               ) : (
               <div className="grid gap-3">
-                {genreMap.get(genre).map(({ status, format, books: book }) => (
+                {genreMap.get(genre).map(({ status, format, member_label, books: book }) => (
                   <div key={book.id} className="flex gap-4 p-4 rounded-xl border border-petal/30 bg-white">
                     <Link
                       href={`/books/${book.slug}`}
@@ -251,10 +284,11 @@ export default function ShelfContent({ entries }) {
                           {book.tropes.slice(0, 3).join(' · ')}
                         </p>
                       )}
-                      <div className="flex items-center gap-2 sm:gap-3 mt-3">
+                      <div className="flex items-center flex-wrap gap-2 sm:gap-3 mt-3">
                         <ShelfButton bookId={book.id} initialStatus={status} />
                         <span className="text-xs text-slate hidden sm:inline">Remove from shelf</span>
                         <ShelfFormatToggle bookId={book.id} currentFormat={format} />
+                        <ShelfMemberTag bookId={book.id} currentMember={member_label} knownMembers={knownMembers} />
                         {book.rating && (
                           <span className="text-xs text-slate ml-auto shrink-0">★ {book.rating.toFixed(1)}</span>
                         )}
