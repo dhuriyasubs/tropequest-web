@@ -1,8 +1,9 @@
 'use client'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import ShelfButton from '@/components/ShelfButton'
 import ShelfStatusSelect from '@/components/ShelfStatusSelect'
+import ShelfSpines from '@/components/ShelfSpines'
 
 const STATUSES = [
   { value: '',        label: 'All'     },
@@ -16,6 +17,17 @@ const UNCATEGORISED_LABEL = 'Off the Map'
 export default function ShelfContent({ entries }) {
   const [query, setQuery]           = useState('')
   const [activeStatus, setStatus]   = useState('')
+  const [view, setView]             = useState('list')
+
+  useEffect(() => {
+    const saved = localStorage.getItem('shelfViewMode')
+    if (saved === 'list' || saved === 'shelf') setView(saved)
+  }, [])
+
+  function changeView(mode) {
+    setView(mode)
+    localStorage.setItem('shelfViewMode', mode)
+  }
 
   const statusCounts = useMemo(() => {
     const c = { unread: 0, reading: 0, read: 0 }
@@ -61,20 +73,43 @@ export default function ShelfContent({ entries }) {
     <>
       {/* Status filter tabs */}
       {entries.length > 0 && (
-        <div className="flex gap-1.5 flex-wrap mb-3">
-          {STATUSES.map(({ value, label }) => (
+        <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
+          <div className="flex gap-1.5 flex-wrap">
+            {STATUSES.map(({ value, label }) => (
+              <button
+                key={value}
+                onClick={() => setStatus(value)}
+                className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
+                  activeStatus === value
+                    ? 'bg-bloom text-white'
+                    : 'bg-petal/15 text-plum hover:bg-petal/30'
+                }`}
+              >
+                {label} · {getCount(value)}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex gap-1 bg-petal/15 rounded-full p-0.5 shrink-0">
             <button
-              key={value}
-              onClick={() => setStatus(value)}
-              className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
-                activeStatus === value
-                  ? 'bg-bloom text-white'
-                  : 'bg-petal/15 text-plum hover:bg-petal/30'
-              }`}
+              onClick={() => changeView('list')}
+              aria-label="List view"
+              className={`p-1.5 rounded-full transition-colors ${view === 'list' ? 'bg-white shadow-sm text-ink' : 'text-slate hover:text-ink'}`}
             >
-              {label} · {getCount(value)}
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" strokeLinecap="round" />
+              </svg>
             </button>
-          ))}
+            <button
+              onClick={() => changeView('shelf')}
+              aria-label="Shelf view"
+              className={`p-1.5 rounded-full transition-colors ${view === 'shelf' ? 'bg-white shadow-sm text-ink' : 'text-slate hover:text-ink'}`}
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M4 19V5M4 19h16M4 19l2-14M20 19l-2-14M9 19V8M15 19V8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          </div>
         </div>
       )}
 
@@ -119,6 +154,9 @@ export default function ShelfContent({ entries }) {
                 {genre}
                 <span className="text-sm font-normal text-slate">({genreMap.get(genre).length})</span>
               </h2>
+              {view === 'shelf' ? (
+                <ShelfSpines entries={genreMap.get(genre)} />
+              ) : (
               <div className="grid gap-3">
                 {genreMap.get(genre).map(({ status, books: book }) => (
                   <div key={book.id} className="flex gap-4 p-4 rounded-xl border border-petal/30 bg-white">
@@ -161,6 +199,7 @@ export default function ShelfContent({ entries }) {
                   </div>
                 ))}
               </div>
+              )}
             </section>
           ))}
         </div>
