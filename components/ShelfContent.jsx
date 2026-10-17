@@ -133,23 +133,26 @@ export default function ShelfContent({ entries }) {
 
   return (
     <>
-      {/* Status filter tabs */}
+      {/* Status filter tabs — horizontal scroll instead of wrap, so this never
+          eats more than one line on mobile regardless of chip count */}
       {entries.length > 0 && (
-        <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
-          <div className="flex gap-1.5 flex-wrap">
-            {STATUSES.map(({ value, label }) => (
-              <button
-                key={value}
-                onClick={() => setStatus(value)}
-                className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
-                  activeStatus === value
-                    ? 'bg-bloom text-white'
-                    : 'bg-petal/15 text-plum hover:bg-petal/30'
-                }`}
-              >
-                {label} · {getCount(value)}
-              </button>
-            ))}
+        <div className="flex items-center gap-2 mb-2">
+          <div className="flex-1 min-w-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex gap-1.5 w-max">
+              {STATUSES.map(({ value, label }) => (
+                <button
+                  key={value}
+                  onClick={() => setStatus(value)}
+                  className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors whitespace-nowrap ${
+                    activeStatus === value
+                      ? 'bg-bloom text-white'
+                      : 'bg-petal/15 text-plum hover:bg-petal/30'
+                  }`}
+                >
+                  {label} · {getCount(value)}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="flex gap-1 bg-petal/15 rounded-full p-0.5 shrink-0">
@@ -177,26 +180,28 @@ export default function ShelfContent({ entries }) {
 
       {/* Member filter — only shown once at least one book has been tagged */}
       {knownMembers.length > 0 && (
-        <div className="flex gap-1.5 flex-wrap mb-3">
-          {[['', 'Everyone'], [MINE, MINE], ...knownMembers.map(m => [m, m])].map(([value, label]) => (
-            <button
-              key={value || 'everyone'}
-              onClick={() => setActiveMember(value)}
-              className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
-                activeMember === value
-                  ? 'bg-bloom text-white'
-                  : 'bg-petal/15 text-plum hover:bg-petal/30'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
+        <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden mb-2">
+          <div className="flex gap-1.5 w-max">
+            {[['', 'Everyone'], [MINE, MINE], ...knownMembers.map(m => [m, m])].map(([value, label]) => (
+              <button
+                key={value || 'everyone'}
+                onClick={() => setActiveMember(value)}
+                className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors whitespace-nowrap ${
+                  activeMember === value
+                    ? 'bg-bloom text-white'
+                    : 'bg-petal/15 text-plum hover:bg-petal/30'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
       {/* Inline search */}
       {entries.length > 0 && (
-        <div className="relative mt-3 mb-8">
+        <div className="relative mt-1 mb-5 sm:mb-8">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate/50 pointer-events-none"
             viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35" strokeLinecap="round"/>

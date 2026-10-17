@@ -24,19 +24,19 @@ export default async function ShelfPage() {
   const entries = (allData ?? []).filter(e => e.books)
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-10">
-      <div className="mb-6">
-        <div className="flex items-center justify-between gap-3 mb-4">
+    <div className="max-w-3xl mx-auto px-4 py-6 sm:py-10">
+      <div className="mb-4 sm:mb-6">
+        <div className="flex items-center justify-between gap-2 sm:gap-3 mb-3 sm:mb-4">
           <div>
-            <h1 className="font-serif text-3xl font-bold">My Shelf</h1>
+            <h1 className="font-serif text-2xl sm:text-3xl font-bold">My Shelf</h1>
             {entries.length > 0 && (
               <p className="text-slate text-sm mt-0.5">
                 {entries.length} book{entries.length !== 1 ? 's' : ''}
               </p>
             )}
           </div>
-          <div className="flex gap-2 items-center shrink-0">
-            <ShareButton />
+          <div className="flex gap-1.5 sm:gap-2 items-center shrink-0">
+            <ShareButton className="[&_span]:hidden sm:[&_span]:inline" />
             <ShelfSearch existingBookIds={entries.map(e => e.books.id)} />
             <ShelfScan />
           </div>

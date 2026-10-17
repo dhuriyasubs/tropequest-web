@@ -115,7 +115,7 @@ export default function ShelfSearch({ existingBookIds = [] }) {
     <div className="relative">
       <button
         onClick={() => setOpen(o => !o)}
-        className={`flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-xl border transition-colors ${
+        className={`flex items-center gap-2 text-sm font-semibold px-3 sm:px-4 py-2 rounded-xl border transition-colors ${
           open
             ? 'bg-bloom text-white border-bloom'
             : 'bg-white text-ink border-petal/40 hover:border-bloom hover:text-bloom'
@@ -124,7 +124,7 @@ export default function ShelfSearch({ existingBookIds = [] }) {
         <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
         </svg>
-        <span>Add Books</span>
+        <span className="hidden sm:inline">Add Books</span>
       </button>
 
       {open && (
