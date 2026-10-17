@@ -24,7 +24,7 @@ export default function ShelfSearch() {
     const t = setTimeout(async () => {
       setLoading(true)
       try {
-        const res  = await fetch(`/api/search?q=${encodeURIComponent(query.trim())}&page=1`)
+        const res  = await fetch(`/api/search?q=${encodeURIComponent(query.trim())}&page=1&coreOnly=false`)
         const data = await res.json()
         setResults(data.books ?? [])
       } catch { setResults([]) }

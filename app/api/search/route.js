@@ -15,11 +15,12 @@ export async function GET(request) {
   const excludeRepresentation = searchParams.getAll('excludeRepresentation')
   const page              = Number(searchParams.get('page') || 1)
   const spice          = searchParams.get('spice') ? Number(searchParams.get('spice')) : null
+  const coreOnly        = searchParams.get('coreOnly') !== 'false'
 
   try {
     const result = await searchBooks({
       query, tropes, subjects, genres, representation, spice, relationshipTypes,
-      excludeTropes, excludeGenres, excludeRepresentation, page,
+      excludeTropes, excludeGenres, excludeRepresentation, page, coreOnly,
     })
     return NextResponse.json(result, {
       headers: { 'Cache-Control': 's-maxage=60, stale-while-revalidate=300' },
