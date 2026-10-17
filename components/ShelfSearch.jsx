@@ -10,13 +10,22 @@ export default function ShelfSearch({ existingBookIds = [] }) {
   const [added,   setAdded]   = useState(new Set())  // bookIds added this session
   const [adding,  setAdding]  = useState(null)        // bookId being added
   const existingSet = useMemo(() => new Set(existingBookIds), [existingBookIds])
+
+  const [manualOpen,   setManualOpen]   = useState(false)
+  const [manualTitle,  setManualTitle]  = useState('')
+  const [manualAuthor, setManualAuthor] = useState('')
+  const [manualSaving, setManualSaving] = useState(false)
+  const [manualDone,   setManualDone]   = useState(null) // { title, alreadyInShelf } | null
   const inputRef = useRef(null)
   const router   = useRouter()
 
   // Focus input when panel opens
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 50)
-    else { setQuery(''); setResults([]) }
+    else {
+      setQuery(''); setResults([])
+      setManualOpen(false); setManualTitle(''); setManualAuthor(''); setManualDone(null)
+    }
   }, [open])
 
   // Debounced search
@@ -54,6 +63,41 @@ export default function ShelfSearch({ existingBookIds = [] }) {
     setAdding(null)
   }
 
+  function openManual() {
+    setManualOpen(true)
+    setManualTitle(query)
+    setManualAuthor('')
+    setManualDone(null)
+  }
+
+  async function addManually(e) {
+    e.preventDefault()
+    const title = manualTitle.trim()
+    if (!title) return
+    setManualSaving(true)
+    try {
+      const res  = await fetch('/api/shelf/manual-add', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ title, author: manualAuthor.trim() || null }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        window.dispatchEvent(new CustomEvent('toast', {
+          detail: { message: data.alreadyInShelf ? `"${title}" is already on your shelf` : `"${title}" added to shelf` },
+        }))
+        setManualDone({ title, alreadyInShelf: data.alreadyInShelf })
+        setManualOpen(false)
+        router.refresh()
+      } else {
+        window.dispatchEvent(new CustomEvent('toast', { detail: { message: data.error ?? 'Could not add book' } }))
+      }
+    } catch {
+      window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Could not add book' } }))
+    }
+    setManualSaving(false)
+  }
+
   return (
     <div className="relative">
       <button
@@ -87,10 +131,18 @@ export default function ShelfSearch({ existingBookIds = [] }) {
             {loading && (
               <p className="text-xs text-slate text-center py-4">Searching…</p>
             )}
-            {!loading && query && results.length === 0 && (
-              <p className="text-xs text-slate text-center py-4">No books found for &ldquo;{query}&rdquo;</p>
+            {!loading && query && results.length === 0 && !manualOpen && (
+              <div className="text-center py-4 px-3">
+                <p className="text-xs text-slate mb-2">No books found for &ldquo;{query}&rdquo;</p>
+                <button
+                  onClick={openManual}
+                  className="text-xs font-semibold text-bloom hover:underline"
+                >
+                  + Add &ldquo;{query}&rdquo; manually
+                </button>
+              </div>
             )}
-            {!loading && !query && (
+            {!loading && !query && !manualOpen && (
               <p className="text-xs text-slate text-center py-4">Type to search books</p>
             )}
             {results.map(book => (
@@ -127,6 +179,59 @@ export default function ShelfSearch({ existingBookIds = [] }) {
                 )}
               </div>
             ))}
+
+            {!loading && results.length > 0 && !manualOpen && (
+              <button
+                onClick={openManual}
+                className="w-full text-left text-xs font-medium text-slate hover:text-bloom px-3 py-2.5"
+              >
+                Can&apos;t find it? + Add manually
+              </button>
+            )}
+
+            {manualOpen && (
+              <form onSubmit={addManually} className="p-3 space-y-2 border-t border-petal/20">
+                <input
+                  type="text"
+                  value={manualTitle}
+                  onChange={e => setManualTitle(e.target.value)}
+                  placeholder="Title"
+                  autoFocus
+                  className="w-full text-sm px-3 py-2 rounded-lg border border-petal/30 focus:outline-none focus:ring-2 focus:ring-bloom/30"
+                />
+                <input
+                  type="text"
+                  value={manualAuthor}
+                  onChange={e => setManualAuthor(e.target.value)}
+                  placeholder="Author (optional)"
+                  className="w-full text-sm px-3 py-2 rounded-lg border border-petal/30 focus:outline-none focus:ring-2 focus:ring-bloom/30"
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    disabled={manualSaving || !manualTitle.trim()}
+                    className="flex-1 text-xs font-semibold bg-bloom text-white py-2 rounded-lg hover:opacity-90 disabled:opacity-50"
+                  >
+                    {manualSaving ? 'Adding…' : 'Add to shelf'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setManualOpen(false)}
+                    className="text-xs text-slate hover:text-ink px-3 py-2"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {manualDone && (
+              <p className="text-xs text-center py-3 px-3 text-green-700 bg-green-50">
+                {manualDone.alreadyInShelf
+                  ? `"${manualDone.title}" is already on your shelf`
+                  : `"${manualDone.title}" added to shelf`}
+              </p>
+            )}
           </div>
         </div>
       )}
