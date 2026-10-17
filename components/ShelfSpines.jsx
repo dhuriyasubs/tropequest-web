@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { getDominantColor } from '@/lib/dominantColor'
+import { getDominantColor, isLight } from '@/lib/dominantColor'
 
 const STATUS_DOT = {
   unread:  'bg-petal',
@@ -26,17 +26,13 @@ function hashId(id) {
   return String(id).split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
 }
 
-function jitter(n, range) {
-  return ((n % 100) / 100 - 0.5) * 2 * range
-}
-
 function SpineBook({ status, book }) {
   const n = hashId(book.id)
   const fallbackColor = SPINE_COLORS[n % SPINE_COLORS.length]
   const [color, setColor] = useState(fallbackColor)
-  const heightClass = n % 3 === 0 ? 'h-36 sm:h-44' : n % 3 === 1 ? 'h-40 sm:h-48' : 'h-44 sm:h-52'
-  const widthClass = n % 5 === 0 ? 'w-7 sm:w-8' : n % 5 === 3 ? 'w-9 sm:w-11' : 'w-8 sm:w-10'
-  const rotate = jitter(n, 1.2)
+  // Width scales with title length (purposeful variety, not random jitter) so
+  // longer titles get a touch more room for their vertical text.
+  const widthClass = book.title.length > 28 ? 'w-11 sm:w-12' : book.title.length > 14 ? 'w-9 sm:w-10' : 'w-8 sm:w-9'
 
   useEffect(() => {
     let cancelled = false
@@ -46,25 +42,27 @@ function SpineBook({ status, book }) {
     return () => { cancelled = true }
   }, [book.cover_url])
 
+  const textClass = isLight(color) ? 'text-ink/80' : 'text-white/90'
+  const dotRing   = isLight(color) ? 'ring-ink/20' : 'ring-white/70'
+
   return (
     <Link
       href={`/books/${book.slug}`}
       title={`${book.title} — ${book.author}`}
-      className={`group relative shrink-0 ${widthClass} ${heightClass} rounded-[2px] transition-transform duration-150 hover:-translate-y-2 hover:z-10 flex flex-col items-center`}
+      className={`group relative shrink-0 ${widthClass} h-44 sm:h-52 rounded-sm transition-transform duration-150 hover:-translate-y-2 hover:z-10 flex flex-col items-center`}
       style={{
-        background: `linear-gradient(to right, ${color}, ${color} 85%, rgba(255,255,255,0.18) 85%, rgba(255,255,255,0.18) 100%)`,
-        boxShadow: '1px 0 0 rgba(0,0,0,0.15), 2px 3px 5px rgba(0,0,0,0.25)',
-        transform: `rotate(${rotate}deg)`,
+        backgroundColor: color,
+        boxShadow: 'inset -2px 0 3px rgba(0,0,0,0.18), 2px 3px 6px rgba(0,0,0,0.25)',
         transition: 'background-color 0.3s ease, transform 0.15s ease',
       }}
     >
-      <span className={`absolute top-1.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full ring-1 ring-white/70 ${STATUS_DOT[status] ?? 'bg-slate'}`} />
+      <span className={`absolute top-1.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full ring-1 ${dotRing} ${STATUS_DOT[status] ?? 'bg-slate'}`} />
 
       <span
         className="flex-1 flex items-center justify-center overflow-hidden px-0.5 py-4"
         style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
       >
-        <span className="text-[10px] sm:text-[11px] font-medium text-white/90 line-clamp-1 tracking-tight">
+        <span className={`text-[10px] sm:text-[11px] font-medium line-clamp-1 tracking-tight ${textClass}`}>
           {book.title}
         </span>
       </span>
@@ -92,7 +90,7 @@ function SpineBook({ status, book }) {
 export default function ShelfSpines({ entries }) {
   return (
     <div className="relative pt-4">
-      <div className="flex flex-wrap items-end gap-[3px] px-1 pb-1">
+      <div className="flex flex-wrap items-end gap-[2px] px-1 pb-1">
         {entries.map(({ status, books: book }) => (
           <SpineBook key={book.id} status={status} book={book} />
         ))}
