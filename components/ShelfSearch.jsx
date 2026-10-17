@@ -1,14 +1,15 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 
-export default function ShelfSearch() {
+export default function ShelfSearch({ existingBookIds = [] }) {
   const [open,    setOpen]    = useState(false)
   const [query,   setQuery]   = useState('')
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(false)
-  const [added,   setAdded]   = useState(new Set())  // bookIds already added
+  const [added,   setAdded]   = useState(new Set())  // bookIds added this session
   const [adding,  setAdding]  = useState(null)        // bookId being added
+  const existingSet = useMemo(() => new Set(existingBookIds), [existingBookIds])
   const inputRef = useRef(null)
   const router   = useRouter()
 
@@ -104,17 +105,26 @@ export default function ShelfSearch() {
                   <p className="text-sm font-medium line-clamp-1">{book.title}</p>
                   <p className="text-xs text-slate">{book.author}</p>
                 </div>
-                <button
-                  onClick={() => addToShelf(book)}
-                  disabled={adding === book.id || added.has(book.id)}
-                  className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${
-                    added.has(book.id)
-                      ? 'bg-green-100 text-green-700 cursor-default'
-                      : 'bg-bloom/10 text-bloom hover:bg-bloom hover:text-white disabled:opacity-50'
-                  }`}
-                >
-                  {adding === book.id ? '…' : added.has(book.id) ? 'Added ✓' : '+ Add'}
-                </button>
+                {existingSet.has(book.id) ? (
+                  <span
+                    className="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg bg-gray-100 text-slate cursor-default"
+                    title="Already on your shelf"
+                  >
+                    Already in shelf
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => addToShelf(book)}
+                    disabled={adding === book.id || added.has(book.id)}
+                    className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${
+                      added.has(book.id)
+                        ? 'bg-green-100 text-green-700 cursor-default'
+                        : 'bg-bloom/10 text-bloom hover:bg-bloom hover:text-white disabled:opacity-50'
+                    }`}
+                  >
+                    {adding === book.id ? '…' : added.has(book.id) ? 'Added ✓' : '+ Add'}
+                  </button>
+                )}
               </div>
             ))}
           </div>

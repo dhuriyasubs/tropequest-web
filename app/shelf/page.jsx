@@ -37,7 +37,7 @@ export default async function ShelfPage() {
           </div>
           <div className="flex gap-2 items-center shrink-0">
             <ShareButton />
-            <ShelfSearch />
+            <ShelfSearch existingBookIds={entries.map(e => e.books.id)} />
             <ShelfScan />
           </div>
         </div>
