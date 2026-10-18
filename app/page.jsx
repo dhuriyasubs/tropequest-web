@@ -10,6 +10,7 @@ import { createSupabaseServer } from '@/lib/supabase'
 import { withTimeout } from '@/lib/withTimeout'
 import { getAllPosts } from '@/lib/blog'
 import PageViewTracker from '@/components/PageViewTracker'
+import OnboardingWelcomeToast from '@/components/OnboardingWelcomeToast'
 
 export const dynamic = 'force-dynamic'
 
@@ -106,13 +107,16 @@ export default async function HomePage() {
   return (
     <>
       <PageViewTracker pageType="home" />
+      <OnboardingWelcomeToast />
       <HeroGrid tropes={popularTropes} />
       <DiscoverStrip />
 
       {user && (
-        <Suspense fallback={<PersonalisedSkeleton />}>
-          <PersonalisedSections userId={user.id} />
-        </Suspense>
+        <div id="personalised-for-you">
+          <Suspense fallback={<PersonalisedSkeleton />}>
+            <PersonalisedSections userId={user.id} />
+          </Suspense>
+        </div>
       )}
 
       {latestPosts.length > 0 && (

@@ -27,7 +27,8 @@ export default function WelcomeFlow({ firstName, popularTropes, allGenres, allAu
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ genres: selGenres, tropes: selTropes, subjects: [], authors: selAuthors }),
     })
-    router.push('/')
+    const hasPicks = selGenres.length > 0 || selTropes.length > 0 || selAuthors.length > 0
+    router.push(hasPicks ? '/?onboarded=1' : '/')
   }
 
   const filteredTropes  = tropeSearch
@@ -44,12 +45,13 @@ export default function WelcomeFlow({ firstName, popularTropes, allGenres, allAu
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-petal/20">
         <span className="font-serif text-lg font-bold text-bloom">TropeQuest</span>
-        {step > 0 && step < 4 && (
+        {step < 4 && (
           <button
             onClick={finish}
-            className="text-sm text-slate hover:text-ink transition-colors"
+            disabled={saving}
+            className="text-sm text-slate hover:text-ink transition-colors disabled:opacity-50"
           >
-            Skip for now
+            {step === 0 ? "I'll just browse" : 'Skip for now'}
           </button>
         )}
       </div>
