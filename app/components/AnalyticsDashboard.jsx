@@ -129,6 +129,19 @@ export default function AnalyticsDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const [userStats, setUserStats] = useState(null);
+  const [userStatsError, setUserStatsError] = useState(null);
+
+  useEffect(() => {
+    fetch('/api/admin/analytics/users')
+      .then((r) => r.json())
+      .then(({ users, summary, error: err }) => {
+        if (err) { setUserStatsError(err); return; }
+        setUserStats({ users, summary });
+      })
+      .catch((e) => setUserStatsError(e.message));
+  }, []);
+
   function applyPreset(key) {
     setActivePreset(key);
     setShowCustom(false);
@@ -281,6 +294,54 @@ export default function AnalyticsDashboard() {
           )}
         </div>
       </div>
+
+      <ChartCard title="Users & engagement · all-time" style={{ marginBottom: "1.5rem" }}>
+        {userStatsError && (
+          <p style={{ color: COLORS.coral, fontSize: 13 }}>Error: {userStatsError}</p>
+        )}
+        {!userStatsError && !userStats && (
+          <p style={{ color: "#9CA3AF", fontSize: 13 }}>Loading…</p>
+        )}
+        {userStats && (
+          <>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12, marginBottom: "1.25rem" }}>
+              <StatCard label="Signups" value={fmt(userStats.summary.totalSignups)} sub={`${userStats.summary.externalSignups} external`} accent={COLORS.purple} />
+              <StatCard label="Onboarded" value={fmt(userStats.summary.onboarded)} sub={`of ${userStats.summary.externalSignups} external`} accent={COLORS.teal} />
+              <StatCard label="Engaged" value={fmt(userStats.summary.engaged)} sub="added a shelf/TBR book" accent={COLORS.blue} />
+              <StatCard label="Returned" value={fmt(userStats.summary.returned)} sub="logged in more than once" accent={COLORS.pink} />
+            </div>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                <thead>
+                  <tr style={{ textAlign: "left", color: "#6B7280", borderBottom: "1px solid #E5E7EB" }}>
+                    <th style={{ padding: "6px 8px" }}>Email</th>
+                    <th style={{ padding: "6px 8px" }}>Signed up</th>
+                    <th style={{ padding: "6px 8px" }}>Returned?</th>
+                    <th style={{ padding: "6px 8px" }}>Onboarded?</th>
+                    <th style={{ padding: "6px 8px", textAlign: "right" }}>Shelf</th>
+                    <th style={{ padding: "6px 8px", textAlign: "right" }}>TBR</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {userStats.users.filter(u => !u.isInternal).map(u => (
+                    <tr key={u.email} style={{ borderBottom: "1px solid #F3F4F6" }}>
+                      <td style={{ padding: "6px 8px", color: "#111" }}>{u.email}</td>
+                      <td style={{ padding: "6px 8px", color: "#6B7280" }}>{u.createdAt?.slice(0, 10)}</td>
+                      <td style={{ padding: "6px 8px", color: u.returned ? COLORS.teal : "#9CA3AF" }}>{u.returned ? "Yes" : "No"}</td>
+                      <td style={{ padding: "6px 8px", color: u.onboardingFinished ? COLORS.teal : "#9CA3AF" }}>{u.onboardingFinished ? `Yes (${u.picksCount})` : "No"}</td>
+                      <td style={{ padding: "6px 8px", textAlign: "right", fontWeight: u.shelfCount ? 600 : 400, color: u.shelfCount ? "#111" : "#9CA3AF" }}>{u.shelfCount}</td>
+                      <td style={{ padding: "6px 8px", textAlign: "right", fontWeight: u.tbrCount ? 600 : 400, color: u.tbrCount ? "#111" : "#9CA3AF" }}>{u.tbrCount}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p style={{ fontSize: 11, color: "#9CA3AF", marginTop: 10 }}>
+              {userStats.summary.totalSignups - userStats.summary.externalSignups} internal (your own / family) accounts excluded from this table.
+            </p>
+          </>
+        )}
+      </ChartCard>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: "1.5rem" }}>
         <StatCard label="Human events" value={fmt(human.length)} sub={`${botPct}% of total is bots`} accent={COLORS.purple} />
