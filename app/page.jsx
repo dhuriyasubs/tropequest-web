@@ -7,6 +7,7 @@ import ScrollReveal from '@/components/ScrollReveal'
 import SeriesCompletionSection from '@/components/SeriesCompletionSection'
 import { getFeaturedBooks, getPopularTropes, getPersonalizedBooks, getSeriesCompletionBooks, getBecauseYouReadBooks } from '@/lib/search'
 import { createSupabaseServer } from '@/lib/supabase'
+import { withTimeout } from '@/lib/withTimeout'
 import { getAllPosts } from '@/lib/blog'
 import PageViewTracker from '@/components/PageViewTracker'
 
@@ -21,10 +22,10 @@ export const metadata = {
 async function PersonalisedSections({ userId }) {
   const supabase = createSupabaseServer()
 
-  const [interestsRes, shelfRes] = await Promise.all([
+  const [interestsRes, shelfRes] = await withTimeout(Promise.all([
     supabase.from('user_interests').select('tropes, subjects, authors').eq('user_id', userId).single(),
     supabase.from('shelf').select('book_id').eq('user_id', userId).eq('status', 'read'),
-  ])
+  ]), 6000, 'personalised sections')
 
   const interests = (interestsRes.data?.tropes?.length || interestsRes.data?.subjects?.length || interestsRes.data?.authors?.length)
     ? interestsRes.data : null
@@ -90,13 +91,13 @@ function PersonalisedSkeleton() {
 // ── Page ──────────────────────────────────────────────────────────────────
 export default async function HomePage() {
   // Kick off cached public fetches immediately — don't wait for auth
-  const publicPromise = Promise.all([
+  const publicPromise = withTimeout(Promise.all([
     getFeaturedBooks(12),
     getPopularTropes(50),
-  ])
+  ]), 6000, 'featured books')
 
   const supabase = createSupabaseServer()
-  const { data: { session } } = await supabase.auth.getSession()
+  const { data: { session } } = await withTimeout(supabase.auth.getSession(), 6000, 'session lookup')
   const user = session?.user
 
   const [books, popularTropes] = await publicPromise

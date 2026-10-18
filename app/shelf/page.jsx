@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createSupabaseServer } from '@/lib/supabase'
+import { withTimeout } from '@/lib/withTimeout'
 import ShelfScan from '@/components/ShelfScan'
 import ShelfSearch from '@/components/ShelfSearch'
 import ShelfContent from '@/components/ShelfContent'
@@ -11,15 +12,15 @@ export const metadata = { title: 'My Shelf' }
 
 export default async function ShelfPage() {
   const supabase = createSupabaseServer()
-  const { data: { session } } = await supabase.auth.getSession()
+  const { data: { session } } = await withTimeout(supabase.auth.getSession(), 6000, 'session lookup')
   if (!session) redirect('/login?next=/shelf')
   const user = session.user
 
-  const { data: allData } = await supabase
+  const { data: allData } = await withTimeout(supabase
     .from('shelf')
     .select('status, format, member_label, created_at, books(id, title, author, cover_url, slug, rating, tropes, series_name, series_number, genres)')
     .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
+    .order('created_at', { ascending: false }), 6000, 'shelf entries')
 
   const entries = (allData ?? []).filter(e => e.books)
   const knownMembers = [...new Set(entries.map(e => e.member_label).filter(Boolean))].sort()

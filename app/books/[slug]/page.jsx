@@ -5,6 +5,7 @@ import { getBookBySlug, getSeriesBooks, getMoreByAuthor, getSimilarBooks } from 
 import { getPostsFeaturingBook } from '@/lib/blog'
 import { slugify, toTitleCase, formatAuthorName } from '@/lib/utils'
 import { createSupabaseServer, supabaseAdmin } from '@/lib/supabase'
+import { withTimeout } from '@/lib/withTimeout'
 import TbrButton from '@/components/TbrButton'
 import DescriptionExpander from '@/components/DescriptionExpander'
 import ShelfControls from '@/components/ShelfControls'
@@ -76,7 +77,7 @@ export default async function BookPage({ params }) {
   if (!book) notFound()
 
   const supabase = createSupabaseServer()
-  const { data: { session } } = await supabase.auth.getSession()
+  const { data: { session } } = await withTimeout(supabase.auth.getSession(), 6000, 'session lookup')
   const user = session?.user
   let isSaved = false
   let shelfStatus = null
@@ -85,12 +86,12 @@ export default async function BookPage({ params }) {
   let userRating = null
   let knownMembers = []
   if (user) {
-    const [tbrRes, shelfRes, ratingRes, membersRes] = await Promise.all([
+    const [tbrRes, shelfRes, ratingRes, membersRes] = await withTimeout(Promise.all([
       supabase.from('tbr').select('id').eq('user_id', user.id).eq('book_id', book.id).single(),
       supabase.from('shelf').select('status, format, member_label').eq('user_id', user.id).eq('book_id', book.id).single(),
       supabase.from('ratings').select('rating').eq('user_id', user.id).eq('book_id', book.id).single(),
       supabase.from('shelf').select('member_label').eq('user_id', user.id).not('member_label', 'is', null),
-    ])
+    ]), 6000, 'user shelf/tbr/rating lookup')
     isSaved = !!tbrRes.data
     shelfStatus = shelfRes.data?.status ?? null
     shelfFormat = shelfRes.data?.format ?? 'physical'
@@ -100,10 +101,10 @@ export default async function BookPage({ params }) {
   }
 
   // Community ratings for this book (public data, no need for the cookie-bound client)
-  const { data: communityRatings } = await supabaseAdmin
+  const { data: communityRatings } = await withTimeout(supabaseAdmin
     .from('ratings')
     .select('rating')
-    .eq('book_id', book.id)
+    .eq('book_id', book.id), 6000, 'community ratings')
   const tqCount = communityRatings?.length ?? 0
   const tqSum = communityRatings?.reduce((s, r) => s + r.rating, 0) ?? 0
   const grCount = book.rating_count ?? 0
@@ -113,12 +114,12 @@ export default async function BookPage({ params }) {
 
   const featuredInPosts = getPostsFeaturingBook(params.slug)
 
-  const [seriesBooks, moreByAuthor, readersAlsoEnjoyed, authorBioRow] = await Promise.all([
+  const [seriesBooks, moreByAuthor, readersAlsoEnjoyed, authorBioRow] = await withTimeout(Promise.all([
     book.series_name ? getSeriesBooks(book.series_name, book.id) : [],
     getMoreByAuthor(book.author, book.id, book.series_name ?? null),
     getSimilarBooks({ tropes: book.tropes ?? [], genres: book.genres ?? [], storyTags: book.story_tags ?? [], excludeId: book.id, limit: 8 }),
     supabaseAdmin.from('author_bios').select('bio').eq('author_name', book.author).maybeSingle(),
-  ])
+  ]), 6000, 'series/author/similar books')
   const authorBio = authorBioRow.data?.bio ?? null
   const authorIntro = authorBio?.intro
     ? authorBio.intro.length > 220
@@ -130,11 +131,11 @@ export default async function BookPage({ params }) {
   let sectionShelfMap = {}
   if (user && (seriesBooks.length || moreByAuthor.length)) {
     const sectionIds = [...seriesBooks, ...moreByAuthor].map(b => b.id)
-    const { data: sectionShelf } = await supabase
+    const { data: sectionShelf } = await withTimeout(supabase
       .from('shelf')
       .select('book_id, status')
       .eq('user_id', user.id)
-      .in('book_id', sectionIds)
+      .in('book_id', sectionIds), 6000, 'section shelf status')
     for (const r of sectionShelf ?? []) sectionShelfMap[r.book_id] = r.status
   }
 
