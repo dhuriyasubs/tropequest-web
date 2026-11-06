@@ -133,14 +133,14 @@ export default function AnalyticsDashboard() {
   const [userStatsError, setUserStatsError] = useState(null);
 
   useEffect(() => {
-    fetch('/api/admin/analytics/users')
+    fetch(`/api/admin/analytics/users?from=${encodeURIComponent(dateRange.from)}&to=${encodeURIComponent(dateRange.to)}`)
       .then((r) => r.json())
       .then(({ users, summary, error: err }) => {
         if (err) { setUserStatsError(err); return; }
         setUserStats({ users, summary });
       })
       .catch((e) => setUserStatsError(e.message));
-  }, []);
+  }, [dateRange]);
 
   function applyPreset(key) {
     setActivePreset(key);
@@ -295,7 +295,7 @@ export default function AnalyticsDashboard() {
         </div>
       </div>
 
-      <ChartCard title="Users & engagement · all-time" style={{ marginBottom: "1.5rem" }}>
+      <ChartCard title="Users & engagement" style={{ marginBottom: "1.5rem" }}>
         {userStatsError && (
           <p style={{ color: COLORS.coral, fontSize: 13 }}>Error: {userStatsError}</p>
         )}
