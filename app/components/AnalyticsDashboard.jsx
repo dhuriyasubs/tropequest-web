@@ -296,6 +296,7 @@ export default function AnalyticsDashboard() {
       </div>
 
       <ChartCard title="Users & engagement" style={{ marginBottom: "1.5rem" }}>
+        <p style={{ fontSize: 12, color: "#9CA3AF", margin: "-4px 0 12px" }}>All-time · &quot;New signups&quot; below reflects the date range selected above</p>
         {userStatsError && (
           <p style={{ color: COLORS.coral, fontSize: 13 }}>Error: {userStatsError}</p>
         )}
@@ -306,6 +307,7 @@ export default function AnalyticsDashboard() {
           <>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12, marginBottom: "1.25rem" }}>
               <StatCard label="Signups" value={fmt(userStats.summary.totalSignups)} sub={`${userStats.summary.externalSignups} external`} accent={COLORS.purple} />
+              <StatCard label="New signups" value={fmt(userStats.summary.newInRange)} sub="in selected range" accent={COLORS.amber} />
               <StatCard label="Onboarded" value={fmt(userStats.summary.onboarded)} sub={`of ${userStats.summary.externalSignups} external`} accent={COLORS.teal} />
               <StatCard label="Engaged" value={fmt(userStats.summary.engaged)} sub="added a shelf/TBR book" accent={COLORS.blue} />
               <StatCard label="Returned" value={fmt(userStats.summary.returned)} sub="logged in more than once" accent={COLORS.pink} />

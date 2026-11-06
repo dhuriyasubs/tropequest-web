@@ -4,10 +4,11 @@ import { isAdmin } from '@/lib/admin'
 
 export const dynamic = 'force-dynamic'
 
-// Signup/activation/engagement per user, scoped to signups within [from, to]
-// — same date-range picker as the event charts above. Engagement counts
-// (shelf/TBR) reflect each included user's full activity, not just activity
-// inside the window.
+// All-time signup/activation/engagement per user — a small app like this one
+// often has zero new signups in a given day/week, so scoping the whole table
+// to the date picker made it go blank most of the time. The table always
+// shows everyone; `newInRange` is the one number that does respect [from, to],
+// for a "how many new people this period" stat alongside the full picture.
 export async function GET(request) {
   const supabase = createSupabaseServer()
   const { data: { user } } = await supabase.auth.getUser()
@@ -18,8 +19,7 @@ export async function GET(request) {
   const to   = searchParams.get('to')   ?? new Date().toISOString()
 
   const [profilesRes, interestsRes, shelfRes, tbrRes] = await Promise.all([
-    supabaseAdmin.from('profiles').select('id, email, created_at, updated_at, email_opt_out')
-      .gte('created_at', from).lte('created_at', to).order('created_at', { ascending: true }),
+    supabaseAdmin.from('profiles').select('id, email, created_at, updated_at, email_opt_out').order('created_at', { ascending: true }),
     supabaseAdmin.from('user_interests').select('user_id, tropes, subjects, authors'),
     supabaseAdmin.from('shelf').select('user_id'),
     supabaseAdmin.from('tbr').select('user_id'),
@@ -50,12 +50,14 @@ export async function GET(request) {
   })
 
   const external = users.filter(u => !u.isInternal)
+  const newInRange = external.filter(u => u.createdAt >= from && u.createdAt <= to).length
   const summary = {
     totalSignups:    users.length,
     externalSignups: external.length,
     onboarded:       external.filter(u => u.onboardingFinished).length,
     engaged:         external.filter(u => u.engaged).length,
     returned:        external.filter(u => u.returned).length,
+    newInRange,
   }
 
   return NextResponse.json({ users, summary })
